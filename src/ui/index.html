@@ -2442,6 +2442,10 @@ html.sans-pilou .home-idee::after  { width: 5px; height: 5px; left: -18px; botto
    lieu de 4,3 (mesuré sur l'accent #c026d3) */
 html[data-theme="dark"] .home-idee { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .home-idee:hover, html[data-theme="dark"] .home-idee:hover { background: var(--accent); color: #fff; }
+/* Un clic sur Pilou fait comme un clic sur sa bulle (demande d'Arthur, 14/11/2026) :
+   au survol de l'ourson, la bulle s'allume. Le bouton reste le chemin au clavier */
+#home-pilou { cursor: pointer; }
+.home-greet:has(#home-pilou:hover) .home-idee { background: var(--accent); color: #fff; }
 .home-idee:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .home-idee.vue { animation: none; }   /* pas de nouvelle apparition en revenant sur l'accueil */
 @keyframes home-idee-pop { from { opacity: 0; transform: scale(.6) translateY(6px); } }
@@ -3559,7 +3563,8 @@ html.verre .toast-stack .toast {
            réécrit à chaque rendu : la bulle n'apparaît qu'une fois au lancement -->
       <!-- 12/11/2026 : c'est Pilou qui pose la question (demande d'Arthur) ; il
            passe après le prénom, la bulle sort de sa bouche -->
-      <div class="home-greet"><span id="home-greet">Bonjour</span><span class="pilou pilou-accueil" id="home-pilou" aria-hidden="true"></span><button type="button" class="home-idee"
+      <div class="home-greet"><span id="home-greet">Bonjour</span><span class="pilou pilou-accueil" id="home-pilou" aria-hidden="true"
+              onclick="homeSuggestion()" title="Proposer une idée ou signaler un problème à l'auteur de Pilote"></span><button type="button" class="home-idee"
               onclick="homeSuggestion()" onanimationend="this.classList.add('vue')"
               title="Proposer une idée ou signaler un problème à l'auteur de Pilote">Une idée,<br>un problème&#8239;?</button></div>
       <div class="home-date"  id="home-date"></div>
