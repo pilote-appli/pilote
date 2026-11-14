@@ -92,9 +92,14 @@ plutôt qu'un logiciel de bureau.
   (dépôts, valeur, frais, dividendes) restent à la couleur du texte, fini les cartes
   arc-en-ciel. `--accent-soft` et `--accent-text` sont dérivés de l'accent choisi par
   `color-mix()` : lisibles quelle que soit la couleur réglée dans les paramètres.
-* **Accent par défaut : prune `#9c4a7a`** (4.2.4), à trois endroits qui doivent rester
-  égaux : `--accent` dans `:root`, `ACCENT_DEFAULT` (index.html, aussi ajoutée aux
-  pastilles) et `DEFAULT_COLOR` dans `appicon.py`. Choisie parce qu'elle ne ressemble
+* **Accent par défaut : fuchsia `#c026d3`** depuis le 14/11/2026 (choix d'Arthur, qui
+  n'aimait pas la prune : la pastille juste à sa gauche). À quatre endroits qui doivent
+  rester égaux : `--accent` dans `:root`, `ACCENT_DEFAULT` (index.html, 6e pastille),
+  `DEFAULT_COLOR` dans `appicon.py` et `_DEFAULT_ACCENT` dans `splash.py` ; plus
+  `assets/make_icon.py` pour l'icône du build, et le site public (`style.css`, les
+  SVG de Pilou). La prune n'est plus une pastille (« n'importe quelle couleur » la
+  donne encore). Un utilisateur qui l'avait choisie la garde.
+* **Avant : prune `#9c4a7a`** (4.2.4 au 14/11/2026). Choisie parce qu'elle ne ressemble
   ni au vert des gains, ni au rouge des pertes, ni à l'ambre des alertes : la terre
   cuite a été écartée pour cette raison, le bleu encre parce qu'il doublait le bleu
   des badges d'information. Un utilisateur qui a déjà choisi sa couleur la garde ;
