@@ -5,6 +5,9 @@
       "version": "4.4.73",
       "date": "2026-11-14",
       "titre": "Un seul pense-bête",
+      "nouveau": [
+        "Pilou suit ta bourse : sur l'accueil, il est tout content quand tes placements montent d'au moins 1 % dans la journée, et un peu inquiet quand ils baissent d'autant. Passe la souris sur lui pour voir le chiffre."
+      ],
       "ameliore": [
         "Les Tâches s'appellent maintenant Pense-bête, et la tuile Pense-bête de l'accueil montre la même liste : ce que tu écris dans l'une apparaît dans l'autre.",
         "Tu peux ajouter, cocher et modifier depuis la tuile, même si la section Pense-bête est masquée dans la barre latérale.",

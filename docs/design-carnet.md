@@ -14,7 +14,9 @@ essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
   fait main dont les couleurs sont des classes `pl-*` tirées de `--accent` par
   `color-mix()` : il suit l'accent et les deux thèmes sans être redessiné.
   Humeurs : `content`, `salut` (bras qui fait trois signes), `joyeux`, `pensif`,
-  `endormi` (deux « z »). Les yeux clignent ; rien ne bouge avec
+  `endormi` (deux « z »), `inquiet` (sourcils relevés vers le milieu, au-dessus
+  des lunettes, bouche qui tombe : 14/11/2026, pour la bourse en baisse ; pas
+  triste, une baisse d'un jour est normale). Les yeux clignent ; rien ne bouge avec
   `prefers-reduced-motion`.
 * **Où il est** (choix d'Arthur) : à côté de « Bonjour » sur l'Accueil
   (`.pilou-accueil`, 1,05 em : n'agrandit pas la salutation), dans le titre de

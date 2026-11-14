@@ -12,7 +12,9 @@
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
 # 4.4.73 (14/11/2026) : Tâches devient Pense-bête, une seule liste avec la
-# tuile de l'accueil (tuile, sa fenêtre, la section).
+# tuile de l'accueil (tuile, sa fenêtre, la section). Pilou suit la bourse du
+# jour : inquiet sur une baisse simulée de 1,8 %.
 home
 js:dashNotesOuvrir()
 tc-liste
+js:goTab("home"),dashBourseJour=function(){return{eur:-180,pct:-1.8,quand:"aujourd'hui"}},homePilouBourse()

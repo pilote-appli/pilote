@@ -17,7 +17,16 @@ d'accent) ; `renderHomeUsers()` la rappelle quand la liste des utilisateurs arri
 Pilou (la mascotte, 4.4.67, `docs/design-carnet.md`) salue juste **après**
 le prénom, une fois et demie la taille du texte (90 px à 1366 px de large,
 marges négatives : le bandeau reste à 108 px) (`#home-pilou`, dessiné une fois par
-`homeRenderGreeting()` ; avant « Bonjour » jusqu'au 12/11/2026). C'est lui qui
+`homeRenderGreeting()` ; avant « Bonjour » jusqu'au 12/11/2026).
+**Il suit la bourse du jour** (idée d'Arthur, 14/11/2026, `homePilouBourse`,
+appelée à la fin de `dashRender`) : `joyeux` à +1 % ou plus, `inquiet` à −1 %
+ou moins (`PILOU_SEUIL_BOURSE`), sinon il salue. Le chiffre est celui de la
+tuile « Performance de ma bourse », période Jour (`dashBourseJour` : PEA et CTO,
+sans la crypto), jamais recalculé. Seulement pour une séance d'aujourd'hui : le
+week-end, avant l'ouverture, hors ligne ou sans PEA ni CTO, il salue. Le
+pourcentage s'ajoute à son infobulle. Redessiné seulement quand l'humeur change
+(le salut ne se rejoue pas à chaque actualisation). Essayé sur Brice avec une
+variation simulée (+2,1 %, −1,8 %, +0,4 %). C'est lui qui
 pose la question : sa bulle de parole **« Une idée, un problème ? »** (voir plus
 bas). Puis la date en italique. **À droite de la salutation** (4.3.19), l'un sous l'autre :
 les utilisateurs (`#home-users`, cliquables pour basculer + « Nouvel utilisateur »),
