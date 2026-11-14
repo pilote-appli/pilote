@@ -17116,6 +17116,12 @@ function _navEnregistrerOrdre(side) {
 }
 
 function _hideSidebarItem(id) {
+  // Un clic à côté du nom suffisait à masquer l'onglet (retour d'une utilisatrice) :
+  // on demande avant
+  const _sec = _navSectionOf(id);
+  const _nom = SIDEBAR_ITEMS.find(x => x.id === id)?.label || id;
+  if (!confirm("Masquer l'onglet « " + _nom + " »" + (_sec ? " de " + _sec.label : "") + " ?\n\n"
+             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenSidebar = S.uiPrefs.hiddenSidebar || [];
   if (!S.uiPrefs.hiddenSidebar.includes(id)) S.uiPrefs.hiddenSidebar.push(id);
@@ -17178,6 +17184,9 @@ function _applyHiddenCards() {
 }
 
 function _hideCard(id) {
+  const _nom = CARD_ITEMS.find(x => x.id === id)?.label || id;
+  if (!confirm("Masquer le bloc « " + _nom + " » ?\n\n"
+             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenCards = S.uiPrefs.hiddenCards || [];
   if (!S.uiPrefs.hiddenCards.includes(id)) S.uiPrefs.hiddenCards.push(id);
