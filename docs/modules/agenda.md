@@ -195,7 +195,7 @@ Calendrier doit être autorisé.
   | Agenda | `resume` | bilan de la semaine écoulée (voir plus bas) |
   | Pilote | `sauvegarde` | X jours après la dernière sauvegarde USB (`lastBackupAt`, rien sans) |
   | Pilote | `ouvrir` | aujourd'hui + X jours, recule à chaque envoi, donc à chaque lancement |
-  | Pilote | `pense-bete` | pense-bêtes de l'accueil (`uiPrefs.penseBete` du PEA) datés, à venir, pas cochés ; titre « 📌 texte ». `save_ui_prefs` relance l'envoi (27/10/2026) |
+  | Pilote | `pense-bete` | tâches du Pense-bête (`taches.json`, depuis la 4.4.73 ; avant : `uiPrefs.penseBete` du PEA) datées, à venir, pas cochées ; titre « 📌 titre ». `save_taches` relance l'envoi |
 * **Rappels du mois** (`MENSUELS`) : le jour choisi (1 à 28), répété chaque
   mois sans fin ; commence au mois suivant dès que le mois est fait.
 * **Rappels « depuis X jours »** (`DELAIS`, `DELAIS_VALEURS`) : au plus tôt

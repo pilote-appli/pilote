@@ -4382,7 +4382,7 @@ html.verre .toast-stack .toast {
   <div id="sa-goals-body"></div>
 </div>
 
-<!-- ════════════════════ TÂCHES ════════════════════ -->
+<!-- ════════════════════ PENSE-BÊTE (module Tâches) ════════════════════ -->
 
 <!-- Tâches (12/11/2026) : rendu par tcRender() (taches.json) -->
 <div class="pane" id="pane-tc-liste">
@@ -5934,7 +5934,6 @@ html.verre .toast-stack .toast {
     </div>
     <div class="dash-nl-form">
       <span id="dn-err" class="dash-err" hidden>Écris la note avant de l'ajouter.</span>
-      <button class="btn btn-ghost btn-sm" id="dn-annuler" hidden onclick="dashNoteAnnulerEdition()">Annuler la modification</button>
       <button class="btn btn-primary btn-sm" id="dn-ok" onclick="dashNoteEnregistrer()"><i class="ph ph-plus"></i> Ajouter</button>
     </div>
     <div class="dash-nl-liste" id="dn-liste"></div>
@@ -12542,9 +12541,9 @@ const NAV_MODULES = {
     besoin: "Pour l'iPhone : un compte Apple avec la double authentification. Sans iPhone, le calendrier marche quand même.",
     tab: "ag-cal", tuiles: ["ag-jour", "ag-notes", "ag-alertes"] },
   "sec-taches": {
-    desc: "Ce que tu as à faire : échéance, priorité, projet, tâches qui reviennent chaque mois.",
-    pas:  "Ajoute ta première tâche : elle apparaîtra aussi sur l'accueil le jour venu.",
-    tab: "tc-liste", tuiles: ["tc-jour", "tc-retard"] },
+    desc: "Ce que tu ne dois pas oublier : échéance, priorité, projet, tâches qui reviennent chaque mois.",
+    pas:  "Ajoute ta première tâche, ici ou depuis la tuile Pense-bête de l'accueil : c'est la même liste.",
+    tab: "tc-liste", tuiles: ["pense-bete", "tc-retard"] },
   "sec-garmin": {
     desc: "Tes montres Garmin et Coros, ou toute autre par ses fichiers .fit : séances ajoutées à Sports, sommeil, VFC, pas.",
     pas:  "Connecte ta montre Garmin ou Coros, ou importe un fichier .fit : chaque onglet explique comment.",
@@ -12981,12 +12980,19 @@ function setDesignPref(d) {
    Ourson à la couleur d'accent, lunettes d'aviateur sur les yeux, sans écharpe
    ni nom écrit. Visible par défaut, propre à chaque utilisateur
    (S.uiPrefs.pilou === false le masque, classe « sans-pilou » sur <html>).
-   Humeurs : content, salut, joyeux, pensif, endormi. */
+   Humeurs : content, salut, joyeux, pensif, endormi, inquiet (14/11/2026 : la
+   bourse du jour baisse, voir homePilouBourse). */
 function pilouSvg(humeur) {
   const salut = humeur === "salut";
   const h = salut ? "content" : humeur;
   let yeux, bouche, extra = "";
-  if (h === "joyeux") {
+  if (h === "inquiet") {
+    // Sourcils relevés vers le milieu, au-dessus des lunettes ; bouche qui tombe
+    yeux = '<g class="pl-yeux"><circle class="pl-k" cx="76" cy="95" r="6.5"/><circle class="pl-k" cx="124" cy="95" r="6.5"/>'
+         + '<circle cx="78.2" cy="92.8" r="2.2" fill="#fff"/><circle cx="126.2" cy="92.8" r="2.2" fill="#fff"/></g>';
+    bouche = '<path class="pl-trait" d="M91 126 q9 -7 18 0"/>';
+    extra = '<path class="pl-trait" style="stroke-width:4" d="M62 70 L88 63 M138 70 L112 63"/>';
+  } else if (h === "joyeux") {
     yeux = '<path class="pl-trait" style="stroke-width:4" d="M68 97 q8 -10 16 0 M116 97 q8 -10 16 0"/>';
     bouche = '<path class="pl-k" d="M88 121 q12 16 24 0 Z"/><ellipse cx="100" cy="127" rx="5" ry="3" fill="#e56a86"/>';
   } else if (h === "pensif") {
@@ -16747,8 +16753,9 @@ const NAV_SECTIONS = [
     { id: "ag-notifs",    label: "Notifications" },
     { id: "ag-connexion", label: "iCloud"     },
   ]},
-  // Tâches (12/11/2026) : à faire, avec échéance, priorité, projet, récurrence
-  { id: "sec-taches", label: "Tâches", children: [
+  // Pense-bête (12/11/2026, « Tâches » jusqu'à la 4.4.72) : à faire, avec
+  // échéance, priorité, projet, récurrence ; même liste que la tuile de l'accueil
+  { id: "sec-taches", label: "Pense-bête", children: [
     { id: "tc-liste",  label: "À faire" },
     { id: "tc-faites", label: "Faites"  },
   ]},
@@ -16954,7 +16961,7 @@ const NAV_ICONS = {
   "sec-comptes": "wallet", "sec-pret": "hand-coins",
   "sec-sport": "person-simple-run", "sec-patri": "bank", "sec-sante": "heartbeat",
   "sec-actus": "newspaper", "sec-agenda": "calendar-blank", "sec-garmin": "watch",
-  "sec-taches": "check-square",
+  "sec-taches": "note-pencil",
 };
 
 function _injectSidebar() {
@@ -22813,7 +22820,34 @@ function homeRenderGreeting() {
   el.innerHTML = escHtml(homeGreeting()) + (nom ? " <em>" + escHtml(nom) + "</em>" : "");
   // Pilou salue à côté du prénom (dessiné une fois : le salut ne se rejoue pas)
   const pl = document.getElementById("home-pilou");
-  if (pl && !pl.firstChild) pl.innerHTML = pilouSvg("salut");
+  if (pl && !pl.firstChild) { pl.innerHTML = pilouSvg("salut"); pl.dataset.humeur = "salut"; }
+  homePilouBourse();
+}
+
+/** Pilou suit la bourse du jour (idée d'Arthur, 14/11/2026) : joyeux au-dessus
+    de +1 %, inquiet en dessous de −1 %, sinon il salue. Le chiffre est celui de
+    la tuile « Performance de ma bourse », période Jour (dashBourseJour : PEA et
+    CTO, sans la crypto), jamais recalculé à part. Seulement pour une séance
+    d'aujourd'hui : le week-end ou avant l'ouverture, hors ligne, sans PEA ni
+    CTO, il salue. Redessiné seulement quand l'humeur change (le salut ne se
+    rejoue pas à chaque rafraîchissement). Appelée par dashRender. */
+const PILOU_SEUIL_BOURSE = 1;   // en %
+function homePilouBourse() {
+  const pl = document.getElementById("home-pilou");
+  if (!pl || !pl.firstChild || _estCto()) return;
+  let d = null;
+  try {
+    if (window._peaPv && window._peaPv.total != null && typeof dashBourseJour === "function") d = dashBourseJour();
+  } catch (e) { d = null; }
+  const p = d && d.quand === "aujourd'hui" ? d.pct : null;
+  const humeur = p == null ? "salut" : p >= PILOU_SEUIL_BOURSE ? "joyeux"
+               : p <= -PILOU_SEUIL_BOURSE ? "inquiet" : "salut";
+  const titre = "Proposer une idée ou signaler un problème à l'auteur de Pilote";
+  pl.title = humeur === "joyeux" ? "Belle journée en bourse : " + pct(p) + "\n" + titre
+           : humeur === "inquiet" ? "La bourse baisse aujourd'hui : " + pct(p) + "\n" + titre : titre;
+  if (pl.dataset.humeur === humeur) return;
+  pl.dataset.humeur = humeur;
+  pl.innerHTML = pilouSvg(humeur);
 }
 
 /** Nom affiche : celui de l'utilisateur actif, sinon le prenom saisi dans le PEA.
@@ -27237,12 +27271,9 @@ const DASH_WIDGETS = [
     render() { return dashAnBilan(); },
   },
   {
-    // Tâches (12/11/2026) : toujours là une fois lues, on en ajoute d'ici
-    id: "tc-jour", label: "Tâches du jour", module: "Tâches", tab: "tc-liste",
-    render() { return dashTcJour(); },
-  },
-  {
-    id: "tc-retard", label: "Tâches en retard", module: "Tâches", tab: "tc-liste",
+    // Pense-bête (12/11/2026, « Tâches » jusqu'à la 4.4.72). La tuile « Tâches
+    // du jour » a fondu dans la tuile Pense-bête (dashConfig la remplace)
+    id: "tc-retard", label: "Tâches en retard", module: "Pense-bête", tab: "tc-liste",
     render() { return dashTcRetard(); },
   },
   {
@@ -27309,8 +27340,8 @@ const DASH_WIDGETS = [
     render() { return dashGaRecords(); },
   },
   {
-    // Notes de l'utilisateur, avec une date si besoin (S.uiPrefs.penseBete) :
-    // toujours affichée une fois ajoutée, c'est d'elle qu'on écrit la première
+    // Les tâches du module Pense-bête (taches.json, 4.4.73) : sans onglet, pour
+    // rester sur l'accueil même section masquée, et y ajouter des tâches
     id: "pense-bete", label: "Pense-bête", module: "Pense-bête", tab: null,
     render() { return dashNotesTuile(); },
   },
@@ -27331,6 +27362,13 @@ function dashConfig() {
   DASH_WIDGETS.forEach(w => {
     if (!cfg.some(c => c.id === w.id)) cfg.push({ id: w.id, on: false });
   });
+  // « Tâches du jour » (fondue dans le Pense-bête en 4.4.73) était allumée :
+  // le Pense-bête prend sa place, s'il n'était pas déjà affiché
+  if (cfg.some(c => c.id === "tc-jour" && c.on)) {
+    cfg = cfg.filter(c => c.id !== "pense-bete" || c.on);
+    if (!cfg.some(c => c.id === "pense-bete"))
+      cfg[cfg.findIndex(c => c.id === "tc-jour")] = { id: "pense-bete", on: true };
+  }
   return cfg.filter(c => DASH_WIDGETS.some(w => w.id === c.id));
 }
 
@@ -27379,6 +27417,7 @@ function dashModuleReady(mod) {
     case "Agenda":     return _agBootstrapped && !(_dashAg.attente && !_dashAg.debut);
     case "Garmin":     return _gaBootstrapped;
     case "Montres":    return _gaBootstrapped && _coBootstrapped;
+    case "Pense-bête": return _tcBootstrapped;
   }
   return true;
 }
@@ -28639,44 +28678,34 @@ function dashAgAlertes() {
 }
 
 /* ── Tuile « Pense-bête » ────────────────────────────────────────────────────
-   S.uiPrefs.penseBete = [{id, texte, date ("AAAA-MM-JJ" ou ""), faite}],
-   enregistré avec les préférences de l'utilisateur (pea_data.json, donc dans
-   ses sauvegardes). Une note cochée passe dans « Terminées », d'où on peut la
-   remettre à faire ou la supprimer. */
-let _dashNoteEdit = null;   // id de la note en cours de modification
+   Depuis la 4.4.73 (demande d'Arthur, 14/11/2026), la tuile montre les tâches
+   du module Pense-bête (TC, taches.json) : ce qu'on y écrit est une tâche, et
+   inversement. Elle reste là même quand la section est masquée (tab: null) :
+   on ajoute, coche, modifie et supprime depuis l'accueil. Les anciennes notes
+   (S.uiPrefs.penseBete) ont été reprises en tâches par Api.load_taches. */
 
-function dashNotes() {
-  if (!S.uiPrefs) S.uiPrefs = {};
-  if (!Array.isArray(S.uiPrefs.penseBete)) S.uiPrefs.penseBete = [];
-  return S.uiPrefs.penseBete;
-}
-/** Notes à faire : les datées d'abord, de la plus ancienne échéance à la plus
-    lointaine (les dépassées en tête), puis les autres dans l'ordre d'écriture. */
-function dashNotesAFaire() {
-  return dashNotes().filter(n => !n.faite).sort((a, b) =>
-    (a.date && b.date) ? a.date.localeCompare(b.date) || a.id - b.id : a.date ? -1 : b.date ? 1 : a.id - b.id);
-}
-function dashNoteEcheance(n) {
-  if (!n.date) return "";
-  const j = dashJours(n.date);
+function dashNoteEcheance(iso) {
+  if (!iso) return "";
+  const j = dashJours(iso);
   const txt = j < -1 ? "il y a " + -j + " j" : j === -1 ? "hier" : j === 0 ? "aujourd'hui"
-            : j === 1 ? "demain" : j <= 30 ? "J−" + j : dashDateCourte(n.date);
-  return `<span class="dash-note-d${j < 0 ? " c-r" : j === 0 ? " dash-note-auj" : ""}" title="${escHtml(dashDateCourte(n.date))}">${txt}</span>`;
+            : j === 1 ? "demain" : j <= 30 ? "J−" + j : dashDateCourte(iso);
+  return `<span class="dash-note-d${j < 0 ? " c-r" : j === 0 ? " dash-note-auj" : ""}" title="${escHtml(dashDateCourte(iso))}">${txt}</span>`;
 }
 
 function dashNotesTuile() {
-  const l = dashNotesAFaire();
-  const lignes = l.slice(0, 3).map(n => `<div class="dash-note" title="${escHtml(n.texte)}" onclick="event.stopPropagation();dashNotesOuvrir(${n.id})">
+  if (!_tcBootstrapped) return null;
+  const l = tcAFaire().sort(tcTri);
+  const lignes = l.slice(0, 3).map(t => `<div class="dash-note" title="${escHtml(t.titre)}" onclick="event.stopPropagation();tcOuvrir(${Number(t.id)})">
       <button type="button" class="dash-note-chk" title="C'est fait" aria-label="Marquer comme faite"
-              onclick="event.stopPropagation();dashNoteFaite(${n.id}, true)"><i class="ph ph-check"></i></button>
-      <span class="dash-note-t">${escHtml(n.texte)}</span>${dashNoteEcheance(n)}</div>`).join("");
+              onclick="event.stopPropagation();dashNoteFaite(${Number(t.id)})"><i class="ph ph-check"></i></button>
+      <span class="dash-note-t">${escHtml(t.titre)}</span>${dashNoteEcheance(t.echeance)}</div>`).join("");
   const autres = l.length > 3
     ? `<button type="button" class="dash-note-plus" onclick="event.stopPropagation();dashNotesOuvrir()">+ ${l.length - 3} autre${l.length > 4 ? "s" : ""}</button>` : "";
   return { lbl: "Pense-bête", val: null, go: null, vizCls: "dash-viz-haut",
            sub: l.length ? "" : "Rien à retenir pour l'instant.",
            viz: (lignes ? `<div class="dash-notes">${lignes}</div>` : "")
               + `<div class="dash-notes-pied"><button type="button" class="btn btn-ghost btn-sm dash-tile-btn"
-                   onclick="event.stopPropagation();dashNotesOuvrir('nouvelle')"><i class="ph ph-plus"></i> Ajouter</button>${autres}</div>` };
+                   onclick="event.stopPropagation();dashNotesOuvrir(true)"><i class="ph ph-plus"></i> Ajouter</button>${autres}</div>` };
 }
 
 /** Hauteur des tuiles de l'accueil : deux rangées tiennent sous le bandeau à
@@ -28708,82 +28737,61 @@ function dashNotesAjuster() {
 }
 window.addEventListener("resize", dashNotesAjuster);
 
-/** id : la note à modifier ; "nouvelle" : en écrire une ; rien : la liste. */
-function dashNotesOuvrir(id) {
-  _dashNoteEdit = typeof id === "number" ? id : null;
-  const n = _dashNoteEdit != null ? dashNotes().find(x => x.id === _dashNoteEdit) : null;
-  document.getElementById("dn-texte").value = n ? n.texte : "";
-  document.getElementById("dn-date").value  = n ? (n.date || "") : "";
+/** ecrire : curseur dans le champ pour en ajouter une ; rien : la liste. */
+function dashNotesOuvrir(ecrire) {
+  if (!_tcBootstrapped) { showToastModern("Le pense-bête n'est pas encore chargé", "warn"); return; }
+  document.getElementById("dn-texte").value = "";
+  document.getElementById("dn-date").value  = "";
   document.getElementById("dn-err").hidden = true;
   dashNotesRenderListe();
   openOvTop("ov-dash-notes");
-  if (id !== undefined) setTimeout(() => document.getElementById("dn-texte").focus(), 60);
+  if (ecrire) setTimeout(() => document.getElementById("dn-texte").focus(), 60);
 }
 
+/** Même liste que la section : modifier ouvre la fenêtre complète de la tâche */
 function dashNotesRenderListe() {
-  const edit = _dashNoteEdit != null;
-  document.getElementById("dn-ok").innerHTML = edit ? '<i class="ph ph-check"></i> Enregistrer' : '<i class="ph ph-plus"></i> Ajouter';
-  document.getElementById("dn-annuler").hidden = !edit;
-  const ligne = (n, faite) => `<div class="dash-nl${n.id === _dashNoteEdit ? " edit" : ""}">
+  const ligne = (t, faite) => `<div class="dash-nl">
       <button type="button" class="dash-note-chk${faite ? " on" : ""}" title="${faite ? "Remettre à faire" : "C'est fait"}"
-              aria-label="${faite ? "Remettre à faire" : "Marquer comme faite"}" onclick="dashNoteFaite(${n.id}, ${!faite})"><i class="ph ph-check"></i></button>
-      <span class="dash-note-t">${escHtml(n.texte)}</span>${faite ? "" : dashNoteEcheance(n)}
-      <span class="m-acts">${faite ? "" : `<button type="button" class="m-iconbtn" title="Modifier" aria-label="Modifier" onclick="dashNotesOuvrir(${n.id})"><i class="ph ph-pencil-simple"></i></button>`}
-        <button type="button" class="m-iconbtn danger" title="Supprimer" aria-label="Supprimer" onclick="dashNoteSupprimer(${n.id})"><i class="ph ph-trash"></i></button></span>
+              aria-label="${faite ? "Remettre à faire" : "Marquer comme faite"}" onclick="dashNoteFaite(${Number(t.id)})"><i class="ph ph-check"></i></button>
+      <span class="dash-note-t">${escHtml(t.titre)}</span>${faite ? "" : dashNoteEcheance(t.echeance)}
+      <span class="m-acts">${faite ? "" : `<button type="button" class="m-iconbtn" title="Modifier" aria-label="Modifier" onclick="tcOuvrir(${Number(t.id)})"><i class="ph ph-pencil-simple"></i></button>`}
+        <button type="button" class="m-iconbtn danger" title="Supprimer" aria-label="Supprimer" onclick="dashNoteSupprimer(${Number(t.id)})"><i class="ph ph-trash"></i></button></span>
     </div>`;
-  const aFaire = dashNotesAFaire(), faites = dashNotes().filter(n => n.faite);
+  const aFaire = tcAFaire().sort(tcTri);
+  const faites = TC.taches.filter(t => t.fait).sort((a, b) => b.fait.localeCompare(a.fait));
   document.getElementById("dn-liste").innerHTML =
-    (aFaire.length ? aFaire.map(n => ligne(n, false)).join("") : `<div class="dash-nl-vide">Aucune note à faire.</div>`)
-    + (faites.length ? `<div class="dash-nl-titre">Faites</div>` + faites.map(n => ligne(n, true)).join("") : "");
-}
-
-function dashNotesApres() {
-  dashRender();
-  if (document.getElementById("ov-dash-notes").classList.contains("open")) dashNotesRenderListe();
-  dashSauverPrefs();
+    (aFaire.length ? aFaire.map(t => ligne(t, false)).join("") : `<div class="dash-nl-vide">Rien à faire.</div>`)
+    + (faites.length ? `<div class="dash-nl-titre">Faites</div>` + faites.map(t => ligne(t, true)).join("") : "");
 }
 
 function dashNoteEnregistrer() {
-  const texte = document.getElementById("dn-texte").value.trim();
-  const date  = document.getElementById("dn-date").value || "";
+  const titre = document.getElementById("dn-texte").value.trim();
   const err = document.getElementById("dn-err");
-  if (!texte) { err.hidden = false; document.getElementById("dn-texte").focus(); return; }
+  if (!titre) { err.hidden = false; document.getElementById("dn-texte").focus(); return; }
   err.hidden = true;
-  const l = dashNotes();
-  const n = _dashNoteEdit != null ? l.find(x => x.id === _dashNoteEdit) : null;
-  if (n) { n.texte = texte; n.date = date; }
-  else l.push({ id: l.reduce((m, x) => Math.max(m, x.id), 0) + 1, texte, date, faite: false });
-  _dashNoteEdit = null;
+  tcNouvelle({ titre: titre.slice(0, 200), echeance: document.getElementById("dn-date").value || "",
+               recurrence: "", projet: "", priorite: 0, note: "" });
   document.getElementById("dn-texte").value = "";
   document.getElementById("dn-date").value = "";
-  dashNotesApres();
+  tcChange();
   document.getElementById("dn-texte").focus();
 }
 
-function dashNoteAnnulerEdition() {
-  _dashNoteEdit = null;
-  document.getElementById("dn-texte").value = "";
-  document.getElementById("dn-date").value = "";
-  document.getElementById("dn-err").hidden = true;
-  dashNotesRenderListe();
-}
-
-function dashNoteFaite(id, faite) {
-  const n = dashNotes().find(x => x.id === id);
-  if (!n) return;
-  n.faite = !!faite;
-  if (_dashNoteEdit === id) dashNoteAnnulerEdition();
-  dashNotesApres();
-  if (faite && !document.getElementById("ov-dash-notes").classList.contains("open"))
-    showToastModern("Note faite : elle reste dans le pense-bête, rubrique « Faites »", "ok");
+function dashNoteFaite(id) {
+  const t = TC && TC.taches.find(x => x.id === id);
+  if (!t) return;
+  const cocher = !t.fait && !t.recurrence;   // une récurrente a déjà son message
+  tcCocher(id);
+  if (cocher && !document.getElementById("ov-dash-notes").classList.contains("open"))
+    showToastModern("C'est fait : elle reste dans le pense-bête, rubrique « Faites »", "ok");
 }
 
 function dashNoteSupprimer(id) {
-  const n = dashNotes().find(x => x.id === id);
-  if (!n || !confirm("Supprimer la note « " + n.texte + " » ?")) return;
-  S.uiPrefs.penseBete = dashNotes().filter(x => x.id !== id);
-  if (_dashNoteEdit === id) dashNoteAnnulerEdition();
-  dashNotesApres();
+  const t = TC && TC.taches.find(x => x.id === id);
+  if (!t || !confirm("Supprimer « " + t.titre + " » ?")) return;
+  TC.taches = TC.taches.filter(x => x.id !== id);
+  delete TC.faites[id];
+  tcChange();
 }
 
 /* ── Objectif de patrimoine (S.uiPrefs.dashObjectif = {montant, date}) ───── */
@@ -28824,7 +28832,7 @@ const DASH_ICONS = {
   "Santé": "heartbeat", "Prêt": "hand-coins",
   "Sauvegarde": "usb", "Comptes": "wallet", "CTO": "briefcase", "Crypto": "currency-btc",
   "Bourse": "globe-hemisphere-west", "Actus": "newspaper", "Pense-bête": "note-pencil",
-  "Agenda": "calendar-blank", "Tâches": "check-square", "Bilan": "chart-bar", "Garmin": "watch", "Montres": "watch",
+  "Agenda": "calendar-blank", "Bilan": "chart-bar", "Garmin": "watch", "Montres": "watch",
 };
 function dashIcon(w) {
   const ic = DASH_ICONS[w.module];
@@ -28884,6 +28892,7 @@ function dashRender() {
          ce que tu veux voir ici.</div>`;
   if (_dashEdit) dashWireHomeDnd(box);
   dashNotesAjuster();
+  homePilouBourse();   // Pilou suit la bourse du jour
 }
 
 /* ── Choisir la tuile d'un emplacement ──────────────────────────── */
@@ -29318,9 +29327,9 @@ function agDuJour(iso, icloud) {
   const ic = (icloud || AG.icloud[agFenetre().debut] || []).filter(e => e.debut <= iso && e.fin >= iso)
     .map(e => ({ type: "icloud", titre: e.titre, heure: e.debut === iso ? e.heure : "",
                  heureFin: e.debut === iso ? e.heureFin : "", agenda: e.agenda, couleur: e.couleur }));
-  // Tâches à faire ce jour-là (module Tâches), sans heure
+  // Tâches à faire ce jour-là (Pense-bête), sans heure
   const tc = (typeof _tcBootstrapped !== "undefined" && _tcBootstrapped) ? tcAFaire().filter(t => t.echeance === iso)
-    .map(t => ({ type: "tache", id: t.id, titre: t.titre, heure: "", heureFin: "", texte: t.note, agenda: "Tâches" })) : [];
+    .map(t => ({ type: "tache", id: t.id, titre: t.titre, heure: "", heureFin: "", texte: t.note, agenda: "Pense-bête" })) : [];
   return notes.concat(ic, tc).sort((a, b) => (a.heure || "99").localeCompare(b.heure || "99"));
 }
 
@@ -29404,7 +29413,7 @@ function agDessinerGrille() {
   if (leg) {
     const vus = new Map();
     agFenetre().jours.forEach(d => agDuJour(spDateISO(d)).forEach(e => {
-      const nom = e.type === "note" ? "Notes" : e.type === "tache" ? "Tâches" : e.agenda;
+      const nom = e.type === "note" ? "Notes" : e.type === "tache" ? "Pense-bête" : e.agenda;
       if (!vus.has(nom)) vus.set(nom, e);
     }));
     leg.innerHTML = [...vus].map(([nom, e]) => {
@@ -29568,7 +29577,7 @@ const AG_NOTIFS = [
   ["resume", "agenda", "calendar-check", "Bilan de la semaine", "la semaine écoulée : bourse, sport, dépenses, poids ; chiffres du dernier lancement de Pilote", AG_ALERTES_RESUME],
   ["sauvegarde", "general", "usb", "Sauvegarde en retard", "comptée depuis la dernière sauvegarde", AG_ALERTES_RAPPEL, "delai"],
   ["ouvrir", "general", "compass", "Pilote pas ouvert depuis…", "recule à chaque lancement de Pilote", AG_ALERTES_RAPPEL, "delai"],
-  ["pense-bete", "general", "push-pin", "Pense-bêtes datés", "ceux de la tuile Pense-bête de l'accueil qui ont une date et ne sont pas cochés", AG_ALERTES_DATE],
+  ["pense-bete", "general", "push-pin", "Pense-bêtes datés", "les tâches du Pense-bête qui ont une date et ne sont pas cochées", AG_ALERTES_DATE],
 ];
 const AG_CASES = { sport: "sport", objectifs: "objectifs", pret: "pret" };
 
@@ -30847,13 +30856,14 @@ function dashGaRecords() {
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════
-   MODULE TÂCHES (12/11/2026, décidé avec Arthur) — docs/modules/taches.md
+   MODULE PENSE-BÊTE (« Tâches » du 12/11/2026 à la 4.4.72) — docs/modules/taches.md
    Données : taches.json via le pont (load_taches / save_taches). Tout se
    calcule ici, Python ne fait que garder le fichier.
    Une tâche : {id, titre, note, echeance, priorite 0|1|2, projet, recurrence
    ""|jour|semaine|mois|an, fait (date cochée), cree}. Une tâche récurrente
    cochée repart à sa prochaine échéance ; la date est notée dans TC.faites
-   (bilan de l'année). Les tâches du jour vont aussi dans l'Agenda (agDuJour).
+   (bilan de l'année). Les tâches du jour vont aussi dans l'Agenda (agDuJour),
+   et toutes sur la tuile Pense-bête de l'accueil (dashNotesTuile).
    ══════════════════════════════════════════════════════════════════════════ */
 
 let TC = null;
@@ -30900,6 +30910,8 @@ function tcChange() {
   tcPersist();
   tcRender();
   if (typeof homeRender === "function") homeRender();
+  const ovPb = document.getElementById("ov-dash-notes");
+  if (ovPb && ovPb.classList.contains("open")) dashNotesRenderListe();
   if (typeof agDessinerGrille === "function" && document.getElementById("ag-cal-grid")) {
     try { agDessinerGrille(); } catch (e) {}
   }
@@ -31055,14 +31067,17 @@ function tcEnregistrer() {
                    priorite: Number(document.getElementById("tc-f-prio").value) || 0,
                    note: document.getElementById("tc-f-note").value.trim().slice(0, 1000) };
   if (_tcEditId) Object.assign(TC.taches.find(x => x.id === _tcEditId) || {}, champs);
-  else {
-    const id = Number(TC._nid.tache) || 1;
-    TC._nid.tache = id + 1;
-    TC.taches.push(Object.assign({ id, fait: "", cree: todayISO() }, champs));
-  }
+  else tcNouvelle(champs);
   if (projet && !TC.projets.includes(projet)) TC.projets.push(projet);
   closeOv("ov-tc");
   tcChange();
+}
+
+/** Une nouvelle tâche (fenêtre de la tâche, ou fenêtre du Pense-bête de l'accueil) */
+function tcNouvelle(champs) {
+  const id = Number(TC._nid.tache) || 1;
+  TC._nid.tache = id + 1;
+  TC.taches.push(Object.assign({ id, fait: "", cree: todayISO() }, champs));
 }
 
 function tcSupprimer() {
@@ -31082,23 +31097,11 @@ function dashTcLignes(l) {
       ${t.echeance && t.echeance < todayISO() ? `<em>${escHtml(tcQuand(t.echeance))}</em>` : ""}</label>`).join("")}</div>`;
 }
 
-/** Toujours affichée une fois les tâches lues : c'est d'elle qu'on en ajoute une */
-function dashTcJour() {
-  if (!_tcBootstrapped) return null;
-  const l = tcDuJour().sort(tcTri), retard = tcEnRetard().length;
-  const plus = `<div class="dash-notes-pied"><button type="button" class="btn btn-ghost btn-sm dash-tile-btn"
-      onclick="event.stopPropagation();tcOuvrir(null)"><i class="ph ph-plus"></i> Ajouter</button>
-      ${l.length > 3 ? `<span class="dash-ag-plus">+ ${l.length - 3} autre${l.length > 4 ? "s" : ""}</span>` : ""}</div>`;
-  return { lbl: "Tâches du jour", val: l.length ? null : "0", vizCls: "dash-viz-haut", go: null,
-           sub: l.length ? (retard ? retard + " en retard" : "") : "Rien d'autre aujourd'hui" + (retard ? ", mais " + retard + " en retard" : "") + ".",
-           viz: (l.length ? dashTcLignes(l) : "") + plus };
-}
-
 function dashTcRetard() {
   if (!_tcBootstrapped) return null;
   const l = tcEnRetard().sort(tcTri);
   if (!l.length) return null;   // rien en retard : la tuile s'efface
-  return { lbl: "Tâches en retard", val: String(l.length), vizCls: "dash-viz-haut", go: "Voir les tâches",
+  return { lbl: "Tâches en retard", val: String(l.length), vizCls: "dash-viz-haut", go: "Voir le pense-bête",
            sub: l.length > 1 ? "tâches à rattraper" : "tâche à rattraper", viz: dashTcLignes(l) };
 }
 
@@ -31178,7 +31181,7 @@ function rgSources() {
   });
   // Tâches
   if (vis.has("sec-taches") && TC) TC.taches.forEach(t =>
-    add("Tâches", "check-square", t.titre, (t.fait ? "faite " + tcQuand(t.fait) : t.echeance ? "pour " + tcQuand(t.echeance) : "sans date") + (t.projet ? " · " + t.projet : ""),
+    add("Pense-bête", "note-pencil", t.titre, (t.fait ? "faite " + tcQuand(t.fait) : t.echeance ? "pour " + tcQuand(t.echeance) : "sans date") + (t.projet ? " · " + t.projet : ""),
         t.note, () => rgAller(t.fait ? "tc-faites" : "tc-liste", () => tcOuvrir(t.id))));
   // Notes de l'Agenda
   if (vis.has("sec-agenda") && AG && AG.notes) AG.notes.forEach(n =>
@@ -32129,7 +32132,7 @@ const PILOU_REACTIONS = {
   "sec-garmin":  "Une montre&#8239;? Ses séances arriveront toutes seules dans Sports.",
   "sec-actus":   "Les newsletters&#8239;? Tu les liras ici, dans Pilote.",
   "sec-agenda":  "L'agenda&#8239;? Tout ce qui a une date, au même endroit.",
-  "sec-taches":  "Les tâches&#8239;? Je te rappellerai celles du jour sur l'accueil.",
+  "sec-taches":  "Le pense-bête&#8239;? Je te rappellerai sur l'accueil ce que tu ne dois pas oublier.",
   "sec-pret":    "Le prêt&#8239;? Je suivrai ce qui est remboursé et ce qui reste.",
 };
 
@@ -32542,10 +32545,12 @@ function _appReady() {
     // Sauf les modules masqués : ni fichier lu, ni cours, ni relevé de la boîte
     // (4.4.10). Ils se chargent quand on les coche de nouveau (cfgModule).
     if (hasPy) {
-      const boots = MODULES_A_CHARGER.filter(([, sec]) => visibles.has(sec))
+      // Le Pense-bête est lu même masqué : sa tuile de l'accueil reste là (4.4.73)
+      const lu = (nom, sec) => visibles.has(sec) || nom === "taches";
+      const boots = MODULES_A_CHARGER.filter(([nom, sec]) => lu(nom, sec))
         .map(([nom, , charger]) => [nom, charger()]);
       boots.push(["usb", svRenderUsbState()]);
-      const masques = MODULES_A_CHARGER.filter(([, sec]) => !visibles.has(sec)).map(([nom]) => nom);
+      const masques = MODULES_A_CHARGER.filter(([nom, sec]) => !lu(nom, sec)).map(([nom]) => nom);
       if (masques.length) _jn("modules masques, non charges : " + masques.join(", "));
       await Promise.all(boots.map(([nom, pr]) =>
         Promise.resolve(pr).then(() => _jn(nom + " ok"),

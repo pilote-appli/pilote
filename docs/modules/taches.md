@@ -6,6 +6,29 @@ Décidé avec Arthur le 12/11/2026 : une section à part, « Tâches », sous Vi
 (pas un onglet de l'Agenda). C'était la première des trois pistes « qui manquent le
 plus » de `docs/pistes.md`.
 
+## Pense-bête (4.4.73, demande d'Arthur du 14/11/2026)
+
+La section s'appelle **« Pense-bête »** : la tuile Pense-bête de l'accueil et le
+module faisaient la même chose (deux listes datées à cocher). Les identifiants ne
+changent pas (`sec-taches`, `tc-*`, `taches.json`, `TC`).
+
+* **Une seule liste** : la tuile `pense-bete` montre les tâches à faire (`tcTri`),
+  et sa fenêtre (`ov-dash-notes` : texte + date, la liste, « Faites ») écrit dans
+  `TC` (`tcNouvelle`). Modifier ouvre la fenêtre complète de la tâche (`tcOuvrir`).
+* **Section masquée, tuile toujours là** (`tab: null`) : `taches.json` est lu même
+  quand la section est masquée (exception dans le chargement des modules). La tuile
+  `tc-retard`, elle, part avec la section.
+* **Anciennes notes** (`S.uiPrefs.penseBete`) : reprises en tâches une fois par
+  `Api.load_taches` (`taches.importer_pense_bete`, drapeau `_migre.penseBete`). Elles
+  restent dans `pea_data.json`, rien n'y est effacé ; une note cochée devient une tâche
+  faite le jour de l'import.
+* **iCloud** : le rappel `pense-bete` de l'Agenda lit les tâches datées de
+  `taches.json` ; `save_taches` relance l'envoi.
+* La tuile « Tâches du jour » (`tc-jour`) a fondu dans `pense-bete`.
+* Vérifié le 14/11/2026 sur une copie de l'app avec Brice : ses 5 notes reprises
+  (10 tâches), section masquée, ajout et coche depuis la tuile écrits dans
+  `taches.json`.
+
 ## Données (`taches.json`, `src/taches.py`)
 
 Un `jsonstore.JsonStore` comme Sports : backups quotidiens dans `backups_taches/`,
@@ -36,9 +59,8 @@ fichier (`Api.load_taches` / `Api.save_taches`), tout se calcule dans la page.
 * **Agenda** : `agDuJour` ajoute les tâches à faire du jour (type `tache`, sans
   heure) : elles sont dans le calendrier, le détail d'un jour (crayon → la tâche)
   et la tuile « Aujourd'hui dans l'agenda ». Elles ne partent **pas** dans iCloud.
-* **Tuiles** : « Tâches du jour » (`tc-jour`, toujours là une fois le module lu :
-  on coche et on ajoute depuis elle) et « Tâches en retard » (`tc-retard`, s'efface
-  quand rien n'est en retard). Elles s'allument quand on accepte le module dans la
+* **Tuiles** : « Pense-bête » (`pense-bete`, voir plus haut) et « Tâches en retard »
+  (`tc-retard`, s'efface quand rien n'est en retard). Elles s'allument quand on accepte le module dans la
   fenêtre « Nouveau module » (`_demanderNouveauxModules` allume désormais les
   `NAV_MODULES.tuiles` des modules pris).
 * **Recherche Ctrl+K** et **bilan de l'année** : voir `docs/accueil.md`.

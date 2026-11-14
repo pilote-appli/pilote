@@ -302,7 +302,7 @@ jamais un second calcul :
 | Prêt | `pret-mensualite`, `pret-gains` | configuration du prêt, `prOverview().benefice_net` |
 | Comptes | `fin-solde`, `fin-revenu` | `finComputeMonthTotals` |
 | Comptes | `fin-releve` (4.4.70) | opérations importées à classer (`finAClasser`), date du dernier import ; boutons « Importer un relevé » (`dashImporterReleve`) et « Classer » (`finVoirAClasser`) : `docs/modules/comptes.md` |
-| Pense-bête | `pense-bete` | `S.uiPrefs.penseBete` |
+| Pense-bête | `pense-bete`, `tc-retard` | tâches du module Pense-bête (`TC`, taches.json) depuis la 4.4.73 ; avant, `S.uiPrefs.penseBete` |
 | Bilan | `bilan` (01/11/2026) | total de la bourse sur la semaine passée (`_bilanCache`, calculé 15 s après le lancement si la tuile est affichée), bouton « Voir le bilan » |
 
 ### Bilan de la semaine (01/11/2026)
@@ -358,7 +358,9 @@ Choix d'Arthur et pièges :
 * **Objectif de patrimoine** : montant et date facultative, saisis depuis la
   tuile (`ov-dash-objectif`). Avec une date : ce qu'il reste ÷ les mois
   restants, arrondi à l'euro supérieur.
-* **Pense-bête** (une seule tuile, choix d'Arthur) : les trois notes les plus
+* **Pense-bête** (une seule tuile, choix d'Arthur ; depuis la 4.4.73 elle montre
+  les tâches du module Pense-bête, voir `docs/modules/taches.md`, et ce qui suit
+  sur `S.uiPrefs` ne vaut que jusqu'à la 4.4.72) : les trois notes les plus
   proches (dépassées en tête, en rouge), « + N autres », une coche pour
   « c'est fait ». La fenêtre `ov-dash-notes` sert à écrire, modifier,
   supprimer et remettre à faire. Les notes vivent dans `S.uiPrefs`, donc dans
@@ -499,9 +501,10 @@ n'est recalculé à part :
 * **Achats programmés** (4.4.40, module Bourse) : `plans-attente` (nombre
   d'échéances à valider, PEA et CTO, mène au compte de la plus ancienne) et
   `plans-prochains` (prochain achat programmé). Les deux disparaissent sans plan.
-* **Tâches** (12/11/2026) : `tc-jour` (toujours là une fois le module lu, cases à
-  cocher et « Ajouter ») et `tc-retard` (s'efface sans retard). Détail :
-  `docs/modules/taches.md`.
+* **Pense-bête** (module « Tâches » jusqu'à la 4.4.73) : `pense-bete` (toutes les
+  tâches à faire, reste sur l'accueil même section masquée) et `tc-retard` (s'efface
+  sans retard). `tc-jour` a fondu dans `pense-bete` en 4.4.73 : `dashConfig` met le
+  Pense-bête à sa place. Détail : `docs/modules/taches.md`.
 
 ## Signaler un problème (09/11/2026, prochaine version)
 

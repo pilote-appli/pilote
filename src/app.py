@@ -237,7 +237,6 @@ class Api:
                     return {"ok": False, "error": "pea_data.json illisible : rien n'est ecrit"}
                 d["uiPrefs"] = prefs or {}
                 storage.save_data(d)
-            agenda.planifier_si("pense-bete")   # les pense-betes vivent dans uiPrefs
             return {"ok": True, "uiPrefs": d["uiPrefs"]}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -354,13 +353,24 @@ class Api:
 
     def load_taches(self) -> dict:
         try:
-            return {"ok": True, "data": taches.load_data(), "erreur": taches.erreur()}
+            data = taches.load_data()
+            # Les notes de l'ancienne tuile Pense-bete deviennent des taches, une
+            # fois (4.4.73). PEA illisible : on reessaiera au prochain lancement
+            if not taches.erreur():
+                try:
+                    notes = (agenda._pea().get("uiPrefs") or {}).get("penseBete")
+                except Exception:
+                    notes = None
+                if taches.importer_pense_bete(data, notes):
+                    taches.save_data(data)
+            return {"ok": True, "data": data, "erreur": taches.erreur()}
         except Exception as e:
             return {"ok": False, "error": str(e), "trace": traceback.format_exc()}
 
     def save_taches(self, data: dict) -> dict:
         try:
             taches.save_data(data or {})
+            agenda.planifier_si("pense-bete")   # les taches datees partent dans iCloud
             return {"ok": True}
         except Exception as e:
             return {"ok": False, "error": str(e)}

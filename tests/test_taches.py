@@ -71,5 +71,20 @@ class Taches(unittest.TestCase):
         self.assertGreater(d["_nid"]["tache"], max(t["id"] for t in d["taches"]))
 
 
+    def test_import_du_pense_bete(self):
+        d = taches.load_data()
+        d["taches"].append({"id": 1, "titre": "Déjà là"}); d["_nid"]["tache"] = 2
+        notes = [{"id": 7, "texte": "Appeler la banque", "date": "2026-12-01", "faite": False},
+                 {"id": 8, "texte": "Faite", "date": "", "faite": True},
+                 {"id": 9, "texte": "  ", "date": "", "faite": False}]
+        self.assertTrue(taches.importer_pense_bete(d, notes))
+        self.assertEqual([(t["id"], t["titre"], t["echeance"], bool(t["fait"])) for t in d["taches"][1:]],
+                         [(2, "Appeler la banque", "2026-12-01", False), (3, "Faite", "", True)])
+        self.assertEqual(d["_nid"]["tache"], 4)
+        # Une seule fois, et rien sans notes
+        self.assertFalse(taches.importer_pense_bete(d, notes))
+        self.assertFalse(taches.importer_pense_bete(taches.default_data(), []))
+        self.assertFalse(taches.importer_pense_bete(taches.default_data(), None))
+
 if __name__ == "__main__":
     unittest.main()
