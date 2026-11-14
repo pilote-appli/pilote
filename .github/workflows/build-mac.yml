@@ -586,7 +586,7 @@ jobs:
           NOM="chemin reel de Pilote : lancement, Enregistrer en vert, fermeture, mise a jour"
           # 81 : Apps deja ouvert avant (orange du build attendu), comme chez Arthur
           apps 1
-          # Lancee au prune (accent par defaut), passee au vert comme par le bouton
+          # Lancee au fuchsia (accent par defaut), passee au vert comme par le bouton
           # Enregistrer des Parametres (saveConfig : save_ui_prefs, puis l'icone)
           PILOTE_ECRANS='home;js:pywebview.api.save_ui_prefs(Object.assign(S.uiPrefs,{accent:"#16a34a"})).then(()=>pywebview.api.set_app_icon_color("#16a34a"))' "$APP/Contents/MacOS/Pilote" > icone.log 2>&1 &
           PID=$!
@@ -607,7 +607,7 @@ jobs:
           # couleur notee doit revenir au lancement suivant
           rm -rf "$APP"; ditto -x -k art/Pilote-mac.zip /Applications; xattr -dr com.apple.quarantine "$APP"
           # (l'app du build a ete lancee une fois par build-mac : elle porte deja
-          # une icone posee, au prune ; une nouvelle version doit la recolorer)
+          # une icone posee, au fuchsia ; une nouvelle version doit la recolorer)
           plutil -replace CFBundleVersion -string 99.0.0 "$APP/Contents/Info.plist"
           "$APP/Contents/MacOS/Pilote" > maj.log 2>&1 &
           PID=$!

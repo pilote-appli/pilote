@@ -159,10 +159,10 @@ Python attend pendant ce temps (`[pile]`). Elles varient avec la charge du PC
   ne se recolorent que sur demande explicite : bouton « 🎨 Recolorer les raccourcis »
   dans Paramètres → Général (`Api.apply_icon_to_shortcuts`, via WScript.Shell).
 * L'icône gravée dans le `.exe` reste celle du build : elle ne peut pas changer à chaud.
-* **Icône du build en prune depuis le 09/11/2026** (prochaine version ; orange
-  avant) : `assets/make_icon.py` rend `icon.ico` (Mac, coins arrondis) et
+* **Icône du build en fuchsia `#c026d3` depuis le 14/11/2026** (prune du 09/11 au
+  14/11, orange avant) : `assets/make_icon.py` rend `icon.ico` (Mac, coins arrondis) et
   `icon_win.ico` (exe, Setup, raccourcis, logos du paquet Store par `build/msix.py`)
-  à la couleur d'accent par défaut, `#9c4a7a`, liseré assombri comme
+  à la couleur d'accent par défaut, `#c026d3`, liseré assombri comme
   `appicon._darken`. L'icône gravée et celle de la fenêtre au lancement sont donc
   enfin la même pour qui garde l'accent par défaut. Régénérer : `cd assets` puis
   `python make_icon.py`.

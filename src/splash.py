@@ -37,7 +37,7 @@ _THEMES = {
     "dark":  {"bg": "#191613", "txt": "#efe7d9", "txt2": "#b1a592", "brd": "rgba(255,230,200,0.13)",
               "haut": "#26211c", "bord": (55, 49, 43)},
 }
-_DEFAULT_ACCENT = "#9c4a7a"   # ACCENT_DEFAULT (index.html) / DEFAULT_COLOR (appicon.py)
+_DEFAULT_ACCENT = "#c026d3"   # ACCENT_DEFAULT (index.html) / DEFAULT_COLOR (appicon.py)
 
 # Style « Verre » (4.4.56, par defaut) : memes jetons que html.verre dans
 # index.html. Le Carnet ci-dessus reste pour qui l'a choisi (uiPrefs.design).

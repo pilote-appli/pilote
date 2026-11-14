@@ -39,7 +39,7 @@
   --b2:     rgba(59,98,163,0.11);
   --p:      #7b4ea3;
   --p2:     rgba(123,78,163,0.12);
-  --accent: #9c4a7a;   /* prune : l'accent par défaut du Carnet (ACCENT_DEFAULT) */
+  --accent: #c026d3;   /* fuchsia : l'accent par défaut (ACCENT_DEFAULT) */
   --hover:  rgba(70,45,20,0.06);
   --rad:    10px;
   --radl:   16px;
@@ -2442,6 +2442,10 @@ html.sans-pilou .home-idee::after  { width: 5px; height: 5px; left: -18px; botto
    lieu de 4,3 (mesuré sur l'accent #c026d3) */
 html[data-theme="dark"] .home-idee { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .home-idee:hover, html[data-theme="dark"] .home-idee:hover { background: var(--accent); color: #fff; }
+/* Un clic sur Pilou fait comme un clic sur sa bulle (demande d'Arthur, 14/11/2026) :
+   au survol de l'ourson, la bulle s'allume. Le bouton reste le chemin au clavier */
+#home-pilou { cursor: pointer; }
+.home-greet:has(#home-pilou:hover) .home-idee { background: var(--accent); color: #fff; }
 .home-idee:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .home-idee.vue { animation: none; }   /* pas de nouvelle apparition en revenant sur l'accueil */
 @keyframes home-idee-pop { from { opacity: 0; transform: scale(.6) translateY(6px); } }
@@ -3559,7 +3563,8 @@ html.verre .toast-stack .toast {
            réécrit à chaque rendu : la bulle n'apparaît qu'une fois au lancement -->
       <!-- 12/11/2026 : c'est Pilou qui pose la question (demande d'Arthur) ; il
            passe après le prénom, la bulle sort de sa bouche -->
-      <div class="home-greet"><span id="home-greet">Bonjour</span><span class="pilou pilou-accueil" id="home-pilou" aria-hidden="true"></span><button type="button" class="home-idee"
+      <div class="home-greet"><span id="home-greet">Bonjour</span><span class="pilou pilou-accueil" id="home-pilou" aria-hidden="true"
+              onclick="homeSuggestion()" title="Proposer une idée ou signaler un problème à l'auteur de Pilote"></span><button type="button" class="home-idee"
               onclick="homeSuggestion()" onanimationend="this.classList.add('vue')"
               title="Proposer une idée ou signaler un problème à l'auteur de Pilote">Une idée,<br>un problème&#8239;?</button></div>
       <div class="home-date"  id="home-date"></div>
@@ -6486,7 +6491,7 @@ if (window.Chart) {
 function carnetChartColors() {
   const cs = getComputedStyle(document.documentElement);
   const v  = n => cs.getPropertyValue(n).trim();
-  return { accent: v("--accent") || "#9c4a7a", txt: v("--txt") || "#2a231b",
+  return { accent: v("--accent") || "#c026d3", txt: v("--txt") || "#2a231b",
            txt2: v("--txt2") || "#6a5e4d", bg2: v("--bg2") || "#fbf8f1" };
 }
 /** "#rrggbb" + opacité -> "rgba(...)" */
@@ -7008,7 +7013,7 @@ const MNS  = ["Jan","Fév","Mar","Avr","Mai","Jun","Juil","Aoû","Sep","Oct","No
 /* Palette des séries sans couleur propre (camemberts du PEA) : tons sourds de
    l'identité « Carnet », accordés au fond papier. Les couleurs portées par les
    données (secteurs, catégories, sports, domaines) restent celles choisies. */
-const CLRS = ["#9c4a7a","#3a6a9a","#6b7d3a","#b8862b","#3f7f7a","#b5552e","#7a5c8f","#8f6b4a","#2f4a6b","#7f9a74","#a86a6a","#4f6b3a","#c07a4f","#5e5a8a"];
+const CLRS = ["#c026d3","#3a6a9a","#6b7d3a","#b8862b","#3f7f7a","#b5552e","#7a5c8f","#8f6b4a","#2f4a6b","#7f9a74","#a86a6a","#4f6b3a","#c07a4f","#5e5a8a"];
 
 /* ─── PRU auto ─── */
 /* toutes : les transactions du compte (celles de S par défaut). Un CTO qui
@@ -12165,7 +12170,7 @@ function openAnnualReport() {
 <style>
   @page { size: A4; margin: 18mm; }
   body { font-family: Arial, Helvetica, sans-serif; color:#18181b; max-width:780px; margin:auto; }
-  h1 { font-size:24px; border-bottom:3px solid ${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#9C4A7A"}; padding-bottom:6px; }
+  h1 { font-size:24px; border-bottom:3px solid ${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#c026d3"}; padding-bottom:6px; }
   h2 { font-size:14px; margin-top:24px; color:#71717a; text-transform:uppercase; letter-spacing:.08em }
   .kpi { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:14px 0 }
   .kpi-card { border:1px solid #e5e7eb; border-radius:8px; padding:12px; }
@@ -12209,7 +12214,7 @@ ${divs.length ? divs.sort((a,b)=>a.date.localeCompare(b.date)).map(d=>`<tr><td>$
 
 <div class="ftr">Pilote — Rapport généré le ${new Date().toLocaleDateString("fr-FR")} à ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</div>
 <div class="noprint" style="text-align:center;margin-top:20px">
-  <button onclick="window.print()" style="padding:10px 20px;font-size:14px;cursor:pointer;background:${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#9C4A7A"};color:#fff;border:0;border-radius:6px"><i class="ph ph-printer"></i> Imprimer / Sauvegarder en PDF</button>
+  <button onclick="window.print()" style="padding:10px 20px;font-size:14px;cursor:pointer;background:${getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#c026d3"};color:#fff;border:0;border-radius:6px"><i class="ph ph-printer"></i> Imprimer / Sauvegarder en PDF</button>
 </div>
 </body></html>`;
   // Affichage dans un overlay interne avec iframe (pywebview ne supporte pas window.open)
@@ -13065,13 +13070,14 @@ async function openDataFolder() {
 }
 
 /* ─── Couleur d'accent : preset rapide + spectre complet ─── */
-/* Accent par defaut depuis l'identite « Carnet » : une prune qui s'accorde au fond
-   papier sans ressembler ni au vert des gains, ni au rouge des pertes, ni a l'ambre
-   des alertes. Meme valeur que --accent dans :root et DEFAULT_COLOR dans appicon.py.
-   Un utilisateur qui a deja choisi sa couleur la garde. */
-const ACCENT_DEFAULT = "#9c4a7a";
+/* Accent par defaut : fuchsia depuis le 14/11/2026 (choix d'Arthur, la pastille a
+   gauche de la prune de l'identite « Carnet », qui l'etait depuis la 4.2.4). Ne
+   ressemble ni au vert des gains, ni au rouge des pertes, ni a l'ambre des alertes.
+   Meme valeur que --accent dans :root, DEFAULT_COLOR dans appicon.py et
+   _DEFAULT_ACCENT dans splash.py. Un utilisateur qui a deja choisi sa couleur la garde. */
+const ACCENT_DEFAULT = "#c026d3";
 const ACCENT_PRESETS = [
-  "#d97706", "#ea580c", "#dc2626", "#e11d48", "#db2777", "#c026d3", ACCENT_DEFAULT,
+  "#d97706", "#ea580c", "#dc2626", "#e11d48", "#db2777", ACCENT_DEFAULT,
   "#9333ea", "#7c3aed", "#6366f1", "#2563eb", "#0284c7", "#0891b2",
   "#0d9488", "#059669", "#16a34a", "#65a30d", "#ca8a04", "#a16207",
   "#78716c", "#475569", "#1f2937",
@@ -17116,6 +17122,12 @@ function _navEnregistrerOrdre(side) {
 }
 
 function _hideSidebarItem(id) {
+  // Un clic à côté du nom suffisait à masquer l'onglet (retour d'une utilisatrice) :
+  // on demande avant
+  const _sec = _navSectionOf(id);
+  const _nom = SIDEBAR_ITEMS.find(x => x.id === id)?.label || id;
+  if (!confirm("Masquer l'onglet « " + _nom + " »" + (_sec ? " de " + _sec.label : "") + " ?\n\n"
+             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenSidebar = S.uiPrefs.hiddenSidebar || [];
   if (!S.uiPrefs.hiddenSidebar.includes(id)) S.uiPrefs.hiddenSidebar.push(id);
@@ -17178,6 +17190,9 @@ function _applyHiddenCards() {
 }
 
 function _hideCard(id) {
+  const _nom = CARD_ITEMS.find(x => x.id === id)?.label || id;
+  if (!confirm("Masquer le bloc « " + _nom + " » ?\n\n"
+             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenCards = S.uiPrefs.hiddenCards || [];
   if (!S.uiPrefs.hiddenCards.includes(id)) S.uiPrefs.hiddenCards.push(id);
@@ -21183,7 +21198,7 @@ function spRenderStatsCharts() {
   const txtColor  = getComputedStyle(document.body).getPropertyValue("color") || "#18181b";
   const gridColor = getComputedStyle(document.documentElement).getPropertyValue("--brd").trim() || "rgba(0,0,0,0.07)";
   const bg2       = getComputedStyle(document.documentElement).getPropertyValue("--bg2") || "#fff";
-  const accent    = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#9c4a7a";
+  const accent    = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#c026d3";
 
   const vals = [];
   for (let m = 0; m < 12; m++) {
@@ -28045,7 +28060,7 @@ function bilanResume(b) {
     à 420 px de large (plateforme.html_vers_pdf), jointe à la notification. */
 function bilanPageHtml(b, tel) {
   const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue("--accent").trim() || "#9C4A7A";
+  const accent = css.getPropertyValue("--accent").trim() || "#c026d3";
   const G = "#15803d", R = "#b91c1c";
   const coul = x => x == null ? "#6b6560" : x >= 0 ? G : R;
   const kg = x => x.toFixed(1).replace(".", ",") + "&nbsp;kg";
@@ -31545,7 +31560,7 @@ function anMelange(a, b, t) {
 
 function anCouleurs() {
   let acc = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
-  if (!/^#[0-9a-f]{3,8}$/i.test(acc)) acc = "#9c4a7a";
+  if (!/^#[0-9a-f]{3,8}$/i.test(acc)) acc = "#c026d3";
   acc = acc.slice(0, 7);
   return { acc, fonce: anMelange(acc, "#150c13", 0.84), clair: anMelange(acc, "#fff9fc", 0.9),
            accD: anMelange(acc, "#1b0f18", 0.3), accL: anMelange(acc, "#fff8f2", 0.8),
