@@ -11,8 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.72 (14/11/2026) : couleur par defaut fuchsia (accueil, icone du Dock,
-# Parametres -> General), clic sur Pilou, confirmation avant de masquer.
-plein home
-js:openSettings('general')
-sp-agenda
+# 4.4.73 (14/11/2026) : Tâches devient Pense-bête, une seule liste avec la
+# tuile de l'accueil (tuile, sa fenêtre, la section).
+home
+js:dashNotesOuvrir()
+tc-liste
