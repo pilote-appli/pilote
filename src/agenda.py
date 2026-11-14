@@ -27,7 +27,7 @@ sonne tout seul, Pilote ferme ou non. Plus un catalogue de rappels qui ne
 partent que si leur alerte est reglee (RAPPELS, 26/10/2026) : rappels du mois
 (un evenement repete chaque mois, qui saute au mois suivant une fois le mois
 fait), dates connues (dividendes, versements, anniversaire du PEA, etapes du
-pret, pense-betes dates de l'accueil), rappels « depuis X jours » (seance,
+pret, taches datees du Pense-bete), rappels « depuis X jours » (seance,
 pesee, sauvegarde USB, Pilote pas ouvert), resume de la semaine, et une
 notification d'essai.
 
@@ -78,6 +78,7 @@ import sante
 import sauvegarde
 import sports
 import storage
+import taches
 
 
 BASE      = "https://caldav.icloud.com/"
@@ -604,12 +605,13 @@ def rappels(alertes: dict, jours: dict, delais: dict = None) -> list:
                 titre = f"🎂 Le PEA a {n} an{'s' if n > 1 else ''}" + (" · cap des 5 ans" if n == 5 else "")
                 out.append(_element("pea-anniv", "pea-anniv", titre, jour))
     if alertes.get("pense-bete"):
-        # Pense-betes de l'accueil (uiPrefs du PEA) : ceux qui ont une date a venir
-        for i, n in enumerate((_pea().get("uiPrefs") or {}).get("penseBete") or []):
-            jour = _jour(n.get("date"))
-            if jour and jour >= auj and not n.get("faite") and str(n.get("texte") or "").strip():
+        # Taches du Pense-bete (taches.json, 4.4.73 ; avant : les notes de la
+        # tuile, dans uiPrefs du PEA) : celles qui ont une date a venir
+        for i, n in enumerate(taches.load_data().get("taches") or []):
+            jour = _jour(n.get("echeance"))
+            if jour and jour >= auj and not n.get("fait") and str(n.get("titre") or "").strip():
                 out.append(_element(f"pense-bete-{_cle(n, jour, i)}", "pense-bete",
-                                    "📌 " + str(n["texte"]).strip()[:200], jour))
+                                    "📌 " + str(n["titre"]).strip()[:200], jour))
     if alertes.get("cto-investir") or alertes.get("cto-dividende") or alertes.get("cto-plan"):
         for c in cto.load_data().get("comptes") or []:
             cid = re.sub(r"[^A-Za-z0-9_-]", "", str(c.get("id") or ""))

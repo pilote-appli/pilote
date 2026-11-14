@@ -17,7 +17,16 @@ d'accent) ; `renderHomeUsers()` la rappelle quand la liste des utilisateurs arri
 Pilou (la mascotte, 4.4.67, `docs/design-carnet.md`) salue juste **après**
 le prénom, une fois et demie la taille du texte (90 px à 1366 px de large,
 marges négatives : le bandeau reste à 108 px) (`#home-pilou`, dessiné une fois par
-`homeRenderGreeting()` ; avant « Bonjour » jusqu'au 12/11/2026). C'est lui qui
+`homeRenderGreeting()` ; avant « Bonjour » jusqu'au 12/11/2026).
+**Il suit la bourse du jour** (idée d'Arthur, 14/11/2026, `homePilouBourse`,
+appelée à la fin de `dashRender`) : `joyeux` à +1 % ou plus, `inquiet` à −1 %
+ou moins (`PILOU_SEUIL_BOURSE`), sinon il salue. Le chiffre est celui de la
+tuile « Performance de ma bourse », période Jour (`dashBourseJour` : PEA et CTO,
+sans la crypto), jamais recalculé. Seulement pour une séance d'aujourd'hui : le
+week-end, avant l'ouverture, hors ligne ou sans PEA ni CTO, il salue. Le
+pourcentage s'ajoute à son infobulle. Redessiné seulement quand l'humeur change
+(le salut ne se rejoue pas à chaque actualisation). Essayé sur Brice avec une
+variation simulée (+2,1 %, −1,8 %, +0,4 %). C'est lui qui
 pose la question : sa bulle de parole **« Une idée, un problème ? »** (voir plus
 bas). Puis la date en italique. **À droite de la salutation** (4.3.19), l'un sous l'autre :
 les utilisateurs (`#home-users`, cliquables pour basculer + « Nouvel utilisateur »),
@@ -302,7 +311,7 @@ jamais un second calcul :
 | Prêt | `pret-mensualite`, `pret-gains` | configuration du prêt, `prOverview().benefice_net` |
 | Comptes | `fin-solde`, `fin-revenu` | `finComputeMonthTotals` |
 | Comptes | `fin-releve` (4.4.70) | opérations importées à classer (`finAClasser`), date du dernier import ; boutons « Importer un relevé » (`dashImporterReleve`) et « Classer » (`finVoirAClasser`) : `docs/modules/comptes.md` |
-| Pense-bête | `pense-bete` | `S.uiPrefs.penseBete` |
+| Pense-bête | `pense-bete`, `tc-retard` | tâches du module Pense-bête (`TC`, taches.json) depuis la 4.4.73 ; avant, `S.uiPrefs.penseBete` |
 | Bilan | `bilan` (01/11/2026) | total de la bourse sur la semaine passée (`_bilanCache`, calculé 15 s après le lancement si la tuile est affichée), bouton « Voir le bilan » |
 
 ### Bilan de la semaine (01/11/2026)
@@ -358,7 +367,9 @@ Choix d'Arthur et pièges :
 * **Objectif de patrimoine** : montant et date facultative, saisis depuis la
   tuile (`ov-dash-objectif`). Avec une date : ce qu'il reste ÷ les mois
   restants, arrondi à l'euro supérieur.
-* **Pense-bête** (une seule tuile, choix d'Arthur) : les trois notes les plus
+* **Pense-bête** (une seule tuile, choix d'Arthur ; depuis la 4.4.73 elle montre
+  les tâches du module Pense-bête, voir `docs/modules/taches.md`, et ce qui suit
+  sur `S.uiPrefs` ne vaut que jusqu'à la 4.4.72) : les trois notes les plus
   proches (dépassées en tête, en rouge), « + N autres », une coche pour
   « c'est fait ». La fenêtre `ov-dash-notes` sert à écrire, modifier,
   supprimer et remettre à faire. Les notes vivent dans `S.uiPrefs`, donc dans
@@ -499,9 +510,10 @@ n'est recalculé à part :
 * **Achats programmés** (4.4.40, module Bourse) : `plans-attente` (nombre
   d'échéances à valider, PEA et CTO, mène au compte de la plus ancienne) et
   `plans-prochains` (prochain achat programmé). Les deux disparaissent sans plan.
-* **Tâches** (12/11/2026) : `tc-jour` (toujours là une fois le module lu, cases à
-  cocher et « Ajouter ») et `tc-retard` (s'efface sans retard). Détail :
-  `docs/modules/taches.md`.
+* **Pense-bête** (module « Tâches » jusqu'à la 4.4.73) : `pense-bete` (toutes les
+  tâches à faire, reste sur l'accueil même section masquée) et `tc-retard` (s'efface
+  sans retard). `tc-jour` a fondu dans `pense-bete` en 4.4.73 : `dashConfig` met le
+  Pense-bête à sa place. Détail : `docs/modules/taches.md`.
 
 ## Signaler un problème (09/11/2026, prochaine version)
 
