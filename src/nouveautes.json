@@ -3,9 +3,10 @@
   "versions": [
     {
       "version": "4.4.73",
-      "date": "2026-11-14",
-      "titre": "Un seul pense-bête",
+      "date": "2026-11-15",
+      "titre": "Tes captures de banque et un seul pense-bête",
       "nouveau": [
+        "Importer un relevé lit aussi les captures d'écran de l'appli de ta banque : fais une capture de la liste de tes opérations et importe-la dans Mes comptes. Pilote retrouve chaque opération (date, libellé, montant) et la classe comme un relevé. Vérifie chaque ligne avant d'importer : la date, le libellé, le montant et le sens se corrigent dans l'aperçu.",
         "Pilou suit ta bourse : sur l'accueil, il est tout content quand tes placements montent d'au moins 1 % dans la journée, et un peu inquiet quand ils baissent d'autant. Passe la souris sur lui pour voir le chiffre."
       ],
       "ameliore": [
