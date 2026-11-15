@@ -57,3 +57,25 @@ def save_data(data: dict) -> None:
 
 def erreur():
     return _store.erreur()
+
+
+def importer_pense_bete(data: dict, notes) -> bool:
+    """Notes de l'ancienne tuile Pense-bete (uiPrefs.penseBete du PEA, jusqu'a
+    la 4.4.72) -> taches, une seule fois (`_migre.penseBete`). Les notes restent
+    dans pea_data.json, rien n'y est efface. Rend True si `data` a change."""
+    if not isinstance(notes, list) or not notes or (data.get("_migre") or {}).get("penseBete"):
+        return False
+    auj = datetime.date.today().isoformat()
+    nid = data.setdefault("_nid", {"tache": 1})
+    for n in notes:
+        titre = str((n or {}).get("texte") or "").strip()[:200]
+        if not titre:
+            continue
+        i = int(nid.get("tache") or 1)
+        nid["tache"] = i + 1
+        data.setdefault("taches", []).append({
+            "id": i, "titre": titre, "note": "", "echeance": str(n.get("date") or "")[:10],
+            "priorite": 0, "projet": "", "recurrence": "",
+            "fait": auj if n.get("faite") else "", "cree": auj})
+    data.setdefault("_migre", {})["penseBete"] = auj
+    return True

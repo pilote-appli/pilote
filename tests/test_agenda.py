@@ -620,11 +620,12 @@ class TestAgenda(unittest.TestCase):
         import datetime
         auj = datetime.date.today()
         j = lambda n: (auj + datetime.timedelta(days=n)).isoformat()
-        (storage.get_user_dir() / "pea_data.json").write_text(json.dumps({"uiPrefs": {"penseBete": [
-            {"id": 1, "texte": "Appeler la banque", "date": j(3), "faite": False},
-            {"id": 2, "texte": "Déjà fait", "date": j(3), "faite": True},
-            {"id": 3, "texte": "Sans date", "date": "", "faite": False},
-            {"id": 4, "texte": "Dépassé", "date": j(-1), "faite": False}]}}), "utf-8")
+        # Les taches du Pense-bete (taches.json, 4.4.73)
+        (storage.get_user_dir() / "taches.json").write_text(json.dumps({"taches": [
+            {"id": 1, "titre": "Appeler la banque", "echeance": j(3), "fait": ""},
+            {"id": 2, "titre": "Déjà fait", "echeance": j(3), "fait": j(0)},
+            {"id": 3, "titre": "Sans date", "echeance": "", "fait": ""},
+            {"id": 4, "titre": "Dépassé", "echeance": j(-1), "fait": ""}]}), "utf-8")
         r = agenda.rappels({"pense-bete": "veille"}, {})
         self.assertEqual([(e["cle"], e["titre"], e["jour"].isoformat()) for e in r],
                          [("pense-bete-1", "📌 Appeler la banque", j(3))])

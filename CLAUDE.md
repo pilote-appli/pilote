@@ -53,7 +53,7 @@ Pilote/
 │   ├── sante.py        # Module « Santé »         (sante.json) + lecture OCR FitDays
 │   ├── ocr_win.ps1     # OCR via Windows.Media.Ocr — appelé par sante.py
 │   ├── patrimoine.py   # Module « Patrimoine »    (patrimoine.json)
-│   ├── taches.py       # Module « Tâches »        (taches.json) : échéance, priorité, projet, récurrence
+│   ├── taches.py       # Module « Pense-bête »    (taches.json) : échéance, priorité, projet, récurrence
 │   ├── actus.py        # Module « Actus »         (actus.json) : boîte Gmail des newsletters, en IMAP
 │   ├── agenda.py       # Agenda iCloud            (agenda.json) : séances, objectifs, mensualités, en CalDAV
 │   ├── garmin.py       # Module « Garmin »        (garmin.json) : la montre, par la clé API personnelle
@@ -321,7 +321,7 @@ Paramètres.
 | Crypto          | crypto-dash, crypto-pos, crypto-tx (écrans du PEA, comme un CTO : `docs/modules/crypto.md`) |
 | Actus           | ac-boite (« Newsletters »), ac-connexion                           |
 | Agenda          | ag-cal (« Calendrier »), ag-notifs (« Notifications »), ag-connexion (« iCloud ») |
-| Tâches          | tc-liste (« À faire »), tc-faites (« Faites »)                     |
+| Pense-bête (id `sec-taches`, « Tâches » jusqu'à la 4.4.73) | tc-liste (« À faire »), tc-faites (« Faites ») ; même liste que la tuile Pense-bête |
 | Montres (id `sec-garmin`) | ga-forme (« Ma forme »), ga-connexion (« Garmin »), co-connexion (« Coros »), mo-fit (« Fichiers .fit ») |
 | Mes comptes     | fin-month, fin-year                                                |
 | Prêt (nom libre) | pr-overview, pr-pea, pr-av, pr-liv, pr-params                     |
