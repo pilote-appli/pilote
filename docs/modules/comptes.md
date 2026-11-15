@@ -171,3 +171,112 @@ corrections générales (parapharmacie avant l'enseigne, noms collés,
 « supérette »). Ces relevés restent écrits par Claude : aucun vrai relevé
 public n'existe. Le premier vrai relevé d'Arthur dira le vrai chiffre.
 `tests/test_budget_releves.py` garde ces seuils et les exemples publiés.
+
+## Captures d'écran de l'appli de la banque (demandé par Arthur le 14/11/2026)
+
+Beaucoup d'utilisateurs n'ont pas le CSV sous la main, mais ont l'appli de leur
+banque sur leur téléphone : une capture de la liste des opérations s'importe
+comme un relevé, par le même bouton « Importer un relevé » (plusieurs captures à
+la fois) et la tuile `fin-releve`. Même aperçu, même classement, rien n'est
+écrit sans « Importer ».
+
+**Lecture** (`src/budget_captures.py`, appelé par `budget_releves.lire` pour
+toute image PNG, JPEG, WebP) : le moteur de Windows, celui de Santé
+(`sante._run_ocr`, Vision sur Mac), lit l'image trois fois (`_preparer`) : en
+taille réelle avec deux traitements, « clair » (le canal le plus sombre : un
+montant vert ou rouge devient noir) et « sombre » (le canal le plus clair,
+inversé : sinon un montant rouge sur fond noir devient noir sur noir), puis le
+meilleur des deux agrandi ×2 (×2 et ×4 sous 900 px de large). Deviner le mode
+sur toute l'image se trompait quand un écran clair est entouré de sombre. On
+garde la lecture qui trouve le plus d'opérations, puis le plus de dates
+différentes (un en-tête de date gris clair raté rattache ses lignes à
+l'en-tête d'avant) ; un « - » vu par une seule lecture est repris
+(`_completer_signes`). Quelques secondes par image : un message le dit pendant
+la lecture. Un seul PowerShell pour tout l'import
+(`SessionOcr`, comme Santé). Une photo HEIC de l'iPhone est refusée avec la
+marche à suivre (capture en PNG ou JPEG).
+
+**Reconnaissance** (`operations`, sans moteur : testée sur des mots
+positionnés) :
+* un montant est une ligne (ou la fin d'une ligne) qui n'est qu'un montant,
+  dans la partie droite : « -50,00 € », « − 9,99 € », « +1 200 € », « -€12.50 ».
+  Ce que l'OCR en fait est réparé : o pour 0, « _ » pour le moins, € lu 6, C,
+  e, 0, K ou apostrophe (en exposant), chevron « › » de la ligne retiré. Un
+  montant rond sans le symbole n'est pas pris (« -15533 € » est « -155,33 € »
+  dont la virgule n'a pas été lue : refusé plutôt que faux). Deux montants sur
+  la ligne : en devise d'origine puis en euros, on garde l'euro ; une valeur
+  puis sa variation signée, c'est un tableau de placements, écarté ;
+* son libellé est la ligne à sa gauche, à la même hauteur ; montant centré
+  entre deux lignes : celle du haut ; montant à hauteur d'un sous-titre plus
+  petit (ou qui est une catégorie, « Paiement CB ») : la ligne au-dessus ; le
+  logo écrit (« DONOU », « uber »), l'icône lue « O » ou la colonne des dates
+  ne sont pas le libellé : la colonne des libellés est le bord gauche le plus
+  fréquent, et un libellé trop court ou hors d'elle est remplacé par la plus
+  grande ligne de la colonne près du montant (montant centré sur le titre et le
+  sous-titre). Un libellé coupé sur deux ou trois lignes de même taille est
+  réuni, sans le sous-titre (catégorie, heure, « • », code postal). Le
+  sous-titre (catégorie de la banque, « Prélèvement », heure, date) est la
+  ligne juste en dessous ;
+* la date : sous le montant à droite (Mouv by LCL), dans le sous-titre
+  (« 12 nov., 14:32 », « 14/11/2026 »), en tête du libellé (« 17/06 Rel.
+  Lille »), sinon l'en-tête au-dessus (« Aujourd'hui », « Hier », « lundi 31
+  juillet 2023 », « 12 nov. », « Il y a 6 heures », « Mardi », jour et mois
+  empilés « 02 / FÉVR. » de Sogexia). « Aujourd'hui » est le jour du fichier
+  (sa date de modification, envoyée par l'interface). Sans année, la plus
+  récente qui ne dépasse pas la capture ; avec le jour de la semaine
+  (« dimanche 19 mai »), l'année où il tombe juste ;
+* le sens : le signe écrit (un « - » vu par une seule des trois lectures
+  compte), sinon la couleur (vert : revenu, rouge : dépense, lue sur l'image
+  d'origine), sinon la convention de l'écran (les dépenses ont un « - » et pas
+  les revenus : sans signe = revenu ; sinon dépense, signalée « à vérifier »).
+
+**Ce qui n'est pas une opération, écarté** : un montant en gros caractères par
+rapport aux autres et à son libellé (solde) ; un libellé de solde, total, à
+venir, découvert, plafond, ou qui commence par un nom de compte (« Compte
+joint », « Livret A », « Mes ressources ») ; un sous-titre de compte (« Solde
+instantané », numéro masqué « •••• »), de placement (« Valeur de part »),
+d'avantage (« Expire le… ») ou de résumé (« 6 transactions ») ; un en-tête de
+date avec un montant (total du jour) ; la section « En attente » (comme les
+lignes en attente d'un relevé : jusqu'à l'en-tête suivant, jusqu'à
+« Transactions comptabilisées » quand l'écran en a un, tout l'écran quand
+c'est son titre, sans chiffre : « Opérations à venir (2) » est une ligne
+repliée, pas une section) et la mention « En attente de validation » sur la
+ligne ; une ligne sans date au milieu de lignes datées.
+
+Écran entier refusé : daté par un mois seul (« Avril » : totaux par
+catégorie) ; libellés presque tous des noms de catégories ou de comptes
+(`_est_categorie` : « Abonnements », « Épargne ») ; montants à l'anglaise sans
+aucun € (bourse, crypto en dollars) ; ticket de caisse photographié (une ligne
+TOTAL, aucun montant signé ni coloré) ; sans aucune date, sauf l'accueil
+« Dernières opérations » (Crédit Agricole, Green-Got, Blank) : accepté quand
+ses montants sont signés ou colorés, qu'aucun ne dépasse 20 000 € et que les
+libellés ne sont pas des catégories, ses lignes étant datées du jour de la
+capture et signalées. Essayé et retiré le 15/11/2026 : accepter aussi un
+accueil sans date ni signe faisait passer cryptos, indices et avantages
+salariés pour des opérations (7 -> 32 inventées sur les vraies captures).
+
+**Plusieurs captures qui se chevauchent** (on fait défiler, on capture encore) :
+une opération vue sur deux captures n'est gardée qu'une fois ; deux cafés
+identiques sur une même capture restent deux (`fusionner`).
+
+**Aperçu** : sur une ligne lue d'une capture (`o.capture`), la date, le libellé
+et le montant se corrigent, et le bouton + / − change le sens (`finRelChamp`).
+Le libellé que l'appli affiche est gardé avec ses accents (`libelleExact`) ;
+un libellé brut de la banque (« CB CARREFOUR 12/11 ») passe par `nettoyer`.
+Une opération importée d'une capture porte `capture: true` : le relevé du
+mois, importé plus tard, la retrouve (même montant, même sens, à trois jours
+près) et ne la double pas ; l'inverse aussi.
+
+**Entraînement et mesure** : deux corpus, hors du dépôt (images d'applis
+bancaires : ni fichiers lourds ni marques dans un dépôt public).
+* Vraies captures : celles que les banques publient sur l'App Store et Google
+  Play (comptes de démonstration, aucune donnée réelle), annotées à la main en
+  regardant chaque image.
+* Captures fictives : `python tests/corpus_captures.py <dossier> [n] [graine]`
+  fabrique des pages à la manière des applis (en-têtes de date, sous-titres,
+  formats de montant, mode sombre, solde en tête, écrans de totaux et de
+  comptes…), photographiées par Chrome sans fenêtre à la taille d'un
+  téléphone, avec leur bonne réponse.
+* `python tests/mesurer_captures.py <dossier> [--erreurs] [--seul x.png
+  [--lignes]]` compare la lecture à la bonne réponse (les lectures de l'OCR
+  sont gardées dans `<dossier>/_ocr/`).
