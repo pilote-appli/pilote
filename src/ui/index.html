@@ -19114,8 +19114,8 @@ function finSaveTx() {
   if (pareil) finProposerPareil(pareil);
 }
 
-function finDeleteTx(id) {
-  if (!confirm("Supprimer cette transaction ?")) return;
+async function finDeleteTx(id) {
+  if (!(await confirmer("Supprimer cette transaction ?", { ok: "Supprimer" }))) return;
   F.transactions = F.transactions.filter(t => t.id !== id);
   finPersist();
   finRenderAll();
@@ -19750,7 +19750,7 @@ function finAddCategory() {
 async function finDeleteCat(id) {
   const c = finCatById(id); if (!c) return;
   if (!finIsCatUsed(id)) {
-    if (!confirm("Supprimer cette catégorie ?")) return;
+    if (!(await confirmer("Supprimer cette catégorie ?", { ok: "Supprimer" }))) return;
     F.categories = F.categories.filter(x => x.id !== id);
     finPersist(); finRenderCatsList(); finRefreshFilters(); finRenderAll();
     return;
@@ -19818,7 +19818,7 @@ async function finRenameSub(catId, subId) {
 async function finDeleteSub(catId, subId) {
   const c = finCatById(catId), s = finSubById(catId, subId); if (!c || !s) return;
   if (!finIsSubUsed(catId, subId)) {
-    if (!confirm("Supprimer cette sous-catégorie ?")) return;
+    if (!(await confirmer("Supprimer cette sous-catégorie ?", { ok: "Supprimer" }))) return;
     c.subs = (c.subs || []).filter(x => x.id !== subId);
     finPersist(); finRenderCatsList();
     return;
@@ -20063,9 +20063,9 @@ async function finSelDate() {
   finApresLot(txs.length + " transaction" + (txs.length > 1 ? "s" : "") + (mode === "jour" ? " mise" + (txs.length > 1 ? "s " : " ") : " décalée" + (txs.length > 1 ? "s " : " ")) + ou, snap);
 }
 
-function finSelSupprimer() {
+async function finSelSupprimer() {
   const txs = finSelTxs(); if (!txs.length) return;
-  if (!confirm("Supprimer " + txs.length + " transaction" + (txs.length > 1 ? "s" : "") + " ?")) return;
+  if (!(await confirmer("Supprimer " + txs.length + " transaction" + (txs.length > 1 ? "s" : "") + " ?", { ok: "Supprimer" }))) return;
   const snap = finSnapshot();
   const ids = new Set(txs.map(t => t.id));
   F.transactions = F.transactions.filter(t => !ids.has(t.id));
@@ -20133,9 +20133,9 @@ async function finRenameSrc(id) {
   s.name = v.trim();
   finPersist(); finRenderSrcsList(); finRefreshFilters(); finRenderAll();
 }
-function finDeleteSrc(id) {
+async function finDeleteSrc(id) {
   if (finIsSrcUsed(id)) { showToastModern("Cette source sert encore : change d'abord celle de ses transactions et récurrents.", "err"); return; }
-  if (!confirm("Supprimer cette source ?")) return;
+  if (!(await confirmer("Supprimer cette source ?", { ok: "Supprimer" }))) return;
   F.sources = F.sources.filter(s => s.id !== id);
   finPersist(); finRenderSrcsList(); finRefreshFilters();
 }
@@ -20272,9 +20272,9 @@ function finSaveRec() {
   showToastModern(_finEditingRecId ? "Récurrent modifié" : "Récurrent ajouté", "ok");
   _finEditingRecId = null;
 }
-function finDeleteRec() {
+async function finDeleteRec() {
   if (!_finEditingRecId) return;
-  if (!confirm("Supprimer ce récurrent ?\n(Les transactions déjà créées restent dans l'historique.)")) return;
+  if (!(await confirmer("Supprimer ce récurrent ?", { texte: "Les transactions déjà créées restent dans l'historique.", ok: "Supprimer" }))) return;
   F.recurrences = F.recurrences.filter(r => r.id !== _finEditingRecId);
   closeOv("ov-fin-rec-edit");
   finPersist();
