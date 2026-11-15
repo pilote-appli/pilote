@@ -12141,7 +12141,7 @@ async function saveUserModal() {
   renderUsersList();
   _renderUserPill();
   if (!_userEditingSlug && r.slug) {
-    if (confirm("Utilisateur \u00ab\u00a0" + label + "\u00a0\u00bb cr\u00e9\u00e9.\nBasculer dessus maintenant ?")) {
+    if (await confirmer("Basculer sur « " + label + " » ?", { texte: "L'utilisateur est créé.", ok: "Basculer", annuler: "Plus tard" })) {
       switchUser(r.slug);
       return;
     }
@@ -12154,11 +12154,11 @@ async function deleteUserFromModal() {
   const api = (window.pywebview && window.pywebview.api) || null;
   if (!api) return;
   const dernier = !USERS_STATE || USERS_STATE.users.length <= 1;
-  if (!confirm(dernier
-      ? "C'est le seul utilisateur : Pilote repartira de z\u00e9ro avec un utilisateur vierge \u00ab Moi \u00bb.\n\n"
-        + "Ses donn\u00e9es partent dans le dossier Donnees/corbeille/ et peuvent \u00eatre r\u00e9cup\u00e9r\u00e9es \u00e0 la main."
-      : "Retirer cet utilisateur de la liste ?\n\nSes donn\u00e9es restent sur le disque "
-        + "(dossier Donnees/users/) et peuvent \u00eatre r\u00e9cup\u00e9r\u00e9es \u00e0 la main.")) return;
+  if (!(await confirmer(dernier ? "Supprimer le seul utilisateur ?" : "Retirer cet utilisateur de la liste ?", dernier
+      ? { ok: "Supprimer", texte: "Pilote repartira de zéro avec un utilisateur vierge « Moi ».\n\n"
+        + "Ses données partent dans le dossier Donnees/corbeille/ et peuvent être récupérées à la main." }
+      : { ok: "Retirer", texte: "Ses données restent sur le disque "
+        + "(dossier Donnees/users/) et peuvent être récupérées à la main." }))) return;
   const wasActive = USERS_STATE && USERS_STATE.active === _userEditingSlug;
   if (wasActive) await _gelerEnregistrements();   // même raison que switchUser
   const r = await api.delete_user(_userEditingSlug);
@@ -12185,10 +12185,10 @@ async function effacerDonneesUtilisateur() {
   if (!state) return;
   const u = state.users.find(x => x.slug === state.active);
   const nom = u ? u.label : "cet utilisateur";
-  if (!confirm("Effacer toutes les données de « " + nom + " » ?\n\n"
-             + "PEA, comptes-titres, comptes, sport, santé, prêt, patrimoine : tout repart de zéro. "
+  if (!(await confirmer("Effacer toutes les données de « " + nom + " » ?", { ok: "Tout effacer", texte:
+               "PEA, comptes-titres, comptes, sport, santé, prêt, patrimoine : tout repart de zéro. "
              + "Le nom et le code PIN sont gardés.\n\n"
-             + "Une copie part dans le dossier Donnees/corbeille/ et peut être récupérée à la main.")) return;
+             + "Une copie part dans le dossier Donnees/corbeille/ et peut être récupérée à la main." }))) return;
   await _gelerEnregistrements();   // rien ne doit réécrire les anciennes données
   const r = await api.wipe_user_data(state.active);
   if (!r || !r.ok) {
@@ -12420,7 +12420,7 @@ function clearPinDigits() {
 }
 
 async function disablePinNow() {
-  if (!confirm("Désactiver le code PIN ? Il ne sera plus demandé à l'ouverture.")) return;
+  if (!(await confirmer("Désactiver le code PIN ?", { texte: "Il ne sera plus demandé à l'ouverture.", ok: "Désactiver" }))) return;
   const cur = await _askCurrentPin();
   if (cur === null) return;
   const ok = await _setPinServer("", null, cur);
@@ -13933,8 +13933,8 @@ async function svDefinirMotDePasse(changer) {
 
 async function svRetirerChiffrement() {
   if (!window.pywebview || !pywebview.api || !pywebview.api.sauvegarde_retirer_chiffrement) return;
-  if (!confirm("Ne plus chiffrer les sauvegardes ?\n\nLes prochaines archives seront lisibles par qui a la clé "
-             + "ou accès au dossier en ligne. Les archives déjà chiffrées gardent leur mot de passe.")) return;
+  if (!(await confirmer("Ne plus chiffrer les sauvegardes ?", { ok: "Ne plus chiffrer", texte: "Les prochaines archives seront lisibles par qui a la clé "
+             + "ou accès au dossier en ligne. Les archives déjà chiffrées gardent leur mot de passe." }))) return;
   const st = await pywebview.api.sauvegarde_retirer_chiffrement();
   if (st && st.ok) { showToastModern("Sauvegardes de nouveau en clair", "warn"); SV_STATE = st; svRefresh(); }
   else showToastModern((st && st.error) || "Échec", "err");
@@ -14044,11 +14044,11 @@ async function svOpenFolder() {
 
 async function svRestore(path, when) {
   if (!window.pywebview || !pywebview.api) return;
-  if (!confirm("Restaurer la sauvegarde du " + when + " ?\n\n"
-             + "Les fichiers actuels seront écrasés par ceux de l'archive, "
+  if (!(await confirmer("Restaurer la sauvegarde du " + when + " ?", { ok: "Restaurer", texte:
+               "Les fichiers actuels seront écrasés par ceux de l'archive, "
              + "pour TOUS les utilisateurs.\n"
              + "Une archive de sécurité de l'état actuel sera créée avant.\n\n"
-             + "L'application se rechargera ensuite.")) return;
+             + "L'application se rechargera ensuite." }))) return;
   // Une écriture en attente passerait sinon PAR-DESSUS les fichiers restaurés
   await _gelerEnregistrements();
   try {
@@ -17488,7 +17488,7 @@ async function doImportDialog() {
   if (!(window.pywebview && window.pywebview.api)) {
     showToastModern("Import indisponible hors de l'app", "warn"); return;
   }
-  if (!confirm("Importer remplacera tes données actuelles. Une sauvegarde de l'état actuel sera faite avant. Continuer ?")) return;
+  if (!(await confirmer("Remplacer tes données par l'import ?", { texte: "Une sauvegarde de l'état actuel sera faite avant.", ok: "Importer" }))) return;
   await _gelerEnregistrements();   // rien ne doit réécrire l'ancien PEA par-dessus l'import
   const r = await window.pywebview.api.import_dialog();
   if (r && r.ok) {
