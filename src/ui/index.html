@@ -22850,7 +22850,7 @@ async function prDeleteAvContrat(id) {
   const c = prAvContrat(id);
   if (!c) return;
   const n = (c.depots || []).length;
-  if (!confirm(`Supprimer « ${c.label} »${n ? ` et ses ${n} dépôt${n > 1 ? "s" : ""}` : ""} ?`)) return;
+  if (!(await confirmer(`Supprimer « ${c.label} »${n ? ` et ses ${n} dépôt${n > 1 ? "s" : ""}` : ""} ?`, { ok: "Supprimer" }))) return;
   prPushUndo();
   PR.av.contrats = prAvContrats().filter(x => String(x.id) !== String(id));
   await prSave("Contrat supprimé");
@@ -22875,7 +22875,7 @@ function prAvTauxModal(cid, annee) {
 
 async function prDeleteAvTaux(cid, annee) {
   const c = prAvContrat(cid);
-  if (!c || !confirm("Supprimer ce taux ?")) return;
+  if (!c || !(await confirmer("Supprimer ce taux ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   c.taux_annuels = (c.taux_annuels || []).filter(x => prN(x.annee) !== prN(annee));
   await prSave("Taux supprimé");
@@ -22902,7 +22902,7 @@ function prAvDepotModal(cid, id) {
 
 async function prDeleteAvDepot(cid, id) {
   const c = prAvContrat(cid);
-  if (!c || !confirm("Supprimer ce dépôt ?")) return;
+  if (!c || !(await confirmer("Supprimer ce dépôt ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   c.depots = (c.depots || []).filter(x => String(x.id) !== String(id));
   await prSave("Dépôt supprimé");
@@ -23052,7 +23052,7 @@ function prPalierModal(recId) {
 
 async function prDelPalier(recId, palierId) {
   const r = (PR.frais_recurrents || []).find(x => x.id === recId);
-  if (!r || !confirm("Supprimer ce changement de montant ?")) return;
+  if (!r || !(await confirmer("Supprimer ce changement de montant ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   r.paliers = (r.paliers || []).filter(p => p.id !== palierId);
   await prSave("Changement de montant supprimé");
@@ -23084,7 +23084,7 @@ function prFraisRembModal(id, recId) {
 /* ── Suppression ─────────────────────────────────────────────────────────── */
 
 async function prDelete(kind, id) {
-  if (!confirm("Supprimer cette ligne ?")) return;
+  if (!(await confirmer("Supprimer cette ligne ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   const rm = arr => (arr || []).filter(x => String(x.id) !== String(id));
   switch (kind) {
@@ -24722,9 +24722,9 @@ async function paDeleteCompte() {
   const credit = PA.comptes.some(x => x.bien === _paEditCpt);
   // Clôturer garde l'historique : supprimer efface aussi les relevés passés et
   // change toute la courbe du patrimoine (FIN-16)
-  if (n && confirm("Clôturer ce compte plutôt que le supprimer ?\n\nClôturer garde ses " + n
-      + " relevé(s) et note 0 € ce mois-ci : ta courbe reste juste. Supprimer efface tout son historique."
-      + "\n\nOK : clôturer. Annuler : continuer vers la suppression.")) {
+  if (n && await confirmer("Clôturer ce compte plutôt que le supprimer ?", { ok: "Clôturer", annuler: "Supprimer quand même",
+      texte: "Clôturer garde ses " + n
+      + " relevé(s) et note 0 € ce mois-ci : ta courbe reste juste. Supprimer efface tout son historique." })) {
     const iso = paMoisIso();
     const c = PA.comptes.find(x => x.id === _paEditCpt);
     const r = PA.releves.find(x => x.compteId === _paEditCpt && x.date === iso);
@@ -24733,8 +24733,8 @@ async function paDeleteCompte() {
     if (await paSave()) { closeOv("ov-pa-compte"); showToastModern("Compte clôturé, historique gardé", "ok"); paRenderAll(); }
     return;
   }
-  if (!confirm(`Supprimer ce compte ?${n ? `\n\nSes ${n} relevé(s) seront également supprimés.` : ""}`
-    + (credit ? "\n\nLa ligne de son crédit reste dans tes dettes : supprime-la aussi s'il est remboursé." : ""))) return;
+  if (!(await confirmer("Supprimer ce compte ?", { ok: "Supprimer", texte: (n ? `Ses ${n} relevé(s) seront également supprimés.` : "")
+    + (n && credit ? "\n\n" : "") + (credit ? "La ligne de son crédit reste dans tes dettes : supprime-la aussi s'il est remboursé." : "") }))) return;
   PA.comptes = PA.comptes.filter(x => x.id !== _paEditCpt);
   PA.releves = PA.releves.filter(r => r.compteId !== _paEditCpt);
   // Le crédit d'un bien supprimé reste, en ligne ordinaire
