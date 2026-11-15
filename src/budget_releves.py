@@ -34,6 +34,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 import io
 
+import budget_captures
 import releves
 from budget_marchands import CIBLES, ICONES_PROPOSEES, MARCHANDS, MCC, SYNONYMES
 
@@ -834,7 +835,9 @@ def classer(op: dict, cats: Categories, hist: Historique) -> dict:
     mt = op["montantSigne"]
     typ = "expense" if mt < 0 else "income"
     genre = genre_de(op["brut"], op.get("typeCol", ""))
-    lib = op.get("affiche") and _jolie(_norm(op["affiche"])) or nettoyer(op["brut"])
+    # (libelleExact : le libellé tel que l'appli de la banque l'affiche, lu sur
+    # une capture d'écran, déjà lisible : gardé avec ses accents)
+    lib = op.get("libelleExact") or op.get("affiche") and _jolie(_norm(op["affiche"])) or nettoyer(op["brut"])
     if genre == "retrait" and not _norm(lib).startswith(("retrait", "cash", "atm")):
         lib = ("Retrait " + lib).strip()     # « RETRAIT DAB 10/11 TOULON » -> « Retrait Toulon »
     texte = _norm(op["brut"]) + " " + _norm(op.get("affiche", ""))
@@ -968,27 +971,45 @@ def _totaux_carte(ops):
 
 
 def lire(fichiers: list, categories=None, historique=None) -> dict:
-    """fichiers : [{nom, b64}]. Renvoie {ok, operations, documents}. Chaque
+    """fichiers : [{nom, b64, date}] (date : modification du fichier, en ms,
+    pour les captures d'écran). Renvoie {ok, operations, documents}. Chaque
     opération : date, type, montant, libelle, brut, genre, cat, sub, comment,
     raison, propose, interne, totalCarte, doubleCarte, empreinte, devise,
     fichier, banque."""
-    tout, docs = [], []
-    for f in fichiers or []:
-        nom = f.get("nom", "")
-        try:
-            r = lire_fichier(nom, base64.b64decode(f.get("b64", "")))
-        except Exception as e:
-            r = {"ok": False, "erreur": "lecture impossible : " + str(e)[:200]}
-        if not r.get("ok"):
-            docs.append({"nom": nom, "erreur": r.get("erreur", "")})
-            continue
-        for o in r["operations"]:
-            o["fichier"] = nom
-            o["banque"] = r.get("banque", "")
-            o["categorieFichier"] = bool(r.get("fichierCategories"))
-        tout += r["operations"]
-        docs.append({"nom": nom, "banque": r.get("banque", ""), "operations": len(r["operations"]),
-                     "ignorees": r.get("ignorees", {})})
+    tout, docs, captures = [], [], []
+    with budget_captures.SessionOcr():
+        for f in fichiers or []:
+            nom = f.get("nom", "")
+            try:
+                data = base64.b64decode(f.get("b64", ""))
+                if budget_captures.est_image(data):
+                    # Capture d'écran de l'appli de la banque : « Aujourd'hui »
+                    # est le jour du fichier (sa date de modification)
+                    ms = f.get("date") or 0
+                    jour = datetime.date.fromtimestamp(ms / 1000.0) if ms else datetime.date.today()
+                    r = budget_captures.lire_image(data, min(jour, datetime.date.today()))
+                elif budget_captures.est_heic(data):
+                    r = {"ok": False, "erreur": "photo au format HEIC de l'iPhone : fais une capture d'écran (PNG) "
+                                                "ou enregistre l'image en JPEG, puis importe-la"}
+                else:
+                    r = lire_fichier(nom, data)
+            except Exception as e:
+                r = {"ok": False, "erreur": "lecture impossible : " + str(e)[:200]}
+            if not r.get("ok"):
+                docs.append({"nom": nom, "erreur": r.get("erreur", "")})
+                continue
+            for o in r["operations"]:
+                o["fichier"] = nom
+                o["banque"] = r.get("banque", "")
+                o["categorieFichier"] = bool(r.get("fichierCategories"))
+            if r.get("banque") == "Capture d'écran":
+                captures.append(r["operations"])
+            else:
+                tout += r["operations"]
+            docs.append({"nom": nom, "banque": r.get("banque", ""), "operations": len(r["operations"]),
+                         "ignorees": r.get("ignorees", {})})
+    # Captures qui se chevauchent (on a fait défiler) : chaque opération une fois
+    tout += budget_captures.fusionner(captures)
     ops = analyser(tout, categories, historique)
     ops.sort(key=lambda o: (o["date"], o["empreinte"]))
     return {"ok": bool(ops), "operations": ops, "documents": docs,

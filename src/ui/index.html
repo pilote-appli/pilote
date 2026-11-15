@@ -944,6 +944,13 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
   align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--brd); font-size: 12px;
 }
 .fin-rel-row:last-child { border-bottom: 0; }
+.fin-rel-row.cap { grid-template-columns: 22px 128px minmax(0, 1fr) 20px minmax(150px, 230px) 118px; }
+.fin-rel-row.cap .fin-tx-date { width: 100%; }
+.fin-rel-row .fin-tx-date.vide, .fin-rel-sens.vide { border-color: var(--accent); color: var(--accent-text); }
+.fin-rel-libin { width: 100%; min-width: 0; }
+.fin-rel-mt { display: flex; align-items: center; gap: 4px; }
+.fin-rel-mt input { width: 100%; min-width: 0; text-align: right; }
+.fin-rel-sens { border: 1px solid var(--brd2); background: transparent; border-radius: 6px; width: 24px; height: 24px; padding: 0; cursor: pointer; font: inherit; font-weight: 700; flex: none; }
 .fin-rel-row.off { opacity: .5; }
 .fin-rel-row .fin-tx-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fin-rel-row .fin-tx-meta { font-family: var(--font); font-size: 11px; }
@@ -960,6 +967,11 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
   .fin-rel-row { grid-template-columns: 22px minmax(0, 1fr) 90px; }
   .fin-rel-row .fin-tx-date, .fin-rel-how { display: none; }
   .fin-rel-row .fin-rel-cat { grid-column: 2 / 4; }
+  /* Ligne d'une capture : date, libellé et montant, puis la catégorie dessous */
+  .fin-rel-row.cap { grid-template-columns: 22px 120px minmax(0, 1fr) 110px; }
+  .fin-rel-row.cap .fin-tx-date { display: block; }
+  .fin-rel-row.cap .fin-rel-mt { grid-column: 4; grid-row: 1; }
+  .fin-rel-row.cap .fin-rel-cat { grid-column: 2 / 5; }
 }
 .fin-tx-chk { width: 14px; height: 14px; margin: 0; cursor: pointer; accent-color: var(--accent); }
 
@@ -4032,8 +4044,8 @@ html.verre .toast-stack .toast {
       <button class="btn btn-ghost"    onclick="finOpenRecurrences()"><i class="ph ph-arrows-clockwise"></i> Récurrents</button>
       <button class="btn btn-ghost"    onclick="finOpenCategories()"><i class="ph ph-squares-four"></i> Catégories</button>
       <button class="btn btn-ghost"    onclick="finOpenSources()"><i class="ph ph-credit-card"></i> Sources</button>
-      <label class="btn btn-ghost" title="Importer le relevé de ta banque (CSV, Excel, OFX, QIF) ou les transactions d'une autre appli (JSON, CSV) : Pilote classe chaque opération, tu corriges avant d'enregistrer"><i class="ph ph-download-simple"></i> Importer un relevé
-        <input type="file" id="fin-import-fichier" multiple accept=".csv,.tsv,.txt,.xlsx,.xls,.ods,.ofx,.qfx,.qif,.xml,.zip,.json,application/json,text/csv" onclick="finImportPrep(this)" onchange="finImportLire(this)" hidden></label>
+      <label class="btn btn-ghost" title="Importer le relevé de ta banque (CSV, Excel, OFX, QIF), une capture d'écran de son appli, ou les transactions d'une autre appli (JSON, CSV) : Pilote classe chaque opération, tu corriges avant d'enregistrer"><i class="ph ph-download-simple"></i> Importer un relevé
+        <input type="file" id="fin-import-fichier" multiple accept=".csv,.tsv,.txt,.xlsx,.xls,.ods,.ofx,.qfx,.qif,.xml,.zip,.json,.png,.jpg,.jpeg,.webp,.heic,application/json,text/csv,image/*" onclick="finImportPrep(this)" onchange="finImportLire(this)" hidden></label>
       <button class="btn btn-ghost" onclick="openSettings('comptes')" title="Paramètres de Mes comptes"><i class="ph ph-gear-six"></i></button>
     </div>
   </div>
@@ -19301,8 +19313,12 @@ function _finRelHistorique() {
    d'une autre appli, avec ses catégories) doit le reprendre. */
 async function finReleveLire(fichiers) {
   let r;
+  // Une capture d'écran se lit en quelques secondes (moteur de Windows) : on le dit
+  const nImages = fichiers.filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp|heic)$/i.test(f.name)).length;
+  if (nImages) showToastModern("Lecture " + (nImages > 1 ? "des " + nImages + " captures" : "de la capture") + " d'écran… quelques secondes par image", "ok", 4000 * nImages);
   try {
-    const f64 = await Promise.all(fichiers.map(async f => ({ nom: f.name, b64: await _ctoImpBase64(f) })));
+    // date : celle du fichier (une capture d'écran dit « Aujourd'hui », « Hier »)
+    const f64 = await Promise.all(fichiers.map(async f => ({ nom: f.name, b64: await _ctoImpBase64(f), date: f.lastModified || 0 })));
     const cats = F.categories.map(c => ({ name: c.name, type: c.type, subs: (c.subs || []).map(s => ({ name: s.name })) }));
     r = await pywebview.api.budget_lire_releve(f64, cats, _finRelHistorique());
   } catch (e) { showToastModern("Lecture impossible : " + e, "err"); return true; }
@@ -19312,19 +19328,23 @@ async function finReleveLire(fichiers) {
   // Déjà dans Pilote : même opération d'un relevé déjà importé (empreinte),
   // ou saisie à la main du même montant à trois jours près (décochée)
   const empreintes = new Set(F.transactions.map(t => t.releve).filter(Boolean));
-  const libres = F.transactions.filter(t => !t.releve);
+  // Une opération lue sur une capture d'écran revient dans le relevé du mois
+  // (et l'inverse) avec un autre libellé : elle compte comme une saisie à la main
+  const libres = F.transactions.filter(t => !t.releve || t.capture);
+  const tous = F.transactions;
   const pris = new Set();
   let doublons = 0;
   const ops = [];
   r.operations.forEach(o => {
     if (empreintes.has(o.empreinte)) { doublons++; return; }
     const j = _finParseISO(o.date).getTime();
-    const deja = libres.find(t => !pris.has(t.id) && t.type === o.type && Math.abs(Number(t.amount) - o.montant) < 0.005
+    const deja = (o.banque === "Capture d'écran" ? tous : libres).find(t => !pris.has(t.id) && t.type === o.type && Math.abs(Number(t.amount) - o.montant) < 0.005
                                   && Math.abs(_finParseISO(t.date).getTime() - j) <= 3 * 864e5);
     if (deja) pris.add(deja.id);
     o.deja = deja ? { date: deja.date, label: deja.label } : null;
     o.coche = !deja && !o.interne && !o.doubleCarte;
     o.parToi = false;
+    o.capture = o.banque === "Capture d'écran";
     ops.push(o);
   });
   _finImp = { mode: "releve", ops, doublons, docs: r.documents || [], filtre: "" };
@@ -19367,7 +19387,20 @@ function _finRelNote(o) {
   if (o.interne) return "Virement entre tes comptes ou vers ton épargne : ni dépense ni revenu, pas coché.";
   if (o.totalCarte) return "Total d'une carte à débit différé : importe aussi le détail de la carte pour avoir les catégories.";
   if (o.devise) return "Payé en " + _finEsc(o.devise) + ", montant débité en euros.";
+  if (o.capture && o.dateDevinee) return "Pas de date sur la capture : celle du jour de la capture, à vérifier.";
+  if (o.capture && o.sensDevine) return "Pas de signe sur la capture : comptée en " + (o.type === "income" ? "revenu" : "dépense") + ", à vérifier.";
   return "";
+}
+
+/* Capture d'écran : date, libellé, montant et sens se corrigent dans l'aperçu
+   (la lecture d'une image peut se tromper d'un chiffre) */
+function finRelChamp(i, champ, v) {
+  const o = _finImp.ops[i];
+  if (champ === "date") { if (/^\d{4}-\d{2}-\d{2}$/.test(v)) { o.date = v; o.dateDevinee = false; } }
+  else if (champ === "libelle") { if (v.trim()) o.libelle = v.trim(); }
+  else if (champ === "montant") { const n = Math.abs(parseFloat(String(v).replace(",", "."))); if (n > 0) o.montant = Math.round(n * 100) / 100; }
+  else if (champ === "sens") { o.type = o.type === "income" ? "expense" : "income"; o.sensDevine = false; o.cat = o.sub = null; o.comment = "aucun"; o.raison = ""; }
+  finReleveApercu();
 }
 
 function finReleveApercu() {
@@ -19390,16 +19423,19 @@ function finReleveApercu() {
   const lignes = vis.map(([o, i]) => {
     const note = _finRelNote(o);
     const ic = FIN_REL_COMMENT[o.comment];
-    return `<div class="fin-rel-row${o.coche ? "" : " off"}">
+    return `<div class="fin-rel-row${o.coche ? "" : " off"}${o.capture ? " cap" : ""}">
       <input type="checkbox" class="fin-tx-chk" ${o.coche ? "checked" : ""} onchange="finRelCocher(${i}, this.checked)" aria-label="Importer ${_finEsc(o.libelle)}">
-      <span class="fin-tx-date">${fd(o.date)}</span>
+      ${o.capture ? `<input type="date" class="fin-input-sm fin-tx-date${o.dateDevinee ? " vide" : ""}" value="${o.date}" onchange="finRelChamp(${i}, 'date', this.value)" aria-label="Date de ${_finEsc(o.libelle)}">`
+                  : `<span class="fin-tx-date">${fd(o.date)}</span>`}
       <div class="fin-rel-lib">
-        <div class="fin-tx-label" title="${_finEsc(o.brut)}">${_finEsc(o.libelle)}</div>
+        ${o.capture ? `<input type="text" class="fin-input-sm fin-rel-libin" value="${_finEsc(o.libelle)}" onchange="finRelChamp(${i}, 'libelle', this.value)" aria-label="Libellé">`
+                    : `<div class="fin-tx-label" title="${_finEsc(o.brut)}">${_finEsc(o.libelle)}</div>`}
         ${note ? `<div class="fin-tx-meta">${note}</div>` : ""}
       </div>
       <span class="fin-rel-how" title="${_finEsc(o.raison || (o.cat ? "" : "Pilote ne reconnaît pas ce libellé"))}">${ic ? `<i class="ph ph-${ic}"></i>` : ""}</span>
       <select class="fin-input-sm fin-rel-cat${o.cat ? "" : " vide"}" onchange="finRelCat(${i}, this.value)" aria-label="Catégorie de ${_finEsc(o.libelle)}">${_finRelOptions(o)}</select>
-      <span class="fin-tx-amount ${o.type}">${o.type === "income" ? "+" : "−"}${finFmtAbs(o.montant)}</span>
+      ${o.capture ? `<span class="fin-rel-mt"><button type="button" class="fin-rel-sens fin-tx-amount ${o.type}${o.sensDevine ? " vide" : ""}" onclick="finRelChamp(${i}, 'sens')" title="Changer : dépense ou revenu">${o.type === "income" ? "+" : "−"}</button><input type="text" inputmode="decimal" class="fin-input-sm" value="${String(o.montant.toFixed(2)).replace(".", ",")}" onchange="finRelChamp(${i}, 'montant', this.value)" aria-label="Montant de ${_finEsc(o.libelle)}"></span>`
+                  : `<span class="fin-tx-amount ${o.type}">${o.type === "income" ? "+" : "−"}${finFmtAbs(o.montant)}</span>`}
     </div>`;
   }).join("");
   const filtre = (f, txt) => `<button type="button" class="fin-rel-filtre${I.filtre === f ? " active" : ""}" onclick="finRelFiltre('${f}')">${txt}</button>`;
@@ -19409,6 +19445,8 @@ function finReleveApercu() {
       ${I.doublons ? I.doublons + " déjà importée" + (I.doublons > 1 ? "s" : "") + ", ignorée" + (I.doublons > 1 ? "s" : "") + "." : ""}
       ${ignorees ? ignorees + " ligne" + (ignorees > 1 ? "s" : "") + " en attente, refusée" + (ignorees > 1 ? "s" : "") + " ou de solde, ignorée" + (ignorees > 1 ? "s" : "") + "." : ""}</p>
     ${erreurs.map(d => `<p class="m-note" style="color:var(--r)">${_finEsc(d.nom)} : ${_finEsc(d.erreur)}</p>`).join("")}
+    ${ops.some(o => o.capture) ? `<p class="m-note"><i class="ph ph-image"></i> Lu sur ${I.docs.filter(d => d.banque === "Capture d'écran").length > 1 ? "des captures" : "une capture"} d'écran :
+      vérifie la date, le libellé et le montant de chaque ligne, ils se corrigent ici. Le signe + ou − change le sens.</p>` : ""}
     <div class="mkpis">
       <div class="mkpi"><span>Dépenses cochées</span><b>${dep.length} · ${somme(dep)}</b></div>
       <div class="mkpi"><span>Revenus cochés</span><b>${rev.length} · ${somme(rev)}</b></div>
@@ -19494,6 +19532,7 @@ function finReleveValider() {
       note: o.devise ? "Payé en " + o.devise : "", createdAt: maintenant,
       releve: o.empreinte, libelleBanque: o.brut,
     };
+    if (o.capture) tx.capture = true;
     if (!o.cat) { tx.aClasser = c.id; nAc++; }
     F.transactions.push(tx);
   });
@@ -27206,7 +27245,7 @@ const DASH_WIDGETS = [
       const n = F.transactions.filter(finAClasser).length;
       const dern = F.transactions.filter(t => t.releve).map(t => t.createdAt || "").sort().pop();
       return { lbl: "Relevés de banque", val: n ? n + " à classer" : dern ? "Tout est classé" : "Aucun import",
-               sub: dern ? "dernier import le " + _finDateToFR(dern.slice(0, 10)) : "CSV, Excel, OFX ou QIF de ta banque",
+               sub: dern ? "dernier import le " + _finDateToFR(dern.slice(0, 10)) : "CSV, Excel, OFX, QIF ou capture d'écran de ta banque",
                go: "Voir mes comptes",
                viz: `<span class="dash-releve-btns"><button type="button" class="btn btn-primary btn-sm dash-add-exp"
                        onclick="event.stopPropagation();dashImporterReleve()"><i class="ph ph-download-simple"></i> Importer un relevé</button>` +

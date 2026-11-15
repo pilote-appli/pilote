@@ -316,7 +316,8 @@ class Api:
             return {"ok": False, "erreur": "Lecture impossible : " + str(e)}
 
     def budget_lire_releve(self, fichiers: list, categories: list, historique: list) -> dict:
-        """Releve d'un compte courant (CSV, Excel, OFX, QIF, en base64) ->
+        """Releve d'un compte courant (CSV, Excel, OFX, QIF, capture d'ecran de
+        l'appli de la banque, en base64) ->
         operations nettoyees et classees pour Mes comptes (rien n'est ecrit).
         categories : celles de l'utilisateur ; historique : ce qu'il a deja
         classe. Voir budget_releves.py et docs/modules/comptes.md."""
