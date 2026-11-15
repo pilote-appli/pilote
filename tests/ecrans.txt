@@ -11,9 +11,19 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.76 (15/11/2026) : plus aucune boite du systeme. Ligne 1 : supprimer une
-# transaction ouvre la fenetre de Pilote ; ligne 2 : un champ manquant de la
-# position, bandeau ; ligne 3 : information a un seul bouton (restauration).
-js:goTab('tx'),delTx(S.transactions[0].id)
-js:document.querySelector('.ov.open').remove(),goTab('pos'),document.getElementById('f-ticker').value='',savePos()
-js:confirmer('Restauration',{ok:'Recharger',annuler:false,texte:'Fenetre_a_un_seul_bouton'})
+# Site public (15/11/2026) : galerie de l'accueil du site, en fuchsia sur les
+# donnees de Brice. Un lot = trois lignes = une app relancee : les lots 3 et 4
+# passent en sombre (en memoire seulement) sur leur premiere ligne.
+# (Les lignes de la 4.4.76 sont dans le commit 4680a14.)
+dash
+fin-month
+sp-agenda
+sa-suivi
+pa-vue
+home
+js:applyTheme('dark'),goTab('dash')
+fin-month
+sp-agenda
+js:applyTheme('dark'),goTab('sa-suivi')
+pa-vue
+home
