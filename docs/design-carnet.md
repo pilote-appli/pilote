@@ -121,8 +121,12 @@ plutôt qu'un logiciel de bureau.
   le 15/11/2026, il n'y en a plus aucun, tout passe par `await confirmer(titre,
   { texte, ok, annuler })` (titre = la question, `texte` = le détail, `ok` = le
   verbe de l'action : « Supprimer », « Restaurer »… ; `annuler` renomme l'autre
-  bouton quand ce n'est pas une annulation, ex. « Supprimer quand même »). De même
-  `demander()` à la place de `prompt()`. Les deux renvoient une promesse : la
+  bouton quand ce n'est pas une annulation, ex. « Supprimer quand même » ;
+  `annuler: false` n'en laisse qu'un, pour une information à lire avant de
+  continuer). De même `demander()` à la place de `prompt()`. Plus d'`alert()` non
+  plus : un champ manquant ou une erreur passe par `showToastModern(msg, "warn" |
+  "err")`, une information à lire avant de recharger par `confirmer(…, { annuler:
+  false })`. Les deux renvoient une promesse : la
   fonction qui les appelle est `async`. Échap et le clic à côté répondent non.
 * **Où c'est** : les jetons dans `:root` et `html[data-theme="dark"]`, puis un bloc
   « IDENTITÉ CARNET » **en fin de la première feuille de style**, qui surcharge les

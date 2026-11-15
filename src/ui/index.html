@@ -8826,8 +8826,8 @@ function saveDivFuture() {
   const ppa     = parseFloat(document.getElementById("df-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("df-montant").value||"");
   const note    = document.getElementById("df-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant estimé requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant estimé requis", "warn");
   if (!S.divFuture) S.divFuture=[];
   if (!NID.divf) NID.divf=10;
   pushUndo();
@@ -8842,8 +8842,8 @@ function saveEditDivFuture(id) {
   const ppa     = parseFloat(document.getElementById("df-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("df-montant").value||"");
   const note    = document.getElementById("df-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant estimé requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant estimé requis", "warn");
   const idx=(S.divFuture||[]).findIndex(x=>x.id===id);
   if (idx<0) return;
   pushUndo();
@@ -8912,8 +8912,8 @@ function saveDiv() {
   const ppa     = parseFloat(document.getElementById("dv-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("dv-montant").value||"");
   const note    = document.getElementById("dv-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant requis", "warn");
   if (!S.divReceived) S.divReceived=[];
   if (!NID.div) NID.div=10;
   pushUndo();
@@ -8956,8 +8956,8 @@ function saveEditDiv(id) {
   const ppa     = parseFloat(document.getElementById("dv-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("dv-montant").value||"");
   const note    = document.getElementById("dv-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant requis", "warn");
   const idx = (S.divReceived||[]).findIndex(x=>x.id===id);
   if (idx<0) return;
   pushUndo();
@@ -11246,7 +11246,8 @@ function demander(titre, valeur = "", opts = {}) {
    système, titrée « 127.0.0.1:7438 indique »). Promesse : true si on
    confirme, false si on annule (Annuler, Échap, clic à côté).
    opts : texte (sous le titre), ok (libellé du bouton), annuler (libellé de
-   l'autre bouton, « Annuler » par défaut). Plus aucun confirm() dans l'app
+   l'autre bouton, « Annuler » par défaut ; false : pas d'autre bouton, pour
+   une simple information). Plus aucun confirm() ni alert() dans l'app
    depuis le 15/11/2026. */
 function confirmer(titre, opts = {}) {
   return new Promise(resolve => {
@@ -11254,7 +11255,7 @@ function confirmer(titre, opts = {}) {
     ov.className = "ov";
     ov.innerHTML = `<div class="modal" style="max-width:420px"><h2>${escHtml(titre)}</h2>
       ${opts.texte ? `<p style="white-space:pre-line;color:var(--txt2);font-size:13px;margin:0">${escHtml(opts.texte)}</p>` : ""}
-      <div class="mact"><button type="button" class="btn btn-ghost" data-r="0">${escHtml(opts.annuler || "Annuler")}</button>
+      <div class="mact">${opts.annuler === false ? "" : `<button type="button" class="btn btn-ghost" data-r="0">${escHtml(opts.annuler || "Annuler")}</button>`}
         <button type="button" class="btn btn-primary" data-r="1">${escHtml(opts.ok || "OK")}</button></div></div>`;
     document.body.appendChild(ov);
     const ok = ov.querySelector('[data-r="1"]');
@@ -11266,7 +11267,8 @@ function confirmer(titre, opts = {}) {
       resolve(r);
     };
     ok.onclick = () => fin(true);
-    ov.querySelector('[data-r="0"]').onclick = () => fin(false);
+    const non = ov.querySelector('[data-r="0"]');
+    if (non) non.onclick = () => fin(false);
     ov.addEventListener("click", e => { if (e.target === ov) fin(false); });
     ov.addEventListener("keydown", e => {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); fin(false); }
@@ -11543,19 +11545,19 @@ function updatePosRecap() {
 
 function savePos() {
   const tickerRaw = document.getElementById("f-ticker").value.trim();
-  if (!tickerRaw) return alert("Ticker requis (ex : EPA:AIR).");
+  if (!tickerRaw) return showToastModern("Ticker requis (ex : EPA:AIR)", "warn");
   const ticker = normalizeTicker(tickerRaw.toUpperCase());
-  if (!ticker) return alert("Ticker invalide.");
+  if (!ticker) return showToastModern("Ticker invalide", "warn");
   const name   = document.getElementById("f-name").value.trim();
   const prix   = parseFloat(document.getElementById("f-prix").value||"");
   const qty    = parseFloat(document.getElementById("f-qty").value||"");
   const frais  = parseFloat(document.getElementById("f-frais").value||"")||0;
   const date   = document.getElementById("f-date").value;
   const existingPos = S.positions.find(p => p.ticker === ticker);
-  if (!name && !existingPos) return alert("Nom requis pour un nouvel actif.");
-  if (isNaN(prix)||prix<=0) return alert("Prix d’achat requis.");
-  if (isNaN(qty)||qty<=0)   return alert("Quantité requise.");
-  if (!date) return alert("Date requise.");
+  if (!name && !existingPos) return showToastModern("Nom requis pour un nouvel actif", "warn");
+  if (isNaN(prix)||prix<=0) return showToastModern("Prix d’achat requis", "warn");
+  if (isNaN(qty)||qty<=0)   return showToastModern("Quantité requise", "warn");
+  if (!date) return showToastModern("Date requise", "warn");
   const pret = document.getElementById("f-pret").checked;
   const pretMt = pret ? prLireMontantPret("f-pret-mt", brutOrdre({qty, cours: prix}) + frais) : undefined;
   if (pretMt === null) return;
@@ -12373,7 +12375,7 @@ async function _rapportImprimer(frame, html, nom) {
     // Imprime UNIQUEMENT le contenu de l'iframe (popup d'impression Windows)
     frame.contentWindow.focus();
     frame.contentWindow.print();
-  } catch(e) { alert("Erreur d'impression : " + e.message); }
+  } catch(e) { showToastModern("Erreur d'impression : " + e.message, "err"); }
 }
 
 /* ─── Helpers PIN OTP (4 cases separees) ─── */
@@ -14062,15 +14064,16 @@ async function svRestore(path, when) {
       res = await pywebview.api.sauvegarde_restore(path, mdp);
     }
     if (res && res.ok) {
-      alert("Restauration terminée : " + res.files + " fichiers.\n\n"
-          + (res.safety ? "État précédent conservé ici :\n" + res.safety + "\n\n" : "")
-          + "L'application va se recharger.");
+      await confirmer("Restauration terminée : " + res.files + " fichiers", { ok: "Recharger", annuler: false, texte:
+            (res.safety ? "État précédent conservé ici :\n" + res.safety + "\n\n" : "")
+          + "L'application va se recharger." });
       location.reload();
     } else if (res && res.safety) {
       // Échec en cours de route : une partie des fichiers est déjà restaurée.
       // Dégeler laisserait l'état en mémoire réécrire par-dessus : on recharge.
-      alert("La restauration s'est arrêtée en route : " + (res.error || "") + "\n\n"
-          + "L'état d'avant est conservé ici :\n" + res.safety + "\n\nL'application va se recharger.");
+      await confirmer("La restauration s'est arrêtée en route", { ok: "Recharger", annuler: false, texte:
+            (res.error ? res.error + "\n\n" : "")
+          + "L'état d'avant est conservé ici :\n" + res.safety + "\n\nL'application va se recharger." });
       location.reload();
     } else {
       _degelerEnregistrements();
