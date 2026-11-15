@@ -20686,7 +20686,7 @@ function spOpenDay(iso) {
 }
 
 async function spQuickDelete(id, iso) {
-  if (!confirm("Supprimer cette séance ?")) return;
+  if (!(await confirmer("Supprimer cette séance ?", { ok: "Supprimer" }))) return;
   SP.sessions = spSessions().filter(x => x.id !== id);
   await spPersist();
   spRenderAll();
@@ -20839,7 +20839,7 @@ async function spDeleteCustomSport(id) {
     showToastModern("Impossible : " + used + " s\u00e9ance" + (used > 1 ? "s utilisent" : " utilise") + " ce sport", "err");
     return;
   }
-  if (!confirm("Supprimer ce sport ?")) return;
+  if (!(await confirmer("Supprimer ce sport ?", { ok: "Supprimer" }))) return;
   SP.customSports = spCustomSports().filter(x => x.id !== id);
   if (_spSport === id) _spSport = "course";
   spRebuildCatalog();
@@ -20985,7 +20985,7 @@ async function spSaveSession() {
 
 async function spDeleteSession() {
   if (!_spEditingId) return;
-  if (!confirm("Supprimer cette séance ?")) return;
+  if (!(await confirmer("Supprimer cette séance ?", { ok: "Supprimer" }))) return;
   SP.sessions = spSessions().filter(x => x.id !== _spEditingId);
   await spPersist();
   closeOv("ov-sp-session");
@@ -21046,10 +21046,8 @@ async function spRenameRoutine(id) {
 
 async function spDeleteRoutine(id) {
   const used = spSessions().filter(s => String(s.routineId) === String(id)).length;
-  const msg = used
-    ? `Cette routine est utilisée par ${used} séance${used > 1 ? "s" : ""}. La supprimer ?`
-    : "Supprimer cette routine ?";
-  if (!confirm(msg)) return;
+  if (!(await confirmer("Supprimer cette routine ?", { ok: "Supprimer",
+    texte: used ? `Elle est utilisée par ${used} séance${used > 1 ? "s" : ""}.` : "" }))) return;
   SP.routines = spRoutines().filter(x => x.id !== id);
   spSessions().forEach(s => { if (String(s.routineId) === String(id)) s.routineId = null; });
   await spPersist();
@@ -21116,7 +21114,7 @@ async function spRenameSubtype(i) {
 
 async function spDeleteSubtype(i) {
   const list = spSubtypes(_spSport);
-  if (!confirm(`Supprimer le type « ${list[i]} » ?`)) return;
+  if (!(await confirmer(`Supprimer le type « ${list[i]} » ?`, { ok: "Supprimer" }))) return;
   list.splice(i, 1);
   await spPersist();
   spRenderSubtypes();
@@ -21186,7 +21184,7 @@ async function spSaveGoal() {
 
 async function spDeleteGoal() {
   if (!_spEditingGoal) return;
-  if (!confirm("Supprimer cet objectif ?")) return;
+  if (!(await confirmer("Supprimer cet objectif ?", { ok: "Supprimer" }))) return;
   SP.goals = spGoals().filter(x => x.id !== _spEditingGoal);
   await spPersist();
   closeOv("ov-sp-goal");
@@ -23940,8 +23938,7 @@ async function saSaveImport() {
   if (!Object.keys(vals).length) { showToastModern("Aucune valeur à enregistrer", "warn"); return; }
 
   const doublon = saMesures().find(m => m.date === date);
-  if (doublon && !confirm("Une pesée existe déjà au " + date
-      + ".\n\nEnregistrer quand même une seconde pesée ce jour-là ?")) return;
+  if (doublon && !(await confirmer("Enregistrer une seconde pesée ce jour-là ?", { texte: "Une pesée existe déjà au " + date + ".", ok: "Enregistrer" }))) return;
 
   const mesure = Object.assign({
     id: saNextId("mesure"),
@@ -24003,7 +24000,7 @@ async function saSaveMesure() {
 
 async function saDeleteMesure() {
   if (!_saEditId) return;
-  if (!confirm("Supprimer cette pesée ?")) return;
+  if (!(await confirmer("Supprimer cette pesée ?", { ok: "Supprimer" }))) return;
   SA.mesures = SA.mesures.filter(x => x.id !== _saEditId);
   if (await saSave()) {
     closeOv("ov-sa-mesure");
@@ -24132,7 +24129,7 @@ async function saSaveGoal() {
 
 async function saDeleteGoal() {
   if (!_saGoalId) return;
-  if (!confirm("Supprimer cet objectif ?")) return;
+  if (!(await confirmer("Supprimer cet objectif ?", { ok: "Supprimer" }))) return;
   SA.goals = SA.goals.filter(x => x.id !== _saGoalId);
   if (await saSave()) {
     closeOv("ov-sa-goal");
