@@ -53,3 +53,24 @@ les chiffres clés disent « premier mois suivi » / « première année suivie 
 le début du suivi ») au lieu de « −8 h 55 vs août ». Le cumul de l'année dit « depuis
 le 11 sept. » et la moyenne hebdo se calcule sur les semaines écoulées **depuis la
 première séance** si le suivi a commencé en cours d'année.
+
+## Blessures (15/11/2026)
+
+Demandé par Arthur : pouvoir noter quand on est blessé. Choix faits avec lui :
+saisie depuis l'Agenda **et** un onglet à part `sp-injuries` (« Blessures »),
+champs essentiels seulement, chiffres réels gardés, **pas de tuile d'accueil**
+(il n'en a pas voulu).
+
+* Données : `SP.injuries = [{id, start, end, zone, note}]`, `end` vide = toujours
+  blessé ; id par `spNextId("injury")`. Un `sports.json` ancien n'a pas la clé :
+  `spInjuries()` la crée, rien à migrer.
+* Agenda : bouton « Blessure », bandeau tant qu'une blessure dure (bouton « Je suis
+  guéri », qui met la fin à aujourd'hui), jours couverts teintés de rouge
+  (`.sp-day.inj`), et la fenêtre d'un jour liste ses blessures ou propose
+  « Blessé ce jour-là ».
+* Une blessure guérie **aujourd'hui** n'est plus « en cours » (`spInjuryOngoing` :
+  fin strictement après aujourd'hui), sinon le bandeau restait jusqu'au lendemain.
+* Les heures ne sont jamais corrigées : le chiffre clé du mois et de l'année
+  ajoute « N jours blessé », l'infobulle du graphique par mois aussi.
+  `spInjuryDays(de, à)` compte des jours distincts (deux blessures le même jour =
+  un jour) et s'arrête à aujourd'hui.

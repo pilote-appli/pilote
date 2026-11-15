@@ -27,6 +27,9 @@ goals : objectifs
   kind "event" -> evenement date (compte a rebours + volume accumule)
   {id, kind, title, sport, target, date, status:"active|done|archived",
    createdAt, doneAt, note}
+
+injuries : blessures (periode ou on ne peut pas faire de sport)
+  {id, start:"YYYY-MM-DD", end:"YYYY-MM-DD" ou "" (toujours blesse), zone, note}
 """
 from __future__ import annotations
 
@@ -88,8 +91,9 @@ def default_data() -> dict:
         "customSports": [],      # sports ajoutes par l'utilisateur (memes champs)
         "routines": [],          # circuits nommes, reutilisables (ex. "Circuit abdos")
         "goals":    [],
+        "injuries": [],          # blessures : {id, start, end ("" = en cours), zone, note}
         "subtypes": {k: list(v) for k, v in DEFAULT_SUBTYPES.items()},
-        "_nid":     {"session": 1, "routine": 1, "goal": 1},
+        "_nid":     {"session": 1, "routine": 1, "goal": 1, "injury": 1},
     }
 
 
