@@ -14,7 +14,10 @@
 # 4.4.73 (14/11/2026) : Tâches devient Pense-bête, une seule liste avec la
 # tuile de l'accueil (tuile, sa fenêtre, la section). Pilou suit la bourse du
 # jour : inquiet sur une baisse simulée de 1,8 %.
+# Captures d'écran de banque : l'aperçu de l'import, opérations fictives
+# injectées (aucune lecture d'image sur la machine de test).
 home
 js:dashNotesOuvrir()
 tc-liste
 js:goTab("home"),dashBourseJour=function(){return{eur:-180,pct:-1.8,quand:"aujourd'hui"}},homePilouBourse()
+js:(async()=>(await(finBootstrap()),goTab('fin-month'),_finImp={mode:'releve',ops:[{"cat":null,"sub":null,"comment":"aucun","raison":"","propose":null,"interne":false,"totalCarte":false,"banque":"Capture\u0020d'\u00e9cran","capture":true,"coche":true,"parToi":false,"deja":null,"date":"2026-11-14","type":"expense","montant":23.4,"libelle":"Carrefour\u0020City","brut":"Carrefour\u0020City","genre":"carte","empreinte":"e1"},{"cat":null,"sub":null,"comment":"aucun","raison":"","propose":null,"interne":false,"totalCarte":false,"banque":"Capture\u0020d'\u00e9cran","capture":true,"coche":true,"parToi":false,"deja":null,"date":"2026-11-13","type":"income","montant":2100.0,"libelle":"Salaire\u0020Employeur","brut":"Salaire\u0020Employeur","genre":"virement","empreinte":"e2"},{"cat":null,"sub":null,"comment":"aucun","raison":"","propose":null,"interne":false,"totalCarte":false,"banque":"Capture\u0020d'\u00e9cran","capture":true,"coche":true,"parToi":false,"deja":null,"date":"2026-11-13","type":"expense","montant":8.9,"libelle":"Uber","brut":"Uber","genre":"carte","empreinte":"e3","sensDevine":true}],doublons:0,docs:[{"nom":"capture.png","banque":"Capture\u0020d'\u00e9cran","operations":3,"ignorees":{"solde":1}}],filtre:''},document.getElementById('fin-import-modal').style.maxWidth='960px',document.getElementById('fin-import-titre').textContent='Importer\u0020un\u0020relev\u00e9',finReleveApercu(),openOvTop('ov-fin-import')))()
