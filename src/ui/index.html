@@ -7001,8 +7001,8 @@ function flash() {
   setTimeout(() => b.classList.remove("show"), 1600);
 }
 
-function resetDef(ask) {
-  if (ask && !confirm("Réinitialiser ? Toutes les données seront effacées.")) return;
+async function resetDef(ask) {
+  if (ask && !(await confirmer("Tout réinitialiser ?", { texte: "Toutes les données seront effacées.", ok: "Réinitialiser" }))) return;
   pushUndo();   // Retour peut annuler la réinitialisation
   // Les réglages (thème, tuiles, pense-bête, compositions d'ETF saisies à la
   // main, ordre de la barre latérale…) vivent dans S.uiPrefs : ils ne font pas
@@ -8164,7 +8164,7 @@ function setPerfRange(range) {
 
 /* Reset Performance : enleve les benchmarks coches + remet plage MAX */
 async function resetPerf() {
-  if (!confirm("Réinitialiser le graphique Performance (benchmarks + plage) ?")) return;
+  if (!(await confirmer("Réinitialiser le graphique Performance ?", { texte: "Les indices de comparaison et la plage reviennent au réglage de départ.", ok: "Réinitialiser" }))) return;
   _benchEnabled = {cac40: false, sp500: false, world: false};
   document.querySelectorAll('#perf-bench-toggles input[type="checkbox"]').forEach(cb => cb.checked = false);
   S.uiPrefs = S.uiPrefs || {};
@@ -8851,8 +8851,8 @@ function saveEditDivFuture(id) {
   persist(); closeOv("ov-divf"); renderDividends(); renderMetrics();
 }
 function editDivFuture(id) { openAddDivFuture(id); }
-function delDivFuture(id) {
-  if (!confirm("Supprimer cet estimatif ?")) return;
+async function delDivFuture(id) {
+  if (!(await confirmer("Supprimer cet estimatif ?", { ok: "Supprimer" }))) return;
   pushUndo();
   S.divFuture=(S.divFuture||[]).filter(d=>d.id!==id);
   persist(); renderDividends(); renderMetrics();
@@ -9958,11 +9958,11 @@ function expoEdSave() {
   expoRender();
   showToastModern("Composition de " + expoCle(_expoEdTicker) + " enregistrée", "ok");
 }
-function expoAnnulerPerso(id) {
+async function expoAnnulerPerso(id) {
   const p = (S.positions || []).find(x => x.id === id);
   const ticker = p ? p.ticker : _expoEdTicker;
   if (!ticker || !(S.uiPrefs && S.uiPrefs.expoPerso && S.uiPrefs.expoPerso[ticker])) return;
-  if (!confirm("Effacer ta composition de " + expoCle(ticker) + " et revenir aux données téléchargées ?")) return;
+  if (!(await confirmer("Effacer ta composition de " + expoCle(ticker) + " ?", { texte: "Pilote reprendra les données téléchargées.", ok: "Effacer" }))) return;
   delete S.uiPrefs.expoPerso[ticker];
   if (window.pywebview && window.pywebview.api && window.pywebview.api.save_ui_prefs)
     window.pywebview.api.save_ui_prefs(S.uiPrefs).catch(() => {});
@@ -11010,8 +11010,8 @@ function _restoreSimulators() {
 }
 
 /* Reset : remet aux valeurs par defaut */
-function resetSimulators() {
-  if (!confirm("Réinitialiser tous les simulateurs ?")) return;
+async function resetSimulators() {
+  if (!(await confirmer("Réinitialiser tous les simulateurs ?", { ok: "Réinitialiser" }))) return;
   const defaults = {
     "sim-dca-start": "0",     "sim-dca-amt": "200", "sim-dca-years": "20", "sim-dca-rate": "7",
     "sim-goal-start": "0",    "sim-goal-amt": "100000", "sim-goal-month": "200", "sim-goal-rate": "7",
@@ -11245,15 +11245,16 @@ function demander(titre, valeur = "", opts = {}) {
 /* Fenêtre de confirmation de Pilote, à la place de confirm() (boîte du
    système, titrée « 127.0.0.1:7438 indique »). Promesse : true si on
    confirme, false si on annule (Annuler, Échap, clic à côté).
-   opts : texte (sous le titre), ok (libellé du bouton). Les autres confirm()
-   de l'app passent ici petit à petit (15/11/2026). */
+   opts : texte (sous le titre), ok (libellé du bouton), annuler (libellé de
+   l'autre bouton, « Annuler » par défaut). Plus aucun confirm() dans l'app
+   depuis le 15/11/2026. */
 function confirmer(titre, opts = {}) {
   return new Promise(resolve => {
     const ov = document.createElement("div");
     ov.className = "ov";
     ov.innerHTML = `<div class="modal" style="max-width:420px"><h2>${escHtml(titre)}</h2>
       ${opts.texte ? `<p style="white-space:pre-line;color:var(--txt2);font-size:13px;margin:0">${escHtml(opts.texte)}</p>` : ""}
-      <div class="mact"><button type="button" class="btn btn-ghost" data-r="0">Annuler</button>
+      <div class="mact"><button type="button" class="btn btn-ghost" data-r="0">${escHtml(opts.annuler || "Annuler")}</button>
         <button type="button" class="btn btn-primary" data-r="1">${escHtml(opts.ok || "OK")}</button></div></div>`;
     document.body.appendChild(ov);
     const ok = ov.querySelector('[data-r="1"]');
@@ -11649,9 +11650,9 @@ function saveEditPos(id) {
 }
 
 
-function delPos(id) {
+async function delPos(id) {
   const p = S.positions.find(x=>x.id===id);
-  if (!confirm("Supprimer la position " + (p?p.name:id) + " ? (les transactions restent)")) return;
+  if (!(await confirmer("Supprimer la position " + (p?p.name:id) + " ?", { texte: "Ses transactions restent.", ok: "Supprimer" }))) return;
   pushUndo();
   S.positions = S.positions.filter(p=>p.id!==id);
   persist(); renderPositions();
@@ -11796,8 +11797,8 @@ function saveEditTx(id) {
   persist(); closeOv("ov-tx"); renderPositions(); renderTx();
   if (document.getElementById("pane-dash")?.classList.contains("active")) renderPerf();
 }
-function delTx(id) {
-  if (!confirm("Supprimer cette transaction ?")) return;
+async function delTx(id) {
+  if (!(await confirmer("Supprimer cette transaction ?", { ok: "Supprimer" }))) return;
   pushUndo(); S.transactions=S.transactions.filter(t=>t.id!==id); persist(); renderPositions(); renderTx();
 }
 
@@ -15046,8 +15047,8 @@ function saveEditRule(id) {
   persist(); closeOv("ov-rule"); renderStrat();
 }
 
-function delRule(id) {
-  if (!confirm("Supprimer cette règle ?")) return;
+async function delRule(id) {
+  if (!(await confirmer("Supprimer cette règle ?", { ok: "Supprimer" }))) return;
   pushUndo();
   S.strategies = (S.strategies||[]).filter(r => r.id !== id);
   persist(); renderStrat();
@@ -16250,35 +16251,35 @@ function soSetNom(v)     { _soEd.nom = v; }
 function soSetBudget(v)  { _soBudget = (v === "" || v == null) ? null : Math.max(0, pacNum(v) || 0); soRender(); }
 function soSetGratuit(c) { _soGratuit = !!c; soRender(); }
 
-function soNouveau() {
-  if (soModifie() && !confirm("Effacer les ordres en cours ? Ils ne sont pas enregistrés.")) return;
+async function soNouveau() {
+  if (soModifie() && !(await confirmer("Effacer les ordres en cours ?", { texte: "Ils ne sont pas enregistrés.", ok: "Effacer" }))) return;
   soCharger({ id: null, nom: "", lignes: [] });
 }
-function soDepuisPlan() {
+async function soDepuisPlan() {
   const p = soPlanLignes();
   if (p.erreur) { showToastModern(p.erreur, "warn"); return; }
   if (!p.lignes.length) { showToastModern("Le plan proposé ne contient aucun ordre avec ce budget", "warn"); return; }
-  if (soModifie() && !confirm("Remplacer les ordres en cours par le plan proposé ?")) return;
+  if (soModifie() && !(await confirmer("Remplacer les ordres en cours par le plan proposé ?", { ok: "Remplacer" }))) return;
   soCharger({ id: null, nom: "", lignes: p.lignes });
   showToastModern("Plan proposé chargé : modifie-le, puis donne-lui un nom pour l'enregistrer", "info");
 }
-function soOuvrir(id) {
+async function soOuvrir(id) {
   if (id === "plan") { soDepuisPlan(); return; }
   const a = SO_AUTO.find(x => x.id === id);
   if (a) {
     const lignes = a.f();
     if (!lignes || !lignes.length) { showToastModern("Aucun ordre possible avec ce budget", "warn"); return; }
-    if (soModifie() && !confirm("Remplacer les ordres en cours par « " + a.nom + " » ?")) return;
+    if (soModifie() && !(await confirmer("Remplacer les ordres en cours par « " + a.nom + " » ?", { ok: "Remplacer" }))) return;
     soCharger({ id: null, nom: "", lignes });
     return;
   }
   const s = soScenarios().find(x => x.id === id);
   if (!s) return;
   if (s.budget != null) _soBudget = s.budget;
-  if (_soEd.id !== id && soModifie() && !confirm("Remplacer les ordres en cours par « " + s.nom + " » ?")) return;
+  if (_soEd.id !== id && soModifie() && !(await confirmer("Remplacer les ordres en cours par « " + s.nom + " » ?", { ok: "Remplacer" }))) return;
   soCharger({ id: s.id, nom: s.nom, lignes: s.lignes.map(l => ({...l})) });
 }
-function soEnregistrer() {
+async function soEnregistrer() {
   const nom = (_soEd.nom || "").trim();
   if (!nom) {
     showToastModern("Donne un nom au scénario", "warn");
@@ -16292,7 +16293,7 @@ function soEnregistrer() {
   if (!lignes.length) { showToastModern("Aucun ordre à enregistrer : saisis au moins une quantité", "warn"); return; }
   const liste = soScenarios().slice();
   const homonyme = liste.find(s => s.nom.toLowerCase() === nom.toLowerCase() && s.id !== _soEd.id);
-  if (homonyme && !confirm("Un scénario « " + homonyme.nom + " » existe déjà. Le remplacer ?")) return;
+  if (homonyme && !(await confirmer("Remplacer le scénario « " + homonyme.nom + " » ?", { texte: "Un scénario porte déjà ce nom.", ok: "Remplacer" }))) return;
   const id = homonyme ? homonyme.id : (liste.some(s => s.id === _soEd.id) ? _soEd.id : "so" + Date.now());
   const i = liste.findIndex(s => s.id === id);
   const sc = { id, nom, lignes, budget: soBudget() };
@@ -16303,9 +16304,9 @@ function soEnregistrer() {
   showToastModern("Scénario « " + nom + " » enregistré", "ok");
   soRender();
 }
-function soSupprScen(id) {
+async function soSupprScen(id) {
   const s = soScenarios().find(x => x.id === id);
-  if (!s || !confirm("Supprimer le scénario « " + s.nom + " » ?")) return;
+  if (!s || !(await confirmer("Supprimer le scénario « " + s.nom + " » ?", { ok: "Supprimer" }))) return;
   soSaveScenarios(soScenarios().filter(x => x.id !== id));
   if (_soEd.id === id) _soEd.id = null;
   _soHorsComparaison.delete(id);
@@ -16686,8 +16687,8 @@ function soHistorique() {
   const c = _cptPrefs().simOrdres;
   return (c && Array.isArray(c.historique)) ? c.historique : [];
 }
-function soSupprHist(id) {
-  if (!confirm("Retirer ce passage de l'historique ? Les achats restent dans Transactions.")) return;
+async function soSupprHist(id) {
+  if (!(await confirmer("Retirer ce passage de l'historique ?", { texte: "Les achats restent dans Transactions.", ok: "Retirer" }))) return;
   pushUndo();
   const pr = _cptPrefs();
   const so = pr.simOrdres || {};
@@ -25949,8 +25950,8 @@ function peEnregistrerPlan() {
   peRender();
   if (typeof dashRender === "function") dashRender();
 }
-function peSupprimer(id) {
-  if (!confirm("Supprimer cet achat programmé ? Les achats déjà enregistrés restent dans les transactions.")) return;
+async function peSupprimer(id) {
+  if (!(await confirmer("Supprimer cet achat programmé ?", { texte: "Les achats déjà enregistrés restent dans les transactions.", ok: "Supprimer" }))) return;
   pushUndo();
   S.plansProg = (S.plansProg || []).filter(p => p.id !== id);
   persist();
