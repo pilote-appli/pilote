@@ -11,7 +11,11 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.74 (15/11/2026) : masquer un onglet ou un bloc demande confirmation
-# dans une fenetre de Pilote (confirmer) au lieu de confirm().
-js:goTab("pos"),_hideCard(CARD_ITEMS[0].id)
-js:document.querySelectorAll('.ov.open').forEach(o=>!o.id&&o.remove()),_hideSidebarItem("tc-liste")
+# 4.4.75 (15/11/2026) : blessures dans Sports. Brice n'en a pas : la ligne 2
+# lui en donne une en memoire seulement (rien n'est enregistre), commencee il y
+# a 3 jours : bandeau, jours teintes, jours blesse du mois, onglet Blessures.
+sp-agenda
+js:SP.injuries=[{id:9,start:spDateISO(new(Date)(Date.now()-3*864e5)),end:"",zone:"Genou"}],spRenderAll()
+sp-agenda 520
+sp-injuries
+js:spOpenInjury(null)

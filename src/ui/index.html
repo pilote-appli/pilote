@@ -1309,6 +1309,21 @@ html.sans-pilou .pilou { display: none; }
   font-size: 11px; font-weight: 700; font-family: var(--mono); color: var(--txt2);
 }
 .sp-day.today .sp-day-n { color: var(--accent); }
+/* Jour de blessure : case teintée de rouge, pansement à côté du numéro */
+.sp-day.inj { background: color-mix(in srgb, var(--r) 9%, var(--bg2)); border-color: color-mix(in srgb, var(--r) 30%, var(--brd)); }
+.sp-day.inj:hover { background: color-mix(in srgb, var(--r) 14%, var(--bg3)); }
+.sp-day-inj { color: var(--r); font-size: 12px; vertical-align: -1px; }
+.sp-inj-ico { background: color-mix(in srgb, var(--r) 14%, transparent); color: var(--r); font-size: 16px; }
+.sp-inj-txt { color: var(--r); white-space: nowrap; }
+.mkpi.accent .sp-inj-txt { color: inherit; font-weight: 700; }
+.sp-inj-banner {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  padding: 10px 14px; border-radius: var(--radl); font-size: 13px; font-weight: 600;
+  background: color-mix(in srgb, var(--r) 9%, var(--bg2));
+  border: 1px solid color-mix(in srgb, var(--r) 30%, var(--brd));
+}
+.sp-inj-banner > .ph-bandaids { color: var(--r); font-size: 18px; }
+.sp-inj-banner .m-spacer { flex: 1; }
 .sp-bubs { display: flex; flex-wrap: wrap; gap: 4px; }
 .sp-bub {
   /* 30 px : quatre bulles tiennent sur une ligne dans une case de calendrier */
@@ -4197,10 +4212,12 @@ html.verre .toast-stack .toast {
     </div>
     <div class="m-spacer"></div>
     <button class="btn btn-primary" onclick="spOpenSession(null, null)"><i class="ph ph-plus"></i> Séance</button>
+    <button class="btn btn-ghost"   onclick="spOpenInjury(null)" title="Noter une blessure"><i class="ph ph-bandaids"></i> Blessure</button>
     <button class="btn btn-ghost"   onclick="spOpenRoutines()">Routines</button>
     <button class="btn btn-ghost" onclick="openSettings('sport')" title="Paramètres des Sports"><i class="ph ph-gear-six"></i></button>
   </div>
 
+  <div id="sp-inj-banner"></div>
   <div class="mkpis" id="sp-month-kpis"></div>
 
   <div class="card" id="card-sp-cal">
@@ -4229,6 +4246,26 @@ html.verre .toast-stack .toast {
   <div class="card" id="card-sp-goals-done">
     <div class="card-h"><span class="card-t">Atteints &amp; archivés</span></div>
     <div class="card-b"><div class="sp-goals" id="sp-goals-done-list"></div></div>
+  </div>
+</div>
+
+<div class="pane" id="pane-sp-injuries">
+  <div class="m-head">
+    <div class="m-nav-lbl" style="min-width:auto;text-align:left;text-transform:none">Blessures</div>
+    <div class="m-spacer"></div>
+    <button class="btn btn-primary" onclick="spOpenInjury(null)"><i class="ph ph-plus"></i> Blessure</button>
+  </div>
+
+  <div class="mkpis" id="sp-inj-kpis"></div>
+
+  <div class="card" id="card-sp-inj-cur">
+    <div class="card-h"><span class="card-t">En cours</span></div>
+    <div class="card-b"><div class="sp-slist" id="sp-inj-cur" style="margin:0"></div></div>
+  </div>
+
+  <div class="card" id="card-sp-inj-past">
+    <div class="card-h"><span class="card-t">Historique</span></div>
+    <div class="card-b"><div class="sp-slist" id="sp-inj-past" style="margin:0"></div></div>
   </div>
 </div>
 
@@ -4695,6 +4732,7 @@ html.verre .toast-stack .toast {
     <div class="sp-slist" id="sp-day-list"></div>
     <div class="mact">
       <button class="btn btn-ghost" onclick="closeOv('ov-sp-day')">Fermer</button>
+      <button class="btn btn-ghost" id="sp-day-inj"><i class="ph ph-bandaids"></i> Blessé ce jour-là</button>
       <button class="btn btn-primary" id="sp-day-add"><i class="ph ph-plus"></i> Ajouter une séance</button>
     </div>
   </div>
@@ -4904,6 +4942,38 @@ html.verre .toast-stack .toast {
       <button class="btn btn-ghost danger" id="sp-g-del" style="margin-right:auto;display:none" onclick="spDeleteGoal()">Supprimer</button>
       <button class="btn btn-ghost" onclick="closeOv('ov-sp-goal')">Annuler</button>
       <button class="btn btn-primary" onclick="spSaveGoal()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Blessure -->
+<div class="ov" id="ov-sp-injury" onclick="if(event.target===this)closeOv('ov-sp-injury')">
+  <div class="modal" style="max-width:480px">
+    <h2 id="sp-inj-title">Nouvelle blessure</h2>
+
+    <div class="fg">
+      <label>Zone du corps</label>
+      <input id="sp-i-zone" type="text" list="sp-i-zones" placeholder="Ex. Genou droit, cheville, dos…">
+      <datalist id="sp-i-zones"></datalist>
+    </div>
+
+    <div class="fg-row">
+      <div class="fg">
+        <label>Début</label>
+        <input id="sp-i-start" type="date">
+      </div>
+      <div class="fg">
+        <label>Fin <span style="color:var(--txt3);font-weight:400">(vide = toujours blessé)</span></label>
+        <input id="sp-i-end" type="date">
+      </div>
+    </div>
+
+    <div class="fg"><label>Note</label><textarea id="sp-i-note" placeholder="Comment c'est arrivé, soins, kiné…"></textarea></div>
+
+    <div class="mact">
+      <button class="btn btn-ghost danger" id="sp-i-del" style="margin-right:auto;display:none" onclick="spDeleteInjury()">Supprimer</button>
+      <button class="btn btn-ghost" onclick="closeOv('ov-sp-injury')">Annuler</button>
+      <button class="btn btn-primary" onclick="spSaveInjury()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -16765,6 +16835,7 @@ const NAV_SECTIONS = [
   { id: "sec-sport", label: "Sports", children: [
     { id: "sp-agenda", label: "Agenda"       },
     { id: "sp-goals",  label: "Objectifs"    },
+    { id: "sp-injuries", label: "Blessures"  },
     { id: "sp-stats",  label: "Statistiques" },
   ]},
   { id: "sec-patri", label: "Patrimoine", children: [
@@ -20459,6 +20530,7 @@ function spRenderAgenda() {
   if (!SP) return;
   const lbl = document.getElementById("sp-month-lbl");
   if (lbl) lbl.textContent = SP_MONTHS[_spMonth.month] + " " + _spMonth.year;
+  spRenderInjuryBanner();
   spRenderMonthKpis();
   spRenderCalendar();
 }
@@ -20511,10 +20583,12 @@ function spRenderMonthKpis() {
   const depuis = (debut && debut.startsWith(String(_spMonth.year)) && debut > _spMonth.year + "-01-01")
     ? "depuis le " + spFmtDayMonth(debut) : "depuis le 1ᵉʳ janvier";
 
+  const jBlesse = spInjuryDays(spDateISO(new Date(_spMonth.year, _spMonth.month, 1)), finMois);
+
   box.innerHTML = `
     <div class="mkpi accent"><span class="mkpi-lbl">Temps de sport</span>
       <span class="mkpi-val">${spFmtDur(t.min)}</span>
-      <span class="mkpi-sub">${delta(t.min, p.min, "dur")}</span></div>
+      <span class="mkpi-sub">${delta(t.min, p.min, "dur")}${jBlesse ? ` · <span class="sp-inj-txt"><i class="ph ph-bandaids"></i> ${spFmtJours(jBlesse)} blessé</span>` : ""}</span></div>
     <div class="mkpi"><span class="mkpi-lbl">Cumul ${_spMonth.year}</span>
       <span class="mkpi-val">${spFmtDur(yearMin)}</span>
       <span class="mkpi-sub">${depuis}</span></div>
@@ -20546,6 +20620,7 @@ function spRenderCalendar() {
     const iso = spDateISO(d);
     const out = (d.getMonth() !== _spMonth.month);
     const list = spSessionsOn(iso);
+    const blesse = spInjuriesOn(iso);
 
     // Une bulle par seance : juste l'emoji du sport, le detail est au clic
     let bubbles = list.slice(0, 4).map(s => {
@@ -20555,8 +20630,8 @@ function spRenderCalendar() {
     }).join("");
     if (list.length > 4) bubbles += `<span class="sp-bub sp-bub-more">+${list.length - 4}</span>`;
 
-    html += `<div class="sp-day${out ? " out" : ""}${iso === todayISO ? " today" : ""}" onclick="spOpenDay('${iso}')">
-               <span class="sp-day-n">${d.getDate()}</span>
+    html += `<div class="sp-day${out ? " out" : ""}${iso === todayISO ? " today" : ""}${blesse.length ? " inj" : ""}" onclick="spOpenDay('${iso}')"${blesse.length ? ` title="${escHtml("Blessé" + (blesse[0].zone ? " : " + blesse[0].zone : ""))}"` : ""}>
+               <span class="sp-day-n">${d.getDate()}${blesse.length ? ' <i class="ph ph-bandaids sp-day-inj"></i>' : ""}</span>
                <div class="sp-bubs">${bubbles}</div>
                ${list.length ? `<span class="sp-day-dur">${spFmtDur(spTotals(list).min)}</span>` : ""}
              </div>`;
@@ -20584,7 +20659,8 @@ function spOpenDay(iso) {
     (list.length ? "  ·  " + spFmtDur(t.min) : "");
 
   const box = document.getElementById("sp-day-list");
-  box.innerHTML = list.length ? list.map(s => {
+  const blesse = spInjuriesOn(iso);
+  box.innerHTML = blesse.map(spInjuryRow).join("") + (list.length ? list.map(s => {
     const sp = spSportById(s.sport);
     const pace = spPace(s);
     return `<div class="sp-srow">
@@ -20599,8 +20675,11 @@ function spOpenDay(iso) {
         <button class="m-iconbtn danger" title="Supprimer" onclick="spQuickDelete(${s.id}, '${iso}')"><i class="ph ph-x"></i></button>
       </div>
     </div>`;
-  }).join("") : `<div class="m-empty">Aucune séance ce jour-là.</div>`;
+  }).join("") : `<div class="m-empty">Aucune séance ce jour-là.</div>`);
 
+  const btnInj = document.getElementById("sp-day-inj");
+  btnInj.style.display = blesse.length ? "none" : "";
+  btnInj.onclick = () => spOpenInjury(null, iso);
   document.getElementById("sp-day-add").onclick = () => { closeOv("ov-sp-day"); spOpenSession(null, iso); };
   document.getElementById("ov-sp-day").classList.add("open");
 }
@@ -21207,6 +21286,181 @@ function spRenderGoals() {
     : `<div class="m-empty">Rien ici pour l'instant.</div>`;
 }
 
+/* ── Blessures ───────────────────────────────────────────────────────────
+   Une blessure = une période {id, start, end, zone, note} ; end vide = toujours
+   blessé. Les jours touchés sont teintés dans l'agenda, et les chiffres du mois
+   et de l'année disent combien de jours on était blessé : ça explique une
+   baisse, sans rien retirer des heures réellement faites. */
+
+let _spEditingInjury = null;
+const SP_ZONES = ["Cheville","Genou","Mollet","Cuisse","Ischio-jambiers","Hanche","Dos","Épaule","Coude","Poignet","Pied","Tendon d'Achille"];
+
+function spInjuries() {
+  if (!SP) return [];
+  if (!Array.isArray(SP.injuries)) SP.injuries = [];
+  return SP.injuries;
+}
+/** Fin effective d'une blessure : sa date de fin, ou aujourd'hui si elle dure encore. */
+function spInjuryEnd(b) { return b.end || spDateISO(new Date()); }
+function spInjuryOngoing(b) { return !b.end || b.end > spDateISO(new Date()); }
+/** Blessures qui couvrent ce jour-là. */
+function spInjuriesOn(iso) {
+  return spInjuries().filter(b => b.start && b.start <= iso && iso <= spInjuryEnd(b));
+}
+/** Nombre de jours blessé entre deux dates incluses (deux blessures le même
+    jour ne comptent qu'une fois, rien après aujourd'hui). */
+function spInjuryDays(fromISO, toISO) {
+  const today = spDateISO(new Date());
+  if (toISO > today) toISO = today;
+  const jours = new Set();
+  spInjuries().forEach(b => {
+    if (!b.start) return;
+    const a = b.start > fromISO ? b.start : fromISO;
+    const z = spInjuryEnd(b) < toISO ? spInjuryEnd(b) : toISO;
+    for (let d = spParseISO(a); spDateISO(d) <= z; d.setDate(d.getDate() + 1)) jours.add(spDateISO(d));
+  });
+  return jours.size;
+}
+/** Durée d'une blessure en jours, jusqu'à aujourd'hui si elle dure encore. */
+function spInjuryLen(b) {
+  const fin = spInjuryEnd(b), today = spDateISO(new Date());
+  const z = (!b.end || fin > today) ? today : fin;
+  return Math.max(1, Math.round((spParseISO(z) - spParseISO(b.start)) / 86400000) + 1);
+}
+function spFmtJours(n) { return n + " jour" + (n > 1 ? "s" : ""); }
+function spFmtDateLongue(iso) {
+  return spParseISO(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function spOpenInjury(id, iso) {
+  if (!SP) { showToastModern("Module sport non chargé", "warn"); return; }
+  _spEditingInjury = id;
+  const b = id ? spInjuries().find(x => x.id === id) : null;
+  document.getElementById("sp-inj-title").textContent = b ? "Modifier la blessure" : "Nouvelle blessure";
+  document.getElementById("sp-i-del").style.display = b ? "" : "none";
+  const deja = spInjuries().map(x => x.zone).filter(Boolean);
+  document.getElementById("sp-i-zones").innerHTML = [...new Set(deja.concat(SP_ZONES))]
+    .map(z => `<option value="${escHtml(z)}">`).join("");
+  document.getElementById("sp-i-zone").value  = b ? (b.zone || "") : "";
+  document.getElementById("sp-i-start").value = b ? b.start : (iso || spDateISO(new Date()));
+  document.getElementById("sp-i-end").value   = b ? (b.end || "") : "";
+  document.getElementById("sp-i-note").value  = b ? (b.note || "") : "";
+  openOvTop("ov-sp-injury");
+  setTimeout(() => document.getElementById("sp-i-zone").focus(), 40);
+}
+
+async function spSaveInjury() {
+  const start = document.getElementById("sp-i-start").value;
+  const end   = document.getElementById("sp-i-end").value;
+  if (!start) { showToastModern("Indique le jour où tu t'es blessé", "warn"); return; }
+  if (end && end < start) { showToastModern("La fin doit venir après le début", "warn"); return; }
+  const b = {
+    id:    _spEditingInjury || spNextId("injury"),
+    start: start,
+    end:   end || "",
+    zone:  document.getElementById("sp-i-zone").value.trim(),
+    note:  document.getElementById("sp-i-note").value.trim(),
+  };
+  const liste = spInjuries();
+  const i = liste.findIndex(x => x.id === b.id);
+  if (i >= 0) liste[i] = b; else liste.push(b);
+  await spPersist();
+  closeOv("ov-sp-injury");
+  if (document.getElementById("ov-sp-day").classList.contains("open")) spOpenDay(start);
+  spRenderAll();
+  showToastModern(i >= 0 ? "Blessure modifiée" : "Blessure notée. Bon rétablissement !", "ok");
+}
+
+async function spDeleteInjury() {
+  if (!_spEditingInjury) return;
+  if (!(await confirmer("Supprimer cette blessure ?", { ok: "Supprimer" }))) return;
+  SP.injuries = spInjuries().filter(x => x.id !== _spEditingInjury);
+  await spPersist();
+  closeOv("ov-sp-injury");
+  if (document.getElementById("ov-sp-day").classList.contains("open")) closeOv("ov-sp-day");
+  spRenderAll();
+  showToastModern("Blessure supprimée", "ok");
+}
+
+/** « Je suis guéri » : la blessure se termine aujourd'hui. */
+async function spHealInjury(id) {
+  const b = spInjuries().find(x => x.id === id);
+  if (!b) return;
+  const today = spDateISO(new Date());
+  b.end = today < b.start ? b.start : today;
+  await spPersist();
+  if (document.getElementById("ov-sp-day").classList.contains("open")) closeOv("ov-sp-day");
+  spRenderAll();
+  showToastModern("Guéri ! Reprends en douceur", "ok");
+}
+
+function spInjuryRow(b) {
+  const enCours = spInjuryOngoing(b);
+  const quand = enCours
+    ? "Depuis le " + spFmtDateLongue(b.start) + (b.end ? " · jusqu'au " + spFmtDateLongue(b.end) : "")
+    : (b.start === b.end ? "Le " + spFmtDateLongue(b.start)
+       : "Du " + spFmtDateLongue(b.start) + " au " + spFmtDateLongue(b.end));
+  return `<div class="sp-srow">
+    <div class="sp-sicon sp-inj-ico"><i class="ph ph-bandaids"></i></div>
+    <div style="flex:1;min-width:0">
+      <div class="sp-sname">${escHtml(b.zone || "Blessure")} <span class="m-tag">${spFmtJours(spInjuryLen(b))}</span></div>
+      <div class="sp-smeta">${escHtml(quand)}</div>
+      ${b.note ? `<div class="sp-snote">${escHtml(b.note)}</div>` : ""}
+    </div>
+    <div class="m-acts">
+      ${enCours && !b.end ? `<button class="btn btn-ghost btn-sm" onclick="spHealInjury(${b.id})"><i class="ph ph-check"></i> Je suis guéri</button>` : ""}
+      <button class="m-iconbtn" title="Modifier" onclick="spOpenInjury(${b.id})"><i class="ph ph-pencil-simple"></i></button>
+    </div>
+  </div>`;
+}
+
+/** Bandeau de l'agenda pendant une blessure en cours. */
+function spRenderInjuryBanner() {
+  const box = document.getElementById("sp-inj-banner");
+  if (!box) return;
+  const today = spDateISO(new Date());
+  const cur = spInjuries().filter(b => spInjuryOngoing(b) && b.start <= today);
+  box.innerHTML = cur.map(b => `<div class="sp-inj-banner">
+      <i class="ph ph-bandaids"></i>
+      <span>Blessé${b.zone ? " (" + escHtml(b.zone) + ")" : ""} depuis ${spFmtJours(spInjuryLen(b))}</span>
+      <span class="m-spacer"></span>
+      ${b.end ? "" : `<button class="btn btn-ghost btn-sm" onclick="spHealInjury(${b.id})"><i class="ph ph-check"></i> Je suis guéri</button>`}
+      <button class="m-iconbtn" title="Modifier" onclick="spOpenInjury(${b.id})"><i class="ph ph-pencil-simple"></i></button>
+    </div>`).join("");
+}
+
+function spRenderInjuries() {
+  if (!SP) return;
+  const today = spDateISO(new Date());
+  const all  = spInjuries().slice().sort((a, b) => String(b.start).localeCompare(String(a.start)));
+  const cur  = all.filter(spInjuryOngoing);
+  const past = all.filter(b => !spInjuryOngoing(b));
+  const an = new Date().getFullYear();
+  const joursAn = spInjuryDays(an + "-01-01", an + "-12-31");
+  const nbAn = all.filter(b => spInjuryEnd(b) >= an + "-01-01" && b.start <= an + "-12-31").length;
+  const dernier = past.reduce((m, b) => b.end > m ? b.end : m, "");
+  const blesse = cur.some(b => b.start <= today);
+  const sans = blesse ? 0
+    : dernier ? Math.round((spParseISO(today) - spParseISO(dernier)) / 86400000) : null;
+
+  const kpis = document.getElementById("sp-inj-kpis");
+  if (kpis) kpis.innerHTML = `
+    <div class="mkpi accent"><span class="mkpi-lbl">Jours blessé en ${an}</span>
+      <span class="mkpi-val">${joursAn}</span>
+      <span class="mkpi-sub">${nbAn ? nbAn + " blessure" + (nbAn > 1 ? "s" : "") + " cette année" : "aucune cette année"}</span></div>
+    <div class="mkpi"><span class="mkpi-lbl">Sans blessure</span>
+      <span class="mkpi-val">${sans === null ? "—" : spFmtJours(sans)}</span>
+      <span class="mkpi-sub">${blesse ? "blessure en cours" : dernier ? "depuis le " + spFmtDayMonth(dernier) : "aucune blessure notée"}</span></div>
+    <div class="mkpi"><span class="mkpi-lbl">Blessures notées</span>
+      <span class="mkpi-val">${all.length}</span>
+      <span class="mkpi-sub">au total</span></div>`;
+
+  document.getElementById("sp-inj-cur").innerHTML = cur.length ? cur.map(spInjuryRow).join("")
+    : `<div class="m-empty">${pilouVide("joyeux")}Aucune blessure en cours. Si tu te blesses, clique sur « + Blessure ».</div>`;
+  document.getElementById("sp-inj-past").innerHTML = past.length ? past.map(spInjuryRow).join("")
+    : `<div class="m-empty">Rien ici pour l'instant.</div>`;
+}
+
 /* ── Statistiques ────────────────────────────────────────────────────────── */
 
 function spChangeStatsYear(d) { _spStatsYear += d; spRenderStats(); }
@@ -21254,11 +21508,12 @@ function spRenderStatsKpis() {
     : String(_spStatsYear - 1) + "-12-31" < debut ? "première année suivie" : null;
   const delta = (cur, prev, kind) => sansRef || spDelta(cur, prev, kind, ref);
   const { weeks, from, end, jan1 } = spMoyenneHebdo(_spStatsYear);
+  const jBlesse = spInjuryDays(_spStatsYear + "-01-01", _spStatsYear + "-12-31");
 
   box.innerHTML = `
     <div class="mkpi accent"><span class="mkpi-lbl">Heures de sport en ${_spStatsYear}</span>
       <span class="mkpi-val">${spFmtDur(t.min)}</span>
-      <span class="mkpi-sub">${delta(t.min, p.min, "dur")}</span></div>
+      <span class="mkpi-sub">${delta(t.min, p.min, "dur")}${jBlesse ? ` · <span class="sp-inj-txt"><i class="ph ph-bandaids"></i> ${spFmtJours(jBlesse)} blessé</span>` : ""}</span></div>
     <div class="mkpi"><span class="mkpi-lbl">Moyenne hebdo</span>
       <span class="mkpi-val">${spFmtDur(t.min / weeks)}</span>
       <span class="mkpi-sub">${from > end ? "avant le début du suivi"
@@ -21296,7 +21551,12 @@ function spRenderStatsCharts() {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false },
-                   tooltip: { callbacks: { label: ctx => spFmtNum(ctx.raw, 1) + " " + unitLbl } } },
+                   tooltip: { callbacks: { label: ctx => spFmtNum(ctx.raw, 1) + " " + unitLbl,
+                     afterLabel: ctx => {
+                       const j = spInjuryDays(spDateISO(new Date(_spStatsYear, ctx.dataIndex, 1)),
+                                              spDateISO(new Date(_spStatsYear, ctx.dataIndex + 1, 0)));
+                       return j ? spFmtJours(j) + " blessé" : "";
+                     } } } },
         scales: {
           x: { ticks: { color: txtColor, font: { size: 10 } }, grid: { display: false } },
           y: { ticks: { color: txtColor, callback: v => v + " " + unitLbl, font: { size: 10 } }, grid: { color: gridColor } }
@@ -21390,6 +21650,7 @@ function spRenderAll() {
   if (!SP) return;
   spRenderAgenda();
   spRenderGoals();
+  spRenderInjuries();
   spRenderStats();
   // Une séance peut s'ajouter depuis l'accueil : ses tuiles suivent tout de suite
   if (typeof dashRender === "function") dashRender();
@@ -21403,6 +21664,7 @@ async function spBootstrap() {
   if (typeof homeRender === "function") homeRender();
   spGoToday();
   spRenderGoals();
+  spRenderInjuries();
   spRenderStats();
 }
 
@@ -21412,10 +21674,11 @@ async function spBootstrap() {
   if (typeof _prev !== "function") return;
   window.goTab = function(n) {
     _prev.call(this, n);
-    if (n !== "sp-agenda" && n !== "sp-goals" && n !== "sp-stats") return;
+    if (n !== "sp-agenda" && n !== "sp-goals" && n !== "sp-injuries" && n !== "sp-stats") return;
     if (!_spBootstrapped) { spBootstrap(); return; }
     if (n === "sp-agenda") spRenderAgenda();
     if (n === "sp-goals")  spRenderGoals();
+    if (n === "sp-injuries") spRenderInjuries();
     if (n === "sp-stats")  spRenderStats();
   };
 })();
@@ -32255,6 +32518,8 @@ const PILOU_VISITE = {
       x: "Chaque séance dans l'agenda, avec ses sports à lui. Les heures se cumulent toutes seules." },
     { tab: "sp-goals", t: "Ses objectifs",
       x: "Des objectifs datés, et où il en est pour chacun." },
+    { tab: "sp-injuries", h: "inquiet", t: "Ses blessures",
+      x: "Quand il est blessé, il le note&nbsp;: les jours d'arrêt se voient dans l'agenda et expliquent les mois plus calmes." },
     { tab: "sp-stats", h: "pensif", t: "Ses statistiques",
       x: "Ses heures et ses distances, semaine après semaine." },
   ],
