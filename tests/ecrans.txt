@@ -11,11 +11,9 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.75 (15/11/2026) : blessures dans Sports. Brice n'en a pas : la ligne 2
-# lui en donne une en memoire seulement (rien n'est enregistre), commencee il y
-# a 3 jours : bandeau, jours teintes, jours blesse du mois, onglet Blessures.
-sp-agenda
-js:SP.injuries=[{id:9,start:spDateISO(new(Date)(Date.now()-3*864e5)),end:"",zone:"Genou"}],spRenderAll()
-sp-agenda 520
-sp-injuries
-js:spOpenInjury(null)
+# 4.4.76 (15/11/2026) : plus aucune boite du systeme. Ligne 1 : supprimer une
+# transaction ouvre la fenetre de Pilote ; ligne 2 : un champ manquant de la
+# position, bandeau ; ligne 3 : information a un seul bouton (restauration).
+js:goTab('tx'),delTx(S.transactions[0].id)
+js:document.querySelector('.ov.open').remove(),goTab('pos'),document.getElementById('f-ticker').value='',savePos()
+js:confirmer('Restauration',{ok:'Recharger',annuler:false,texte:'Fenetre_a_un_seul_bouton'})
