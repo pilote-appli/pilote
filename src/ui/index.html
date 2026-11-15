@@ -11172,6 +11172,40 @@ function demander(titre, valeur = "", opts = {}) {
   });
 }
 
+/* Fenêtre de confirmation de Pilote, à la place de confirm() (boîte du
+   système, titrée « 127.0.0.1:7438 indique »). Promesse : true si on
+   confirme, false si on annule (Annuler, Échap, clic à côté).
+   opts : texte (sous le titre), ok (libellé du bouton). Les autres confirm()
+   de l'app passent ici petit à petit (15/11/2026). */
+function confirmer(titre, opts = {}) {
+  return new Promise(resolve => {
+    const ov = document.createElement("div");
+    ov.className = "ov";
+    ov.innerHTML = `<div class="modal" style="max-width:420px"><h2>${escHtml(titre)}</h2>
+      ${opts.texte ? `<p style="white-space:pre-line;color:var(--txt2);font-size:13px;margin:0">${escHtml(opts.texte)}</p>` : ""}
+      <div class="mact"><button type="button" class="btn btn-ghost" data-r="0">Annuler</button>
+        <button type="button" class="btn btn-primary" data-r="1">${escHtml(opts.ok || "OK")}</button></div></div>`;
+    document.body.appendChild(ov);
+    const ok = ov.querySelector('[data-r="1"]');
+    let fini = false;
+    const fin = r => {
+      if (fini) return; fini = true;
+      ov.classList.remove("open");
+      setTimeout(() => ov.remove(), 0);
+      resolve(r);
+    };
+    ok.onclick = () => fin(true);
+    ov.querySelector('[data-r="0"]').onclick = () => fin(false);
+    ov.addEventListener("click", e => { if (e.target === ov) fin(false); });
+    ov.addEventListener("keydown", e => {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); fin(false); }
+    });
+    ov.style.zIndex = 9700;
+    ov.classList.add("open");
+    setTimeout(() => ok.focus(), 40);
+  });
+}
+
 function openOvTop(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -17140,13 +17174,13 @@ function _navEnregistrerOrdre(side) {
   _enregistrerUiPrefs();
 }
 
-function _hideSidebarItem(id) {
+async function _hideSidebarItem(id) {
   // Un clic à côté du nom suffisait à masquer l'onglet (retour d'une utilisatrice) :
   // on demande avant
   const _sec = _navSectionOf(id);
   const _nom = SIDEBAR_ITEMS.find(x => x.id === id)?.label || id;
-  if (!confirm("Masquer l'onglet « " + _nom + " »" + (_sec ? " de " + _sec.label : "") + " ?\n\n"
-             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
+  if (!(await confirmer("Masquer l'onglet « " + _nom + " »" + (_sec ? " de " + _sec.label : "") + " ?",
+        { texte: "Tu pourras le réafficher dans Paramètres, Masqués.", ok: "Masquer" }))) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenSidebar = S.uiPrefs.hiddenSidebar || [];
   if (!S.uiPrefs.hiddenSidebar.includes(id)) S.uiPrefs.hiddenSidebar.push(id);
@@ -17208,10 +17242,10 @@ function _applyHiddenCards() {
   });
 }
 
-function _hideCard(id) {
+async function _hideCard(id) {
   const _nom = CARD_ITEMS.find(x => x.id === id)?.label || id;
-  if (!confirm("Masquer le bloc « " + _nom + " » ?\n\n"
-             + "Tu pourras le réafficher dans Paramètres, Masqués.")) return;
+  if (!(await confirmer("Masquer le bloc « " + _nom + " » ?",
+        { texte: "Tu pourras le réafficher dans Paramètres, Masqués.", ok: "Masquer" }))) return;
   S.uiPrefs = S.uiPrefs || {};
   S.uiPrefs.hiddenCards = S.uiPrefs.hiddenCards || [];
   if (!S.uiPrefs.hiddenCards.includes(id)) S.uiPrefs.hiddenCards.push(id);
