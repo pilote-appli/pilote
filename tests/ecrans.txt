@@ -11,8 +11,9 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# Site public (15/11/2026) : captures de la page Mac en fuchsia, sur les
-# donnees de Brice : PEA en clair, Sante puis Accueil en sombre (en memoire).
-dash
-js:applyTheme('dark'),goTab('sa-suivi')
-js:goTab('home')
+# 4.4.76 (15/11/2026) : plus aucune boite du systeme. Ligne 1 : supprimer une
+# transaction ouvre la fenetre de Pilote ; ligne 2 : un champ manquant de la
+# position, bandeau ; ligne 3 : information a un seul bouton (restauration).
+js:goTab('tx'),delTx(S.transactions[0].id)
+js:document.querySelector('.ov.open').remove(),goTab('pos'),document.getElementById('f-ticker').value='',savePos()
+js:confirmer('Restauration',{ok:'Recharger',annuler:false,texte:'Fenetre_a_un_seul_bouton'})

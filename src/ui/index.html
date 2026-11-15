@@ -7001,8 +7001,8 @@ function flash() {
   setTimeout(() => b.classList.remove("show"), 1600);
 }
 
-function resetDef(ask) {
-  if (ask && !confirm("Réinitialiser ? Toutes les données seront effacées.")) return;
+async function resetDef(ask) {
+  if (ask && !(await confirmer("Tout réinitialiser ?", { texte: "Toutes les données seront effacées.", ok: "Réinitialiser" }))) return;
   pushUndo();   // Retour peut annuler la réinitialisation
   // Les réglages (thème, tuiles, pense-bête, compositions d'ETF saisies à la
   // main, ordre de la barre latérale…) vivent dans S.uiPrefs : ils ne font pas
@@ -8164,7 +8164,7 @@ function setPerfRange(range) {
 
 /* Reset Performance : enleve les benchmarks coches + remet plage MAX */
 async function resetPerf() {
-  if (!confirm("Réinitialiser le graphique Performance (benchmarks + plage) ?")) return;
+  if (!(await confirmer("Réinitialiser le graphique Performance ?", { texte: "Les indices de comparaison et la plage reviennent au réglage de départ.", ok: "Réinitialiser" }))) return;
   _benchEnabled = {cac40: false, sp500: false, world: false};
   document.querySelectorAll('#perf-bench-toggles input[type="checkbox"]').forEach(cb => cb.checked = false);
   S.uiPrefs = S.uiPrefs || {};
@@ -8826,8 +8826,8 @@ function saveDivFuture() {
   const ppa     = parseFloat(document.getElementById("df-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("df-montant").value||"");
   const note    = document.getElementById("df-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant estimé requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant estimé requis", "warn");
   if (!S.divFuture) S.divFuture=[];
   if (!NID.divf) NID.divf=10;
   pushUndo();
@@ -8842,8 +8842,8 @@ function saveEditDivFuture(id) {
   const ppa     = parseFloat(document.getElementById("df-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("df-montant").value||"");
   const note    = document.getElementById("df-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant estimé requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant estimé requis", "warn");
   const idx=(S.divFuture||[]).findIndex(x=>x.id===id);
   if (idx<0) return;
   pushUndo();
@@ -8851,8 +8851,8 @@ function saveEditDivFuture(id) {
   persist(); closeOv("ov-divf"); renderDividends(); renderMetrics();
 }
 function editDivFuture(id) { openAddDivFuture(id); }
-function delDivFuture(id) {
-  if (!confirm("Supprimer cet estimatif ?")) return;
+async function delDivFuture(id) {
+  if (!(await confirmer("Supprimer cet estimatif ?", { ok: "Supprimer" }))) return;
   pushUndo();
   S.divFuture=(S.divFuture||[]).filter(d=>d.id!==id);
   persist(); renderDividends(); renderMetrics();
@@ -8912,8 +8912,8 @@ function saveDiv() {
   const ppa     = parseFloat(document.getElementById("dv-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("dv-montant").value||"");
   const note    = document.getElementById("dv-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant requis", "warn");
   if (!S.divReceived) S.divReceived=[];
   if (!NID.div) NID.div=10;
   pushUndo();
@@ -8956,8 +8956,8 @@ function saveEditDiv(id) {
   const ppa     = parseFloat(document.getElementById("dv-ppa").value||"")||null;
   const montant = parseFloat(document.getElementById("dv-montant").value||"");
   const note    = document.getElementById("dv-note").value.trim();
-  if (!date||!ticker) return alert("Date et actif requis.");
-  if (isNaN(montant)||montant<=0) return alert("Montant requis.");
+  if (!date||!ticker) return showToastModern("Date et actif requis", "warn");
+  if (isNaN(montant)||montant<=0) return showToastModern("Montant requis", "warn");
   const idx = (S.divReceived||[]).findIndex(x=>x.id===id);
   if (idx<0) return;
   pushUndo();
@@ -9958,11 +9958,11 @@ function expoEdSave() {
   expoRender();
   showToastModern("Composition de " + expoCle(_expoEdTicker) + " enregistrée", "ok");
 }
-function expoAnnulerPerso(id) {
+async function expoAnnulerPerso(id) {
   const p = (S.positions || []).find(x => x.id === id);
   const ticker = p ? p.ticker : _expoEdTicker;
   if (!ticker || !(S.uiPrefs && S.uiPrefs.expoPerso && S.uiPrefs.expoPerso[ticker])) return;
-  if (!confirm("Effacer ta composition de " + expoCle(ticker) + " et revenir aux données téléchargées ?")) return;
+  if (!(await confirmer("Effacer ta composition de " + expoCle(ticker) + " ?", { texte: "Pilote reprendra les données téléchargées.", ok: "Effacer" }))) return;
   delete S.uiPrefs.expoPerso[ticker];
   if (window.pywebview && window.pywebview.api && window.pywebview.api.save_ui_prefs)
     window.pywebview.api.save_ui_prefs(S.uiPrefs).catch(() => {});
@@ -11010,8 +11010,8 @@ function _restoreSimulators() {
 }
 
 /* Reset : remet aux valeurs par defaut */
-function resetSimulators() {
-  if (!confirm("Réinitialiser tous les simulateurs ?")) return;
+async function resetSimulators() {
+  if (!(await confirmer("Réinitialiser tous les simulateurs ?", { ok: "Réinitialiser" }))) return;
   const defaults = {
     "sim-dca-start": "0",     "sim-dca-amt": "200", "sim-dca-years": "20", "sim-dca-rate": "7",
     "sim-goal-start": "0",    "sim-goal-amt": "100000", "sim-goal-month": "200", "sim-goal-rate": "7",
@@ -11245,15 +11245,17 @@ function demander(titre, valeur = "", opts = {}) {
 /* Fenêtre de confirmation de Pilote, à la place de confirm() (boîte du
    système, titrée « 127.0.0.1:7438 indique »). Promesse : true si on
    confirme, false si on annule (Annuler, Échap, clic à côté).
-   opts : texte (sous le titre), ok (libellé du bouton). Les autres confirm()
-   de l'app passent ici petit à petit (15/11/2026). */
+   opts : texte (sous le titre), ok (libellé du bouton), annuler (libellé de
+   l'autre bouton, « Annuler » par défaut ; false : pas d'autre bouton, pour
+   une simple information). Plus aucun confirm() ni alert() dans l'app
+   depuis le 15/11/2026. */
 function confirmer(titre, opts = {}) {
   return new Promise(resolve => {
     const ov = document.createElement("div");
     ov.className = "ov";
     ov.innerHTML = `<div class="modal" style="max-width:420px"><h2>${escHtml(titre)}</h2>
       ${opts.texte ? `<p style="white-space:pre-line;color:var(--txt2);font-size:13px;margin:0">${escHtml(opts.texte)}</p>` : ""}
-      <div class="mact"><button type="button" class="btn btn-ghost" data-r="0">Annuler</button>
+      <div class="mact">${opts.annuler === false ? "" : `<button type="button" class="btn btn-ghost" data-r="0">${escHtml(opts.annuler || "Annuler")}</button>`}
         <button type="button" class="btn btn-primary" data-r="1">${escHtml(opts.ok || "OK")}</button></div></div>`;
     document.body.appendChild(ov);
     const ok = ov.querySelector('[data-r="1"]');
@@ -11265,7 +11267,8 @@ function confirmer(titre, opts = {}) {
       resolve(r);
     };
     ok.onclick = () => fin(true);
-    ov.querySelector('[data-r="0"]').onclick = () => fin(false);
+    const non = ov.querySelector('[data-r="0"]');
+    if (non) non.onclick = () => fin(false);
     ov.addEventListener("click", e => { if (e.target === ov) fin(false); });
     ov.addEventListener("keydown", e => {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); fin(false); }
@@ -11542,19 +11545,19 @@ function updatePosRecap() {
 
 function savePos() {
   const tickerRaw = document.getElementById("f-ticker").value.trim();
-  if (!tickerRaw) return alert("Ticker requis (ex : EPA:AIR).");
+  if (!tickerRaw) return showToastModern("Ticker requis (ex : EPA:AIR)", "warn");
   const ticker = normalizeTicker(tickerRaw.toUpperCase());
-  if (!ticker) return alert("Ticker invalide.");
+  if (!ticker) return showToastModern("Ticker invalide", "warn");
   const name   = document.getElementById("f-name").value.trim();
   const prix   = parseFloat(document.getElementById("f-prix").value||"");
   const qty    = parseFloat(document.getElementById("f-qty").value||"");
   const frais  = parseFloat(document.getElementById("f-frais").value||"")||0;
   const date   = document.getElementById("f-date").value;
   const existingPos = S.positions.find(p => p.ticker === ticker);
-  if (!name && !existingPos) return alert("Nom requis pour un nouvel actif.");
-  if (isNaN(prix)||prix<=0) return alert("Prix d’achat requis.");
-  if (isNaN(qty)||qty<=0)   return alert("Quantité requise.");
-  if (!date) return alert("Date requise.");
+  if (!name && !existingPos) return showToastModern("Nom requis pour un nouvel actif", "warn");
+  if (isNaN(prix)||prix<=0) return showToastModern("Prix d’achat requis", "warn");
+  if (isNaN(qty)||qty<=0)   return showToastModern("Quantité requise", "warn");
+  if (!date) return showToastModern("Date requise", "warn");
   const pret = document.getElementById("f-pret").checked;
   const pretMt = pret ? prLireMontantPret("f-pret-mt", brutOrdre({qty, cours: prix}) + frais) : undefined;
   if (pretMt === null) return;
@@ -11649,9 +11652,9 @@ function saveEditPos(id) {
 }
 
 
-function delPos(id) {
+async function delPos(id) {
   const p = S.positions.find(x=>x.id===id);
-  if (!confirm("Supprimer la position " + (p?p.name:id) + " ? (les transactions restent)")) return;
+  if (!(await confirmer("Supprimer la position " + (p?p.name:id) + " ?", { texte: "Ses transactions restent.", ok: "Supprimer" }))) return;
   pushUndo();
   S.positions = S.positions.filter(p=>p.id!==id);
   persist(); renderPositions();
@@ -11796,8 +11799,8 @@ function saveEditTx(id) {
   persist(); closeOv("ov-tx"); renderPositions(); renderTx();
   if (document.getElementById("pane-dash")?.classList.contains("active")) renderPerf();
 }
-function delTx(id) {
-  if (!confirm("Supprimer cette transaction ?")) return;
+async function delTx(id) {
+  if (!(await confirmer("Supprimer cette transaction ?", { ok: "Supprimer" }))) return;
   pushUndo(); S.transactions=S.transactions.filter(t=>t.id!==id); persist(); renderPositions(); renderTx();
 }
 
@@ -12140,7 +12143,7 @@ async function saveUserModal() {
   renderUsersList();
   _renderUserPill();
   if (!_userEditingSlug && r.slug) {
-    if (confirm("Utilisateur \u00ab\u00a0" + label + "\u00a0\u00bb cr\u00e9\u00e9.\nBasculer dessus maintenant ?")) {
+    if (await confirmer("Basculer sur « " + label + " » ?", { texte: "L'utilisateur est créé.", ok: "Basculer", annuler: "Plus tard" })) {
       switchUser(r.slug);
       return;
     }
@@ -12153,11 +12156,11 @@ async function deleteUserFromModal() {
   const api = (window.pywebview && window.pywebview.api) || null;
   if (!api) return;
   const dernier = !USERS_STATE || USERS_STATE.users.length <= 1;
-  if (!confirm(dernier
-      ? "C'est le seul utilisateur : Pilote repartira de z\u00e9ro avec un utilisateur vierge \u00ab Moi \u00bb.\n\n"
-        + "Ses donn\u00e9es partent dans le dossier Donnees/corbeille/ et peuvent \u00eatre r\u00e9cup\u00e9r\u00e9es \u00e0 la main."
-      : "Retirer cet utilisateur de la liste ?\n\nSes donn\u00e9es restent sur le disque "
-        + "(dossier Donnees/users/) et peuvent \u00eatre r\u00e9cup\u00e9r\u00e9es \u00e0 la main.")) return;
+  if (!(await confirmer(dernier ? "Supprimer le seul utilisateur ?" : "Retirer cet utilisateur de la liste ?", dernier
+      ? { ok: "Supprimer", texte: "Pilote repartira de zéro avec un utilisateur vierge « Moi ».\n\n"
+        + "Ses données partent dans le dossier Donnees/corbeille/ et peuvent être récupérées à la main." }
+      : { ok: "Retirer", texte: "Ses données restent sur le disque "
+        + "(dossier Donnees/users/) et peuvent être récupérées à la main." }))) return;
   const wasActive = USERS_STATE && USERS_STATE.active === _userEditingSlug;
   if (wasActive) await _gelerEnregistrements();   // même raison que switchUser
   const r = await api.delete_user(_userEditingSlug);
@@ -12184,10 +12187,10 @@ async function effacerDonneesUtilisateur() {
   if (!state) return;
   const u = state.users.find(x => x.slug === state.active);
   const nom = u ? u.label : "cet utilisateur";
-  if (!confirm("Effacer toutes les données de « " + nom + " » ?\n\n"
-             + "PEA, comptes-titres, comptes, sport, santé, prêt, patrimoine : tout repart de zéro. "
+  if (!(await confirmer("Effacer toutes les données de « " + nom + " » ?", { ok: "Tout effacer", texte:
+               "PEA, comptes-titres, comptes, sport, santé, prêt, patrimoine : tout repart de zéro. "
              + "Le nom et le code PIN sont gardés.\n\n"
-             + "Une copie part dans le dossier Donnees/corbeille/ et peut être récupérée à la main.")) return;
+             + "Une copie part dans le dossier Donnees/corbeille/ et peut être récupérée à la main." }))) return;
   await _gelerEnregistrements();   // rien ne doit réécrire les anciennes données
   const r = await api.wipe_user_data(state.active);
   if (!r || !r.ok) {
@@ -12372,7 +12375,7 @@ async function _rapportImprimer(frame, html, nom) {
     // Imprime UNIQUEMENT le contenu de l'iframe (popup d'impression Windows)
     frame.contentWindow.focus();
     frame.contentWindow.print();
-  } catch(e) { alert("Erreur d'impression : " + e.message); }
+  } catch(e) { showToastModern("Erreur d'impression : " + e.message, "err"); }
 }
 
 /* ─── Helpers PIN OTP (4 cases separees) ─── */
@@ -12419,7 +12422,7 @@ function clearPinDigits() {
 }
 
 async function disablePinNow() {
-  if (!confirm("Désactiver le code PIN ? Il ne sera plus demandé à l'ouverture.")) return;
+  if (!(await confirmer("Désactiver le code PIN ?", { texte: "Il ne sera plus demandé à l'ouverture.", ok: "Désactiver" }))) return;
   const cur = await _askCurrentPin();
   if (cur === null) return;
   const ok = await _setPinServer("", null, cur);
@@ -13932,8 +13935,8 @@ async function svDefinirMotDePasse(changer) {
 
 async function svRetirerChiffrement() {
   if (!window.pywebview || !pywebview.api || !pywebview.api.sauvegarde_retirer_chiffrement) return;
-  if (!confirm("Ne plus chiffrer les sauvegardes ?\n\nLes prochaines archives seront lisibles par qui a la clé "
-             + "ou accès au dossier en ligne. Les archives déjà chiffrées gardent leur mot de passe.")) return;
+  if (!(await confirmer("Ne plus chiffrer les sauvegardes ?", { ok: "Ne plus chiffrer", texte: "Les prochaines archives seront lisibles par qui a la clé "
+             + "ou accès au dossier en ligne. Les archives déjà chiffrées gardent leur mot de passe." }))) return;
   const st = await pywebview.api.sauvegarde_retirer_chiffrement();
   if (st && st.ok) { showToastModern("Sauvegardes de nouveau en clair", "warn"); SV_STATE = st; svRefresh(); }
   else showToastModern((st && st.error) || "Échec", "err");
@@ -14043,11 +14046,11 @@ async function svOpenFolder() {
 
 async function svRestore(path, when) {
   if (!window.pywebview || !pywebview.api) return;
-  if (!confirm("Restaurer la sauvegarde du " + when + " ?\n\n"
-             + "Les fichiers actuels seront écrasés par ceux de l'archive, "
+  if (!(await confirmer("Restaurer la sauvegarde du " + when + " ?", { ok: "Restaurer", texte:
+               "Les fichiers actuels seront écrasés par ceux de l'archive, "
              + "pour TOUS les utilisateurs.\n"
              + "Une archive de sécurité de l'état actuel sera créée avant.\n\n"
-             + "L'application se rechargera ensuite.")) return;
+             + "L'application se rechargera ensuite." }))) return;
   // Une écriture en attente passerait sinon PAR-DESSUS les fichiers restaurés
   await _gelerEnregistrements();
   try {
@@ -14061,15 +14064,16 @@ async function svRestore(path, when) {
       res = await pywebview.api.sauvegarde_restore(path, mdp);
     }
     if (res && res.ok) {
-      alert("Restauration terminée : " + res.files + " fichiers.\n\n"
-          + (res.safety ? "État précédent conservé ici :\n" + res.safety + "\n\n" : "")
-          + "L'application va se recharger.");
+      await confirmer("Restauration terminée : " + res.files + " fichiers", { ok: "Recharger", annuler: false, texte:
+            (res.safety ? "État précédent conservé ici :\n" + res.safety + "\n\n" : "")
+          + "L'application va se recharger." });
       location.reload();
     } else if (res && res.safety) {
       // Échec en cours de route : une partie des fichiers est déjà restaurée.
       // Dégeler laisserait l'état en mémoire réécrire par-dessus : on recharge.
-      alert("La restauration s'est arrêtée en route : " + (res.error || "") + "\n\n"
-          + "L'état d'avant est conservé ici :\n" + res.safety + "\n\nL'application va se recharger.");
+      await confirmer("La restauration s'est arrêtée en route", { ok: "Recharger", annuler: false, texte:
+            (res.error ? res.error + "\n\n" : "")
+          + "L'état d'avant est conservé ici :\n" + res.safety + "\n\nL'application va se recharger." });
       location.reload();
     } else {
       _degelerEnregistrements();
@@ -15046,8 +15050,8 @@ function saveEditRule(id) {
   persist(); closeOv("ov-rule"); renderStrat();
 }
 
-function delRule(id) {
-  if (!confirm("Supprimer cette règle ?")) return;
+async function delRule(id) {
+  if (!(await confirmer("Supprimer cette règle ?", { ok: "Supprimer" }))) return;
   pushUndo();
   S.strategies = (S.strategies||[]).filter(r => r.id !== id);
   persist(); renderStrat();
@@ -16250,35 +16254,35 @@ function soSetNom(v)     { _soEd.nom = v; }
 function soSetBudget(v)  { _soBudget = (v === "" || v == null) ? null : Math.max(0, pacNum(v) || 0); soRender(); }
 function soSetGratuit(c) { _soGratuit = !!c; soRender(); }
 
-function soNouveau() {
-  if (soModifie() && !confirm("Effacer les ordres en cours ? Ils ne sont pas enregistrés.")) return;
+async function soNouveau() {
+  if (soModifie() && !(await confirmer("Effacer les ordres en cours ?", { texte: "Ils ne sont pas enregistrés.", ok: "Effacer" }))) return;
   soCharger({ id: null, nom: "", lignes: [] });
 }
-function soDepuisPlan() {
+async function soDepuisPlan() {
   const p = soPlanLignes();
   if (p.erreur) { showToastModern(p.erreur, "warn"); return; }
   if (!p.lignes.length) { showToastModern("Le plan proposé ne contient aucun ordre avec ce budget", "warn"); return; }
-  if (soModifie() && !confirm("Remplacer les ordres en cours par le plan proposé ?")) return;
+  if (soModifie() && !(await confirmer("Remplacer les ordres en cours par le plan proposé ?", { ok: "Remplacer" }))) return;
   soCharger({ id: null, nom: "", lignes: p.lignes });
   showToastModern("Plan proposé chargé : modifie-le, puis donne-lui un nom pour l'enregistrer", "info");
 }
-function soOuvrir(id) {
+async function soOuvrir(id) {
   if (id === "plan") { soDepuisPlan(); return; }
   const a = SO_AUTO.find(x => x.id === id);
   if (a) {
     const lignes = a.f();
     if (!lignes || !lignes.length) { showToastModern("Aucun ordre possible avec ce budget", "warn"); return; }
-    if (soModifie() && !confirm("Remplacer les ordres en cours par « " + a.nom + " » ?")) return;
+    if (soModifie() && !(await confirmer("Remplacer les ordres en cours par « " + a.nom + " » ?", { ok: "Remplacer" }))) return;
     soCharger({ id: null, nom: "", lignes });
     return;
   }
   const s = soScenarios().find(x => x.id === id);
   if (!s) return;
   if (s.budget != null) _soBudget = s.budget;
-  if (_soEd.id !== id && soModifie() && !confirm("Remplacer les ordres en cours par « " + s.nom + " » ?")) return;
+  if (_soEd.id !== id && soModifie() && !(await confirmer("Remplacer les ordres en cours par « " + s.nom + " » ?", { ok: "Remplacer" }))) return;
   soCharger({ id: s.id, nom: s.nom, lignes: s.lignes.map(l => ({...l})) });
 }
-function soEnregistrer() {
+async function soEnregistrer() {
   const nom = (_soEd.nom || "").trim();
   if (!nom) {
     showToastModern("Donne un nom au scénario", "warn");
@@ -16292,7 +16296,7 @@ function soEnregistrer() {
   if (!lignes.length) { showToastModern("Aucun ordre à enregistrer : saisis au moins une quantité", "warn"); return; }
   const liste = soScenarios().slice();
   const homonyme = liste.find(s => s.nom.toLowerCase() === nom.toLowerCase() && s.id !== _soEd.id);
-  if (homonyme && !confirm("Un scénario « " + homonyme.nom + " » existe déjà. Le remplacer ?")) return;
+  if (homonyme && !(await confirmer("Remplacer le scénario « " + homonyme.nom + " » ?", { texte: "Un scénario porte déjà ce nom.", ok: "Remplacer" }))) return;
   const id = homonyme ? homonyme.id : (liste.some(s => s.id === _soEd.id) ? _soEd.id : "so" + Date.now());
   const i = liste.findIndex(s => s.id === id);
   const sc = { id, nom, lignes, budget: soBudget() };
@@ -16303,9 +16307,9 @@ function soEnregistrer() {
   showToastModern("Scénario « " + nom + " » enregistré", "ok");
   soRender();
 }
-function soSupprScen(id) {
+async function soSupprScen(id) {
   const s = soScenarios().find(x => x.id === id);
-  if (!s || !confirm("Supprimer le scénario « " + s.nom + " » ?")) return;
+  if (!s || !(await confirmer("Supprimer le scénario « " + s.nom + " » ?", { ok: "Supprimer" }))) return;
   soSaveScenarios(soScenarios().filter(x => x.id !== id));
   if (_soEd.id === id) _soEd.id = null;
   _soHorsComparaison.delete(id);
@@ -16686,8 +16690,8 @@ function soHistorique() {
   const c = _cptPrefs().simOrdres;
   return (c && Array.isArray(c.historique)) ? c.historique : [];
 }
-function soSupprHist(id) {
-  if (!confirm("Retirer ce passage de l'historique ? Les achats restent dans Transactions.")) return;
+async function soSupprHist(id) {
+  if (!(await confirmer("Retirer ce passage de l'historique ?", { texte: "Les achats restent dans Transactions.", ok: "Retirer" }))) return;
   pushUndo();
   const pr = _cptPrefs();
   const so = pr.simOrdres || {};
@@ -17487,7 +17491,7 @@ async function doImportDialog() {
   if (!(window.pywebview && window.pywebview.api)) {
     showToastModern("Import indisponible hors de l'app", "warn"); return;
   }
-  if (!confirm("Importer remplacera tes données actuelles. Une sauvegarde de l'état actuel sera faite avant. Continuer ?")) return;
+  if (!(await confirmer("Remplacer tes données par l'import ?", { texte: "Une sauvegarde de l'état actuel sera faite avant.", ok: "Importer" }))) return;
   await _gelerEnregistrements();   // rien ne doit réécrire l'ancien PEA par-dessus l'import
   const r = await window.pywebview.api.import_dialog();
   if (r && r.ok) {
@@ -19113,8 +19117,8 @@ function finSaveTx() {
   if (pareil) finProposerPareil(pareil);
 }
 
-function finDeleteTx(id) {
-  if (!confirm("Supprimer cette transaction ?")) return;
+async function finDeleteTx(id) {
+  if (!(await confirmer("Supprimer cette transaction ?", { ok: "Supprimer" }))) return;
   F.transactions = F.transactions.filter(t => t.id !== id);
   finPersist();
   finRenderAll();
@@ -19749,7 +19753,7 @@ function finAddCategory() {
 async function finDeleteCat(id) {
   const c = finCatById(id); if (!c) return;
   if (!finIsCatUsed(id)) {
-    if (!confirm("Supprimer cette catégorie ?")) return;
+    if (!(await confirmer("Supprimer cette catégorie ?", { ok: "Supprimer" }))) return;
     F.categories = F.categories.filter(x => x.id !== id);
     finPersist(); finRenderCatsList(); finRefreshFilters(); finRenderAll();
     return;
@@ -19817,7 +19821,7 @@ async function finRenameSub(catId, subId) {
 async function finDeleteSub(catId, subId) {
   const c = finCatById(catId), s = finSubById(catId, subId); if (!c || !s) return;
   if (!finIsSubUsed(catId, subId)) {
-    if (!confirm("Supprimer cette sous-catégorie ?")) return;
+    if (!(await confirmer("Supprimer cette sous-catégorie ?", { ok: "Supprimer" }))) return;
     c.subs = (c.subs || []).filter(x => x.id !== subId);
     finPersist(); finRenderCatsList();
     return;
@@ -20062,9 +20066,9 @@ async function finSelDate() {
   finApresLot(txs.length + " transaction" + (txs.length > 1 ? "s" : "") + (mode === "jour" ? " mise" + (txs.length > 1 ? "s " : " ") : " décalée" + (txs.length > 1 ? "s " : " ")) + ou, snap);
 }
 
-function finSelSupprimer() {
+async function finSelSupprimer() {
   const txs = finSelTxs(); if (!txs.length) return;
-  if (!confirm("Supprimer " + txs.length + " transaction" + (txs.length > 1 ? "s" : "") + " ?")) return;
+  if (!(await confirmer("Supprimer " + txs.length + " transaction" + (txs.length > 1 ? "s" : "") + " ?", { ok: "Supprimer" }))) return;
   const snap = finSnapshot();
   const ids = new Set(txs.map(t => t.id));
   F.transactions = F.transactions.filter(t => !ids.has(t.id));
@@ -20132,9 +20136,9 @@ async function finRenameSrc(id) {
   s.name = v.trim();
   finPersist(); finRenderSrcsList(); finRefreshFilters(); finRenderAll();
 }
-function finDeleteSrc(id) {
+async function finDeleteSrc(id) {
   if (finIsSrcUsed(id)) { showToastModern("Cette source sert encore : change d'abord celle de ses transactions et récurrents.", "err"); return; }
-  if (!confirm("Supprimer cette source ?")) return;
+  if (!(await confirmer("Supprimer cette source ?", { ok: "Supprimer" }))) return;
   F.sources = F.sources.filter(s => s.id !== id);
   finPersist(); finRenderSrcsList(); finRefreshFilters();
 }
@@ -20271,9 +20275,9 @@ function finSaveRec() {
   showToastModern(_finEditingRecId ? "Récurrent modifié" : "Récurrent ajouté", "ok");
   _finEditingRecId = null;
 }
-function finDeleteRec() {
+async function finDeleteRec() {
   if (!_finEditingRecId) return;
-  if (!confirm("Supprimer ce récurrent ?\n(Les transactions déjà créées restent dans l'historique.)")) return;
+  if (!(await confirmer("Supprimer ce récurrent ?", { texte: "Les transactions déjà créées restent dans l'historique.", ok: "Supprimer" }))) return;
   F.recurrences = F.recurrences.filter(r => r.id !== _finEditingRecId);
   closeOv("ov-fin-rec-edit");
   finPersist();
@@ -20685,7 +20689,7 @@ function spOpenDay(iso) {
 }
 
 async function spQuickDelete(id, iso) {
-  if (!confirm("Supprimer cette séance ?")) return;
+  if (!(await confirmer("Supprimer cette séance ?", { ok: "Supprimer" }))) return;
   SP.sessions = spSessions().filter(x => x.id !== id);
   await spPersist();
   spRenderAll();
@@ -20838,7 +20842,7 @@ async function spDeleteCustomSport(id) {
     showToastModern("Impossible : " + used + " s\u00e9ance" + (used > 1 ? "s utilisent" : " utilise") + " ce sport", "err");
     return;
   }
-  if (!confirm("Supprimer ce sport ?")) return;
+  if (!(await confirmer("Supprimer ce sport ?", { ok: "Supprimer" }))) return;
   SP.customSports = spCustomSports().filter(x => x.id !== id);
   if (_spSport === id) _spSport = "course";
   spRebuildCatalog();
@@ -20984,7 +20988,7 @@ async function spSaveSession() {
 
 async function spDeleteSession() {
   if (!_spEditingId) return;
-  if (!confirm("Supprimer cette séance ?")) return;
+  if (!(await confirmer("Supprimer cette séance ?", { ok: "Supprimer" }))) return;
   SP.sessions = spSessions().filter(x => x.id !== _spEditingId);
   await spPersist();
   closeOv("ov-sp-session");
@@ -21045,10 +21049,8 @@ async function spRenameRoutine(id) {
 
 async function spDeleteRoutine(id) {
   const used = spSessions().filter(s => String(s.routineId) === String(id)).length;
-  const msg = used
-    ? `Cette routine est utilisée par ${used} séance${used > 1 ? "s" : ""}. La supprimer ?`
-    : "Supprimer cette routine ?";
-  if (!confirm(msg)) return;
+  if (!(await confirmer("Supprimer cette routine ?", { ok: "Supprimer",
+    texte: used ? `Elle est utilisée par ${used} séance${used > 1 ? "s" : ""}.` : "" }))) return;
   SP.routines = spRoutines().filter(x => x.id !== id);
   spSessions().forEach(s => { if (String(s.routineId) === String(id)) s.routineId = null; });
   await spPersist();
@@ -21115,7 +21117,7 @@ async function spRenameSubtype(i) {
 
 async function spDeleteSubtype(i) {
   const list = spSubtypes(_spSport);
-  if (!confirm(`Supprimer le type « ${list[i]} » ?`)) return;
+  if (!(await confirmer(`Supprimer le type « ${list[i]} » ?`, { ok: "Supprimer" }))) return;
   list.splice(i, 1);
   await spPersist();
   spRenderSubtypes();
@@ -21185,7 +21187,7 @@ async function spSaveGoal() {
 
 async function spDeleteGoal() {
   if (!_spEditingGoal) return;
-  if (!confirm("Supprimer cet objectif ?")) return;
+  if (!(await confirmer("Supprimer cet objectif ?", { ok: "Supprimer" }))) return;
   SP.goals = spGoals().filter(x => x.id !== _spEditingGoal);
   await spPersist();
   closeOv("ov-sp-goal");
@@ -22851,7 +22853,7 @@ async function prDeleteAvContrat(id) {
   const c = prAvContrat(id);
   if (!c) return;
   const n = (c.depots || []).length;
-  if (!confirm(`Supprimer « ${c.label} »${n ? ` et ses ${n} dépôt${n > 1 ? "s" : ""}` : ""} ?`)) return;
+  if (!(await confirmer(`Supprimer « ${c.label} »${n ? ` et ses ${n} dépôt${n > 1 ? "s" : ""}` : ""} ?`, { ok: "Supprimer" }))) return;
   prPushUndo();
   PR.av.contrats = prAvContrats().filter(x => String(x.id) !== String(id));
   await prSave("Contrat supprimé");
@@ -22876,7 +22878,7 @@ function prAvTauxModal(cid, annee) {
 
 async function prDeleteAvTaux(cid, annee) {
   const c = prAvContrat(cid);
-  if (!c || !confirm("Supprimer ce taux ?")) return;
+  if (!c || !(await confirmer("Supprimer ce taux ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   c.taux_annuels = (c.taux_annuels || []).filter(x => prN(x.annee) !== prN(annee));
   await prSave("Taux supprimé");
@@ -22903,7 +22905,7 @@ function prAvDepotModal(cid, id) {
 
 async function prDeleteAvDepot(cid, id) {
   const c = prAvContrat(cid);
-  if (!c || !confirm("Supprimer ce dépôt ?")) return;
+  if (!c || !(await confirmer("Supprimer ce dépôt ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   c.depots = (c.depots || []).filter(x => String(x.id) !== String(id));
   await prSave("Dépôt supprimé");
@@ -23053,7 +23055,7 @@ function prPalierModal(recId) {
 
 async function prDelPalier(recId, palierId) {
   const r = (PR.frais_recurrents || []).find(x => x.id === recId);
-  if (!r || !confirm("Supprimer ce changement de montant ?")) return;
+  if (!r || !(await confirmer("Supprimer ce changement de montant ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   r.paliers = (r.paliers || []).filter(p => p.id !== palierId);
   await prSave("Changement de montant supprimé");
@@ -23085,7 +23087,7 @@ function prFraisRembModal(id, recId) {
 /* ── Suppression ─────────────────────────────────────────────────────────── */
 
 async function prDelete(kind, id) {
-  if (!confirm("Supprimer cette ligne ?")) return;
+  if (!(await confirmer("Supprimer cette ligne ?", { ok: "Supprimer" }))) return;
   prPushUndo();
   const rm = arr => (arr || []).filter(x => String(x.id) !== String(id));
   switch (kind) {
@@ -23939,8 +23941,7 @@ async function saSaveImport() {
   if (!Object.keys(vals).length) { showToastModern("Aucune valeur à enregistrer", "warn"); return; }
 
   const doublon = saMesures().find(m => m.date === date);
-  if (doublon && !confirm("Une pesée existe déjà au " + date
-      + ".\n\nEnregistrer quand même une seconde pesée ce jour-là ?")) return;
+  if (doublon && !(await confirmer("Enregistrer une seconde pesée ce jour-là ?", { texte: "Une pesée existe déjà au " + date + ".", ok: "Enregistrer" }))) return;
 
   const mesure = Object.assign({
     id: saNextId("mesure"),
@@ -24002,7 +24003,7 @@ async function saSaveMesure() {
 
 async function saDeleteMesure() {
   if (!_saEditId) return;
-  if (!confirm("Supprimer cette pesée ?")) return;
+  if (!(await confirmer("Supprimer cette pesée ?", { ok: "Supprimer" }))) return;
   SA.mesures = SA.mesures.filter(x => x.id !== _saEditId);
   if (await saSave()) {
     closeOv("ov-sa-mesure");
@@ -24131,7 +24132,7 @@ async function saSaveGoal() {
 
 async function saDeleteGoal() {
   if (!_saGoalId) return;
-  if (!confirm("Supprimer cet objectif ?")) return;
+  if (!(await confirmer("Supprimer cet objectif ?", { ok: "Supprimer" }))) return;
   SA.goals = SA.goals.filter(x => x.id !== _saGoalId);
   if (await saSave()) {
     closeOv("ov-sa-goal");
@@ -24724,9 +24725,9 @@ async function paDeleteCompte() {
   const credit = PA.comptes.some(x => x.bien === _paEditCpt);
   // Clôturer garde l'historique : supprimer efface aussi les relevés passés et
   // change toute la courbe du patrimoine (FIN-16)
-  if (n && confirm("Clôturer ce compte plutôt que le supprimer ?\n\nClôturer garde ses " + n
-      + " relevé(s) et note 0 € ce mois-ci : ta courbe reste juste. Supprimer efface tout son historique."
-      + "\n\nOK : clôturer. Annuler : continuer vers la suppression.")) {
+  if (n && await confirmer("Clôturer ce compte plutôt que le supprimer ?", { ok: "Clôturer", annuler: "Supprimer quand même",
+      texte: "Clôturer garde ses " + n
+      + " relevé(s) et note 0 € ce mois-ci : ta courbe reste juste. Supprimer efface tout son historique." })) {
     const iso = paMoisIso();
     const c = PA.comptes.find(x => x.id === _paEditCpt);
     const r = PA.releves.find(x => x.compteId === _paEditCpt && x.date === iso);
@@ -24735,8 +24736,8 @@ async function paDeleteCompte() {
     if (await paSave()) { closeOv("ov-pa-compte"); showToastModern("Compte clôturé, historique gardé", "ok"); paRenderAll(); }
     return;
   }
-  if (!confirm(`Supprimer ce compte ?${n ? `\n\nSes ${n} relevé(s) seront également supprimés.` : ""}`
-    + (credit ? "\n\nLa ligne de son crédit reste dans tes dettes : supprime-la aussi s'il est remboursé." : ""))) return;
+  if (!(await confirmer("Supprimer ce compte ?", { ok: "Supprimer", texte: (n ? `Ses ${n} relevé(s) seront également supprimés.` : "")
+    + (n && credit ? "\n\n" : "") + (credit ? "La ligne de son crédit reste dans tes dettes : supprime-la aussi s'il est remboursé." : "") }))) return;
   PA.comptes = PA.comptes.filter(x => x.id !== _paEditCpt);
   PA.releves = PA.releves.filter(r => r.compteId !== _paEditCpt);
   // Le crédit d'un bien supprimé reste, en ligne ordinaire
@@ -25949,8 +25950,8 @@ function peEnregistrerPlan() {
   peRender();
   if (typeof dashRender === "function") dashRender();
 }
-function peSupprimer(id) {
-  if (!confirm("Supprimer cet achat programmé ? Les achats déjà enregistrés restent dans les transactions.")) return;
+async function peSupprimer(id) {
+  if (!(await confirmer("Supprimer cet achat programmé ?", { texte: "Les achats déjà enregistrés restent dans les transactions.", ok: "Supprimer" }))) return;
   pushUndo();
   S.plansProg = (S.plansProg || []).filter(p => p.id !== id);
   persist();
@@ -26206,7 +26207,7 @@ async function ctoSupprimerCompte() {
   if (!c) return;
   const n = ((ctoEtat(c.id) || {}).transactions || []).length;
   const crypto = ctoEstCrypto(c);
-  if (!confirm(`Supprimer ${crypto ? "le portefeuille crypto" : "le CTO"} « ${c.nom} » ?` + (n ? `\n\nSes ${n} opération(s) seront effacées de Pilote (la sauvegarde du jour les garde).` : ""))) return;
+  if (!(await confirmer(`Supprimer ${crypto ? "le portefeuille crypto" : "le CTO"} « ${c.nom} » ?`, { ok: "Supprimer", texte: n ? `Ses ${n} opération(s) seront effacées de Pilote (la sauvegarde du jour les garde).` : "" }))) return;
   closeOv("ov-cto-compte");
   // Le PEA d'abord dans S : on ne supprime pas le compte affiché sous ses pieds
   _cptBasculer("pea");
@@ -29122,9 +29123,9 @@ function dashNoteFaite(id) {
     showToastModern("C'est fait : elle reste dans le pense-bête, rubrique « Faites »", "ok");
 }
 
-function dashNoteSupprimer(id) {
+async function dashNoteSupprimer(id) {
   const t = TC && TC.taches.find(x => x.id === id);
-  if (!t || !confirm("Supprimer « " + t.titre + " » ?")) return;
+  if (!t || !(await confirmer("Supprimer « " + t.titre + " » ?", { ok: "Supprimer" }))) return;
   TC.taches = TC.taches.filter(x => x.id !== id);
   delete TC.faites[id];
   tcChange();
@@ -29577,8 +29578,8 @@ async function agEnvoyer() {
 }
 
 async function agDeconnecter() {
-  if (!confirm("Déconnecter l'agenda iCloud ? Pilote retire de l'agenda les événements qu'il y a mis "
-             + "(l'agenda « Pilote » est supprimé), puis oublie le mot de passe. Tes autres événements ne bougent pas.")) return;
+  if (!(await confirmer("Déconnecter l'agenda iCloud ?", { ok: "Déconnecter", texte: "Pilote retire de l'agenda les événements qu'il y a mis "
+             + "(l'agenda « Pilote » est supprimé), puis oublie le mot de passe. Tes autres événements ne bougent pas." }))) return;
   AG.occupe = true;
   agRender();
   const r = await agApi().save_agenda_deconnexion();
@@ -29855,7 +29856,7 @@ async function agEnregistrerNote() {
 }
 
 async function agSupprimerNote() {
-  if (!AG.noteId || !confirm("Supprimer cette note ? Elle part aussi de l'agenda iCloud.")) return;
+  if (!AG.noteId || !(await confirmer("Supprimer cette note ?", { texte: "Elle part aussi de l'agenda iCloud.", ok: "Supprimer" }))) return;
   await agEcrireNotes(AG.notes.filter(x => x.id !== AG.noteId), "Note supprimée");
 }
 
@@ -31416,9 +31417,9 @@ function tcNouvelle(champs) {
   TC.taches.push(Object.assign({ id, fait: "", cree: todayISO() }, champs));
 }
 
-function tcSupprimer() {
+async function tcSupprimer() {
   const t = TC && TC.taches.find(x => x.id === _tcEditId);
-  if (!t || !confirm("Supprimer « " + t.titre + " » ?")) return;
+  if (!t || !(await confirmer("Supprimer « " + t.titre + " » ?", { ok: "Supprimer" }))) return;
   TC.taches = TC.taches.filter(x => x.id !== t.id);
   delete TC.faites[t.id];
   closeOv("ov-tc");
@@ -32805,8 +32806,8 @@ function _appReady() {
     Promise.resolve(pywebview.api.mac_emplacement()).then(async r => {
       if (!r || !r.aDeplacer) return;
       // Ouvert depuis Téléchargements : Pilote se range lui-même dans Applications
-      if (r.copie && pywebview.api.mac_ranger && confirm("Pilote doit être dans le dossier "
-          + "Applications pour se mettre à jour. L'y ranger maintenant ? Il va redémarrer.")) {
+      if (r.copie && pywebview.api.mac_ranger && await confirmer("Ranger Pilote dans Applications ?", { ok: "Ranger", annuler: "Plus tard",
+          texte: "Pilote doit être dans le dossier Applications pour se mettre à jour. Il va redémarrer." })) {
         const m = await pywebview.api.mac_ranger();
         if (m && m.ok) { showToastModern("Rangement dans Applications…", "ok"); return; }
       }
