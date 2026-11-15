@@ -26204,7 +26204,7 @@ async function ctoSupprimerCompte() {
   if (!c) return;
   const n = ((ctoEtat(c.id) || {}).transactions || []).length;
   const crypto = ctoEstCrypto(c);
-  if (!confirm(`Supprimer ${crypto ? "le portefeuille crypto" : "le CTO"} « ${c.nom} » ?` + (n ? `\n\nSes ${n} opération(s) seront effacées de Pilote (la sauvegarde du jour les garde).` : ""))) return;
+  if (!(await confirmer(`Supprimer ${crypto ? "le portefeuille crypto" : "le CTO"} « ${c.nom} » ?`, { ok: "Supprimer", texte: n ? `Ses ${n} opération(s) seront effacées de Pilote (la sauvegarde du jour les garde).` : "" }))) return;
   closeOv("ov-cto-compte");
   // Le PEA d'abord dans S : on ne supprime pas le compte affiché sous ses pieds
   _cptBasculer("pea");
@@ -29120,9 +29120,9 @@ function dashNoteFaite(id) {
     showToastModern("C'est fait : elle reste dans le pense-bête, rubrique « Faites »", "ok");
 }
 
-function dashNoteSupprimer(id) {
+async function dashNoteSupprimer(id) {
   const t = TC && TC.taches.find(x => x.id === id);
-  if (!t || !confirm("Supprimer « " + t.titre + " » ?")) return;
+  if (!t || !(await confirmer("Supprimer « " + t.titre + " » ?", { ok: "Supprimer" }))) return;
   TC.taches = TC.taches.filter(x => x.id !== id);
   delete TC.faites[id];
   tcChange();
@@ -29575,8 +29575,8 @@ async function agEnvoyer() {
 }
 
 async function agDeconnecter() {
-  if (!confirm("Déconnecter l'agenda iCloud ? Pilote retire de l'agenda les événements qu'il y a mis "
-             + "(l'agenda « Pilote » est supprimé), puis oublie le mot de passe. Tes autres événements ne bougent pas.")) return;
+  if (!(await confirmer("Déconnecter l'agenda iCloud ?", { ok: "Déconnecter", texte: "Pilote retire de l'agenda les événements qu'il y a mis "
+             + "(l'agenda « Pilote » est supprimé), puis oublie le mot de passe. Tes autres événements ne bougent pas." }))) return;
   AG.occupe = true;
   agRender();
   const r = await agApi().save_agenda_deconnexion();
@@ -29853,7 +29853,7 @@ async function agEnregistrerNote() {
 }
 
 async function agSupprimerNote() {
-  if (!AG.noteId || !confirm("Supprimer cette note ? Elle part aussi de l'agenda iCloud.")) return;
+  if (!AG.noteId || !(await confirmer("Supprimer cette note ?", { texte: "Elle part aussi de l'agenda iCloud.", ok: "Supprimer" }))) return;
   await agEcrireNotes(AG.notes.filter(x => x.id !== AG.noteId), "Note supprimée");
 }
 
@@ -31414,9 +31414,9 @@ function tcNouvelle(champs) {
   TC.taches.push(Object.assign({ id, fait: "", cree: todayISO() }, champs));
 }
 
-function tcSupprimer() {
+async function tcSupprimer() {
   const t = TC && TC.taches.find(x => x.id === _tcEditId);
-  if (!t || !confirm("Supprimer « " + t.titre + " » ?")) return;
+  if (!t || !(await confirmer("Supprimer « " + t.titre + " » ?", { ok: "Supprimer" }))) return;
   TC.taches = TC.taches.filter(x => x.id !== t.id);
   delete TC.faites[t.id];
   closeOv("ov-tc");
@@ -32803,8 +32803,8 @@ function _appReady() {
     Promise.resolve(pywebview.api.mac_emplacement()).then(async r => {
       if (!r || !r.aDeplacer) return;
       // Ouvert depuis Téléchargements : Pilote se range lui-même dans Applications
-      if (r.copie && pywebview.api.mac_ranger && confirm("Pilote doit être dans le dossier "
-          + "Applications pour se mettre à jour. L'y ranger maintenant ? Il va redémarrer.")) {
+      if (r.copie && pywebview.api.mac_ranger && await confirmer("Ranger Pilote dans Applications ?", { ok: "Ranger", annuler: "Plus tard",
+          texte: "Pilote doit être dans le dossier Applications pour se mettre à jour. Il va redémarrer." })) {
         const m = await pywebview.api.mac_ranger();
         if (m && m.ok) { showToastModern("Rangement dans Applications…", "ok"); return; }
       }
