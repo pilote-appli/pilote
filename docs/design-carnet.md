@@ -116,6 +116,14 @@ plutôt qu'un logiciel de bureau.
   `ebtn()`/`dbtn()` (Modifier / Supprimer des tableaux) ont un `title` et un
   `aria-label`, comme tout bouton qui n'a qu'une icône. Les messages d'état
   (« ✓ À jour ») gardent leur caractère : ce ne sont pas des boutons.
+* **Questions à l'utilisateur : fenêtres de Pilote, jamais celles du système.**
+  `confirm()` affichait une boîte grise titrée « 127.0.0.1:7438 indique » : depuis
+  le 15/11/2026, il n'y en a plus aucun, tout passe par `await confirmer(titre,
+  { texte, ok, annuler })` (titre = la question, `texte` = le détail, `ok` = le
+  verbe de l'action : « Supprimer », « Restaurer »… ; `annuler` renomme l'autre
+  bouton quand ce n'est pas une annulation, ex. « Supprimer quand même »). De même
+  `demander()` à la place de `prompt()`. Les deux renvoient une promesse : la
+  fonction qui les appelle est `async`. Échap et le clic à côté répondent non.
 * **Où c'est** : les jetons dans `:root` et `html[data-theme="dark"]`, puis un bloc
   « IDENTITÉ CARNET » **en fin de la première feuille de style**, qui surcharge les
   composants plutôt que de réécrire chaque règle. Un nouveau composant réutilise ces

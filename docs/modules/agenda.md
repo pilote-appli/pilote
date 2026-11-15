@@ -349,6 +349,6 @@ correspond à son iPhone, note comprise. Pas encore essayé : les mensualités, 
 répétés (iCloud rend-il bien chaque occurrence avec `expand` ?), et le tout
 sur Mac.
 
-Sur le banc navigateur, `confirm()` répond « Annuler » sans s'afficher : le
-bouton Déconnecter n'y fait donc rien (remplacer `window.confirm` le temps de
-l'essai). Dans la vraie fenêtre, la question s'affiche.
+La question de Déconnecter est une fenêtre de Pilote (`confirmer()`, depuis le
+15/11/2026) : elle s'affiche aussi sur le banc navigateur, où l'ancien
+`confirm()` répondait « Annuler » sans s'afficher.
