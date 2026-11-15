@@ -3406,7 +3406,7 @@ html.verre .toast-stack .toast {
 .rg-vide { padding: 22px 12px; text-align: center; font-size: 13px; color: var(--txt3); }
 /* Bilan de l'année avec Pilou : une carte à la fois, comme une story (13/11/2026,
    demande d'Arthur). Un clic sur la carte montre la suivante, à gauche la
-   précédente ; à la fin, Télécharger mon année et Partager. */
+   précédente ; à la fin, Télécharger la vidéo et Partager. */
 .an-modal { width: auto; max-width: none; padding: 18px 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; }
 .an-fermer { position: absolute; top: 10px; right: 10px; }
 .an-barres { display: flex; gap: 4px; width: var(--an-l); }
@@ -31610,9 +31610,8 @@ document.addEventListener("keydown", e => {
    Des cartes au format story (1080 × 1920), présentées par Pilou, à garder
    ou à partager : AUCUN montant en euros, seulement des heures, des % et des
    mois. Une carte à la fois, comme une story (un clic : la suivante) ; à la
-   fin, « Télécharger mon année » (toutes les cartes en PNG dans un dossier
-   choisi, Api.images_enregistrer) et « Partager » (partage du système, sinon
-   image copiée). Chaque carte est un SVG dessiné dans un canvas. Du 1er décembre au 31 janvier : une tuile d'accueil et Pilou le
+   fin, « Télécharger la vidéo » (les cartes en vidéo MP4, dans le fichier
+   choisi, Api.video_debut) et « Partager » (la vidéo, partage du système). Chaque carte est un SVG dessiné dans un canvas. Du 1er décembre au 31 janvier : une tuile d'accueil et Pilou le
    propose une fois ; le reste de l'année, Paramètres → Général. En janvier,
    c'est l'année d'avant. Les chiffres viennent des mêmes calculs que leurs
    modules (computePnl pour le PEA, finComputeYearTotals pour Mes comptes).
@@ -32255,6 +32254,7 @@ async function anOuvrir(an) {
   const r = await anCalculer(an);
   _anCartes = anComposer(r, (S.config && S.config.prenom) || "");
   _anCartes.an = an;
+  _anVideo = null;
   const scene = document.getElementById("an-scene");
   if (!scene) return;
   if (_anCartes.length < 2) {
@@ -32293,55 +32293,243 @@ function anAller(i) {
   const pied = document.getElementById("an-pied");
   const dernier = _anIndex === _anCartes.length - 1;
   pied.innerHTML = dernier
-    ? `<button type="button" class="btn btn-primary btn-sm" onclick="anTelecharger()"><i class="ph ph-download-simple"></i> Télécharger mon année</button>
+    ? `<button type="button" class="btn btn-primary btn-sm" onclick="anTelecharger()"><i class="ph ph-download-simple"></i> Télécharger la vidéo</button>
        <button type="button" class="btn btn-ghost btn-sm" onclick="anPartager()"><i class="ph ph-share-network"></i> Partager</button>
        <button type="button" class="btn btn-ghost btn-sm" onclick="anAller(0)"><i class="ph ph-arrow-counter-clockwise"></i> Revoir</button>`
     : `<span class="an-astuce"><i class="ph ph-hand-tap"></i> Clique sur la carte pour la suivante · ${_anIndex + 1} / ${_anCartes.length}</span>`;
 }
 
-/** La carte i en PNG 1080 × 1920 (data URL) */
-async function anPng(i) {
-  const url = URL.createObjectURL(new Blob([_anCartes[i].svg], { type: "image/svg+xml" }));
-  try {
+/* ── La vidéo de l'année (15/11/2026, demande d'Arthur : une vidéo plutôt
+   qu'une image par carte) ── Chaque carte reste AN_VIDEO_CARTE ms, la suivante
+   glisse depuis la droite (30 images/s ; une image toutes les 0,5 s quand
+   rien ne bouge, pour encoder vite). Les images sont encodées en H.264
+   (WebCodecs) et rangées dans un MP4 écrit ici (anMp4) : MediaRecorder, qui
+   filme le canvas en temps réel, sortait une vidéo vide ou tronquée quand les
+   images ne bougent pas (mesuré dans WebView2 le 15/11). */
+const AN_VIDEO_CARTE = 3000, AN_VIDEO_GLISSE = 450, AN_VIDEO_FIN = 1000, AN_VIDEO_IPS = 30;
+let _anVideo = null, _anMontage = null;
+
+/** Une carte (SVG) prête à dessiner dans un canvas */
+function anImage(svg) {
+  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+  return new Promise((ok, ko) => {
     const img = new Image();
-    await new Promise((ok, ko) => { img.onload = ok; img.onerror = ko; img.src = url; });
-    const cv = document.createElement("canvas");
-    cv.width = 1080; cv.height = 1920;
-    cv.getContext("2d").drawImage(img, 0, 0, 1080, 1920);
-    return cv.toDataURL("image/png");
-  } finally { URL.revokeObjectURL(url); }
+    img.onload = () => { URL.revokeObjectURL(url); ok(img); };
+    img.onerror = e => { URL.revokeObjectURL(url); ko(e); };
+    img.src = url;
+  });
 }
 
-/** Toutes les cartes dans un dossier choisi (« Pilote - Mon année 2026 ») */
+/** Le fichier MP4 : une piste vidéo H.264. images : [{ data: Uint8Array,
+    cle: bool, duree }] dans l'ordre, duree en 1/3000 s ; avcC : la
+    description donnée par l'encodeur. */
+function anMp4(images, avcC, l, h) {
+  const u32 = v => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
+  const u16 = v => [(v >>> 8) & 255, v & 255];
+  const txt = s => Array.from(s, c => c.charCodeAt(0));
+  const boite = (type, ...parts) => {
+    const corps = [].concat(...parts.map(p => Array.from(p)));
+    return [...u32(8 + corps.length), ...txt(type), ...corps];
+  };
+  const plein = (type, version, flags, ...parts) => boite(type, [version, ...u32(flags).slice(1)], ...parts);
+  const matrice = [...u32(0x10000), ...u32(0), ...u32(0), ...u32(0), ...u32(0x10000), ...u32(0), ...u32(0), ...u32(0), ...u32(0x40000000)];
+  const n = images.length, total = images.reduce((s, x) => s + x.duree, 0), dureeMs = Math.round(total / 3);
+  const stts = [];   // durées à la suite, regroupées
+  images.forEach(x => { const d = stts[stts.length - 1]; if (d && d[1] === x.duree) d[0]++; else stts.push([1, x.duree]); });
+  const ftyp = boite("ftyp", txt("isom"), u32(512), txt("isomiso2avc1mp41"));
+  const tailleDonnees = images.reduce((s, x) => s + x.data.length, 0);
+  const debutDonnees = ftyp.length + 8;
+  const stbl = boite("stbl",
+    plein("stsd", 0, 0, u32(1), boite("avc1", new Array(6).fill(0), u16(1), new Array(16).fill(0), u16(l), u16(h),
+      u32(0x480000), u32(0x480000), u32(0), u16(1), new Array(32).fill(0), u16(0x18), u16(0xffff), boite("avcC", avcC))),
+    plein("stts", 0, 0, u32(stts.length), [].concat(...stts.map(([c, d]) => [...u32(c), ...u32(d)]))),
+    plein("stss", 0, 0, u32(images.filter(x => x.cle).length), [].concat(...images.map((x, i) => x.cle ? u32(i + 1) : []))),
+    plein("stsc", 0, 0, u32(1), u32(1), u32(n), u32(1)),
+    plein("stsz", 0, 0, u32(0), u32(n), [].concat(...images.map(x => u32(x.data.length)))),
+    plein("stco", 0, 0, u32(1), u32(debutDonnees)));
+  const moov = boite("moov",
+    plein("mvhd", 0, 0, u32(0), u32(0), u32(1000), u32(dureeMs), u32(0x10000), u16(0x100), new Array(10).fill(0), matrice, new Array(24).fill(0), u32(2)),
+    boite("trak",
+      plein("tkhd", 0, 3, u32(0), u32(0), u32(1), u32(0), u32(dureeMs), new Array(8).fill(0), u16(0), u16(0), u16(0), u16(0), matrice, u32(l * 65536), u32(h * 65536)),
+      boite("mdia",
+        plein("mdhd", 0, 0, u32(0), u32(0), u32(3000), u32(total), u16(0x55c4), u16(0)),
+        plein("hdlr", 0, 0, u32(0), txt("vide"), new Array(12).fill(0), txt("VideoHandler"), [0]),
+        boite("minf",
+          plein("vmhd", 0, 1, new Array(8).fill(0)),
+          boite("dinf", plein("dref", 0, 0, u32(1), plein("url ", 0, 1))),
+          stbl))));
+  return new Blob([new Uint8Array(ftyp), new Uint8Array([...u32(8 + tailleDonnees), ...txt("mdat")]),
+                   ...images.map(x => x.data), new Uint8Array(moov)], { type: "video/mp4" });
+}
+
+/** Les cartes du bilan ouvert en vidéo MP4 1080 × 1920 ({ blob, an }) ;
+    progres(0..1) suit le montage. Fermer le bilan l'interrompt. */
+function anMonterVideo(progres) {
+  const cartes = _anCartes;
+  if (_anVideo && _anVideo.cartes === cartes) return Promise.resolve(_anVideo);
+  if (_anMontage) return _anMontage;
+  const ouvert = () => cartes === _anCartes && !!document.querySelector("#ov-anbilan.open");
+  _anMontage = (async () => {
+    if (typeof VideoEncoder !== "function" || typeof VideoFrame !== "function") throw new Error("vidéo impossible ici");
+    const L = 1080, H = 1920, ips = AN_VIDEO_IPS;
+    // Baseline d'abord : jamais d'images dans le désordre (le MP4 ci-dessus
+    // n'a pas de table de décalage pour elles)
+    let config = null;
+    for (const codec of ["avc1.42E028", "avc1.4D0028", "avc1.640028"]) {
+      const c = { codec, width: L, height: H, bitrate: 6000000, framerate: ips, avc: { format: "avc" } };
+      if ((await VideoEncoder.isConfigSupported(c)).supported) { config = c; break; }
+    }
+    if (!config) throw new Error("H.264 indisponible ici");
+    // Chaque SVG rendu une fois en image (le redessiner à chaque image est lent)
+    const imgs = await Promise.all(cartes.map(async c => {
+      const img = await anImage(c.svg), cv = document.createElement("canvas");
+      cv.width = L; cv.height = H;
+      cv.getContext("2d").drawImage(img, 0, 0, L, H);
+      return cv;
+    }));
+    const cv = document.createElement("canvas");
+    cv.width = L; cv.height = H;
+    const cx = cv.getContext("2d");
+    const n = imgs.length, D = AN_VIDEO_CARTE, T = AN_VIDEO_GLISSE;
+    const dessiner = t => {
+      const k = Math.min(n - 1, Math.floor(t / D)), p = t - k * D;
+      cx.fillStyle = "#000"; cx.fillRect(0, 0, L, H);
+      if (k < n - 1 && p > D - T) {
+        const f = (p - (D - T)) / T, e = f < 0.5 ? 2 * f * f : 1 - Math.pow(2 - 2 * f, 2) / 2;
+        cx.drawImage(imgs[k], -e * L, 0, L, H);
+        cx.drawImage(imgs[k + 1], (1 - e) * L, 0, L, H);
+      } else cx.drawImage(imgs[k], 0, 0, L, H);
+    };
+    const sorties = [];
+    let avcC = null, erreur = null, dernier = -1;
+    const enc = new VideoEncoder({
+      output: (morceau, meta) => {
+        if (meta && meta.decoderConfig && meta.decoderConfig.description) avcC = new Uint8Array(meta.decoderConfig.description);
+        if (morceau.timestamp <= dernier) erreur = new Error("images dans le désordre");
+        dernier = morceau.timestamp;
+        const data = new Uint8Array(morceau.byteLength);
+        morceau.copyTo(data);
+        sorties.push({ data, cle: morceau.type === "key" });
+      },
+      error: e => { erreur = e; }
+    });
+    enc.configure(config);
+    // Début de chaque image (ms) : une toutes les 0,5 s au plus sur une carte
+    // fixe (la première est une image clé), 30 par seconde dans un glissement
+    const debuts = [], cles = new Set();
+    for (let k = 0; k < n; k++) {
+      const fixe = k < n - 1 ? D - T : D + AN_VIDEO_FIN, m = Math.ceil(fixe / 500);
+      cles.add(debuts.length);
+      for (let j = 0; j < m; j++) debuts.push(k * D + j * fixe / m);
+      if (k < n - 1) {
+        const g = Math.round(T * ips / 1000);
+        for (let j = 0; j < g; j++) debuts.push(k * D + fixe + j * T / g);
+      }
+    }
+    debuts.push(n * D + AN_VIDEO_FIN);
+    const nb = debuts.length - 1;
+    try {
+      for (let i = 0; i < nb; i++) {
+        if (erreur) throw erreur;
+        if (!ouvert()) throw new DOMException("bilan fermé", "AbortError");
+        dessiner(debuts[i]);
+        const image = new VideoFrame(cv, { timestamp: Math.round(debuts[i] * 1000), duration: Math.round((debuts[i + 1] - debuts[i]) * 1000) });
+        enc.encode(image, { keyFrame: cles.has(i) });
+        image.close();
+        // L'encodeur garde au plus quelques images d'avance
+        while (enc.encodeQueueSize > 4) await new Promise(r => setTimeout(r, 5));
+        if (i % 5 === 0) { if (progres) progres(i / nb); await new Promise(r => setTimeout(r, 0)); }
+      }
+      await enc.flush();
+    } finally { if (enc.state !== "closed") enc.close(); }
+    if (erreur) throw erreur;
+    if (!avcC || sorties.length !== nb) throw new Error("encodage incomplet (" + sorties.length + "/" + nb + ")");
+    sorties.forEach((x, i) => { x.duree = Math.round(debuts[i + 1] * 3) - Math.round(debuts[i] * 3); });
+    _anVideo = { blob: anMp4(sorties, avcC, L, H), an: cartes.an, cartes };
+    return _anVideo;
+  })().finally(() => { _anMontage = null; });
+  return _anMontage;
+}
+
+/** Le pied du bilan pendant le montage */
+function anProgres(f) {
+  const pied = document.getElementById("an-pied");
+  if (!pied) return;
+  let el = document.getElementById("an-progres");
+  if (!el) {
+    pied.innerHTML = `<span class="an-astuce" id="an-progres"></span>`;
+    el = document.getElementById("an-progres");
+  }
+  el.innerHTML = `<i class="ph ph-circle-notch ac-tourne"></i> Pilou monte ta vidéo… ${Math.round(f * 100)} %`;
+}
+
+function anBase64(blob) {
+  return new Promise((ok, ko) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(",")[1] || "");
+    r.onerror = () => ko(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+/** « Télécharger la vidéo » : où l'enregistrer, puis la vidéo part par
+    morceaux au pont (Api.video_debut / video_morceau / video_fin) */
 async function anTelecharger() {
   const api = window.pywebview && pywebview.api;
-  if (!api || !api.images_enregistrer) { showToastModern("Possible seulement dans l'app", "warn"); return; }
+  if (!api || !api.video_debut) { showToastModern("Possible seulement dans l'app", "warn"); return; }
+  let enCours = false;
   try {
-    const cartes = [];
-    for (let i = 0; i < _anCartes.length; i++) cartes.push({ nom: _anCartes[i].nom, png: await anPng(i) });
-    const r = await api.images_enregistrer("Pilote - Mon année " + (_anCartes.an || anAnnee()), cartes);
-    if (r && r.ok) {
-      showToastModern(r.n + " images enregistrées", "ok");
-    } else if (!(r && r.cancelled)) showToastModern("Images non enregistrées : " + ((r && r.error) || "?"), "err");
-  } catch (e) { showToastModern("Images non enregistrées", "err"); console.warn("[bilan annuel]", e); }
+    anProgres(0);
+    const v = await anMonterVideo(anProgres);
+    anAller(_anIndex);
+    const r = await api.video_debut("Pilote - Mon année " + v.an);
+    if (!r || !r.ok) {
+      if (!(r && r.cancelled)) showToastModern("Vidéo non enregistrée : " + ((r && r.error) || "?"), "err");
+      return;
+    }
+    enCours = true;
+    const MORCEAU = 3 * 512 * 1024;   // multiple de 3 : chaque morceau se code seul en base64
+    for (let o = 0; o < v.blob.size; o += MORCEAU) {
+      const m = await api.video_morceau(await anBase64(v.blob.slice(o, o + MORCEAU)));
+      if (!m || !m.ok) { enCours = false; throw new Error((m && m.error) || "écriture"); }
+    }
+    enCours = false;
+    const f = await api.video_fin(true);
+    if (f && f.ok) showToastModern("Vidéo enregistrée", "ok");
+    else showToastModern("Vidéo non enregistrée : " + ((f && f.error) || "?"), "err");
+  } catch (e) {
+    if (enCours) api.video_fin(false);
+    if (document.querySelector("#ov-anbilan.open")) anAller(_anIndex);
+    if (!(e && e.name === "AbortError")) {
+      showToastModern("Vidéo non enregistrée", "err");
+      console.warn("[bilan annuel] vidéo", e);
+    }
+  }
 }
 
-/** Partager la carte affichée : la fenêtre de partage du système quand elle
-    existe, sinon l'image est copiée, à coller dans WhatsApp, Instagram… */
+/** « Partager » : la vidéo dans la fenêtre de partage du système. Elle ne
+    s'ouvre que juste après un clic : si la vidéo vient d'être montée, il
+    faut recliquer. Sans partage possible ici : on l'enregistre. */
 async function anPartager() {
+  const pret = !!(_anVideo && _anVideo.cartes === _anCartes);
   try {
-    const png = await anPng(_anIndex);
-    const blob = await (await fetch(png)).blob();
-    const nom = "Pilote " + (_anCartes.an || anAnnee()) + " - " + _anCartes[_anIndex].nom + ".png";
-    const fichier = new File([blob], nom, { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [fichier] })) {
-      try { await navigator.share({ files: [fichier], title: "Mon année avec Pilote" }); return; }
-      catch (e) { if (e && e.name === "AbortError") return; }
+    if (!pret) anProgres(0);
+    const v = await anMonterVideo(anProgres);
+    if (!pret) anAller(_anIndex);
+    const fichier = new File([v.blob], "Pilote - Mon année " + v.an + ".mp4", { type: "video/mp4" });
+    if (!(navigator.canShare && navigator.canShare({ files: [fichier] }))) {
+      showToastModern("Partage indisponible ici : enregistre la vidéo, puis envoie-la", "warn");
+      return anTelecharger();
     }
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-    showToastModern("Image copiée : colle-la dans ta story, WhatsApp ou un mail (Ctrl+V)", "ok");
+    try { await navigator.share({ files: [fichier], title: "Mon année avec Pilote" }); }
+    catch (e) {
+      if (e && e.name === "NotAllowedError" && !pret) showToastModern("Ta vidéo est prête : clique encore sur Partager", "ok");
+      else if (!(e && e.name === "AbortError")) throw e;
+    }
   } catch (e) {
-    showToastModern("Partage impossible ici : utilise « Télécharger mon année »", "warn");
+    if (document.querySelector("#ov-anbilan.open")) anAller(_anIndex);
+    if (e && e.name === "AbortError") return;
+    showToastModern("Partage impossible ici : utilise « Télécharger la vidéo »", "warn");
     console.warn("[bilan annuel] partage", e);
   }
 }

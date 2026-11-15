@@ -905,41 +905,67 @@ class Api:
         ok, msg = storage.import_from(path)
         return {"ok": ok, "message": msg}
 
-    def images_enregistrer(self, dossier: str, cartes: list) -> dict:
-        """Bilan de l'annee : « Telecharger mon annee » enregistre toutes les
-        cartes ([{nom, png}], PNG en base64) dans un dossier choisi par
-        l'utilisateur, sous-dossier « dossier ». Rien dans Donnees/."""
-        import base64
+    def video_debut(self, nom: str) -> dict:
+        """Bilan de l'annee : « Telecharger la video ». Demande ou l'enregistrer ;
+        la video arrive ensuite par morceaux (video_morceau) dans un .part qui ne
+        prend son nom qu'a la fin (video_fin). Rien dans Donnees/."""
         import re as _re
+        self.video_fin(False)
+        nom = _re.sub(r"[^\w .-]+", "", str(nom or "Pilote"))[:60].strip() or "Pilote"
         try:
-            images = []
-            for c in (cartes or [])[:20]:
-                octets = base64.b64decode(str(c.get("png") or "").split(",")[-1], validate=True)
-                if not octets.startswith(bytes([0x89]) + b"PNG"):
-                    return {"ok": False, "error": "image invalide"}
-                nom = _re.sub(r"[^\w .-]+", "", str(c.get("nom") or "carte"))[:80].strip() or "carte"
-                images.append((nom, octets))
-            if not images:
-                return {"ok": False, "error": "aucune image"}
             win = webview.windows[0]
-            choix = win.create_file_dialog(_dialogue("FOLDER"))
+            choix = win.create_file_dialog(
+                _dialogue("SAVE"),
+                save_filename=nom + ".mp4",
+                file_types=("Vidéo MP4 (*.mp4)",),
+            )
             if not choix:
                 return {"ok": False, "cancelled": True}
-            base = Path(choix if isinstance(choix, str) else choix[0])
-            sous = _re.sub(r"[^\w .-]+", "", str(dossier or "Pilote"))[:60].strip() or "Pilote"
-            cible = base / sous
-            n = 2
-            while cible.exists():
-                cible = base / ("%s (%d)" % (sous, n))
-                n += 1
-            cible.mkdir(parents=True)
-            for i, (nom, octets) in enumerate(images, 1):
-                (cible / ("%02d - %s.png" % (i, nom))).write_bytes(octets)
+            cible = Path(choix if isinstance(choix, str) else choix[0])
+            if cible.suffix.lower() != ".mp4":
+                cible = cible.with_name(cible.name + ".mp4")
+            part = cible.with_name(cible.name + ".part")
+            self._video = {"cible": cible, "part": part, "f": open(part, "wb"), "n": 0}
+            return {"ok": True}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def video_morceau(self, b64: str) -> dict:
+        """Un morceau de la video (base64), a la suite des precedents."""
+        import base64
+        v = getattr(self, "_video", None)
+        if not v:
+            return {"ok": False, "error": "aucune video en cours"}
+        try:
+            octets = base64.b64decode(str(b64 or ""), validate=True)
+            if v["n"] == 0 and octets[4:8] != b"ftyp":   # en-tete d'un MP4
+                raise ValueError("video invalide")
+            v["n"] += len(octets)
+            if v["n"] > 300 * 1024 * 1024:
+                raise ValueError("video trop lourde")
+            v["f"].write(octets)
+            return {"ok": True}
+        except Exception as e:
+            self.video_fin(False)
+            return {"ok": False, "error": str(e)}
+
+    def video_fin(self, garder: bool) -> dict:
+        """Ferme la video en cours : le .part prend son nom (garder), ou s'efface."""
+        v = getattr(self, "_video", None)
+        self._video = None
+        if not v:
+            return {"ok": False, "error": "aucune video en cours"}
+        try:
+            v["f"].close()
+            if not garder or not v["n"]:
+                v["part"].unlink()
+                return {"ok": False, "cancelled": True}
+            os.replace(str(v["part"]), str(v["cible"]))
             try:
-                plateforme.ouvrir(str(cible))   # le dossier s'ouvre : les images sont la
+                plateforme.ouvrir(str(v["cible"].parent))   # le dossier s'ouvre : la video est la
             except Exception:
                 pass
-            return {"ok": True, "path": str(cible), "n": len(images)}
+            return {"ok": True, "path": str(v["cible"])}
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
