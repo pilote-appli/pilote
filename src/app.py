@@ -103,6 +103,7 @@ def acquire_single_instance_lock() -> bool:
         threading.Thread(target=_listen_for_focus_pings, args=(s,), daemon=True).start()
         return True
     except OSError:
+        s.close()
         # Deja en cours -> on ping pour faire remonter la fenetre existante.
         # Windows ne laisse passer au premier plan que le processus lance par
         # l'utilisateur, c'est-a-dire celui-ci : il cede ce droit a l'autre.
@@ -111,14 +112,22 @@ def acquire_single_instance_lock() -> bool:
             ctypes.windll.user32.AllowSetForegroundWindow(-1)   # ASFW_ANY
         except Exception:
             pass
+        # Le port peut aussi etre pris par un autre programme : le 16/11/2026,
+        # le service de notifications de Windows l'avait pris comme port de
+        # sortie, et Pilote se fermait sans rien dire a chaque lancement. On
+        # ne quitte donc que si un Pilote repond ; sinon on demarre sans verrou.
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as c:
                 c.settimeout(2)
                 c.connect(("127.0.0.1", SINGLE_INSTANCE_PORT))
                 c.sendall(b"focus")
+                if c.recv(16) == b"pilote":
+                    return False
         except Exception:
             pass
-        return False
+        print("[app] Port du verrou pris par un autre programme : "
+              "demarrage sans verrou.", flush=True)
+        return True
 
 
 def _listen_for_focus_pings(server_sock: socket.socket) -> None:
@@ -127,6 +136,7 @@ def _listen_for_focus_pings(server_sock: socket.socket) -> None:
             conn, _ = server_sock.accept()
             try:
                 conn.recv(64)
+                conn.sendall(b"pilote")   # prouve a la 2e instance qu'un Pilote tourne
             except Exception:
                 pass
             conn.close()

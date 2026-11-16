@@ -11,6 +11,9 @@
         "Barre du haut : Rechercher est maintenant juste à côté du nom de la page, avec son raccourci Ctrl K. Actualiser n'apparaît plus que là où il y a des cours.",
         "Bilan de la semaine : le PDF se lit mieux sur iPhone, en pages d'un écran, au style Verre.",
         "Le style Carnet est retiré : Verre est désormais le seul style de Pilote."
+      ],
+      "corrige": [
+        "Pilote pouvait refuser de s'ouvrir, sans aucun message, quand un service de Windows occupait par hasard le port qu'il utilise pour ne pas s'ouvrir deux fois. Il s'ouvre maintenant normalement."
       ]
     },
     {
