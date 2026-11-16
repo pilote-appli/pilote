@@ -969,19 +969,31 @@ def _completer_signes(ops, autres):
 
 class SessionOcr:
     """Un seul moteur de lecture pour toutes les captures d'un import (voir
-    sante._ServeurOcr : 3 s de démarrage au lieu de 3 s par passe)."""
+    sante._ServeurOcr : 3 s de démarrage au lieu de 3 s par passe).
+    differe=True : le moteur ne démarre qu'à demarrer(), appelé devant la
+    première capture. Un import de CSV ou de PDF ne lançait sinon un
+    PowerShell que pour rien : 3 s perdues à chaque import, et 1 020 dans
+    test_entrainement_1020_releves (mesuré le 16/11/2026)."""
+
+    def __init__(self, differe: bool = False):
+        self.differe = differe
+        self.ouvert = False
+
+    def demarrer(self):
+        import sys
+        if sys.platform != "win32" or self.ouvert:
+            return
+        import sante
+        if sante._serveur is None:
+            try:
+                sante._serveur = sante._ServeurOcr()
+                self.ouvert = True
+            except Exception:
+                sante._serveur = None
 
     def __enter__(self):
-        import sys
-        self.ouvert = False
-        if sys.platform == "win32":
-            import sante
-            if sante._serveur is None:
-                try:
-                    sante._serveur = sante._ServeurOcr()
-                    self.ouvert = True
-                except Exception:
-                    sante._serveur = None
+        if not self.differe:
+            self.demarrer()
         return self
 
     def __exit__(self, *a):

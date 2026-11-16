@@ -102,10 +102,6 @@ def lire_entete(chemin) -> dict:
         return {}
 
 
-def est_chiffre(chemin) -> bool:
-    return bool(lire_entete(chemin))
-
-
 def dechiffrer_flux(chemin, dst, cle: bytes) -> None:
     """Dechiffre le fichier `chemin` dans dst (fichier temporaire : il ne
     doit servir qu'une fois la fonction revenue sans erreur). Leve

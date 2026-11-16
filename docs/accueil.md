@@ -206,6 +206,10 @@ juste après le patch de `goTab` de Garmin) :
   une installation existante ne change pas d'aspect après mise à jour.
 * Un widget ajouté par une version ultérieure apparaît **éteint** en fin de
   liste, jamais activé d'office.
+* Une tuile qui affiche des cours ou l'historique (`_peaPv`, `ctoResume`,
+  `getVar`, Patrimoine) va aussi dans `TUILES_A_COURS` : au lancement, la
+  fenêtre n'attend les cours que si l'une de ces tuiles est allumée (16/11/2026,
+  `docs/demarrage-et-icone.md`).
 
 ### Tuile « Performance du PEA » : la période se choisit sur la tuile (4.2.7)
 

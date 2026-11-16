@@ -59,16 +59,9 @@ input, select { font-family: var(--mono); }
 }
 /* Plus gros, mais la hauteur du bloc reste celle du logo (34px) */
 .topbar-title  { font-size: 25px; font-weight: 800; letter-spacing: -.7px; line-height: 1; }
-.topbar-sub    { font-size: 11px; color: var(--txt2); font-family: var(--mono); margin-top: 1px; }
 .topbar-right  { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 
 /* ── Status pill ─────────────────────────────────── */
-.spill {
-  display: flex; align-items: center; gap: 6px;
-  border: 1px solid var(--brd);
-  border-radius: 99px; padding: 5px 12px;
-  font-size: 11px; font-family: var(--mono); color: var(--txt2);
-}
 .sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--txt3); flex-shrink: 0; transition: background .4s, box-shadow .4s; }
 .sdot.live { background: var(--g); box-shadow: 0 0 7px rgba(22,163,74,.5); }
 
@@ -133,41 +126,7 @@ input, select { font-family: var(--mono); }
 .mc-sub    { font-size: 12px; color: var(--txt2); margin-top: 10px; font-family: var(--mono); }
 
 /* ── Cartes "dashboard" supplementaires ─────────── */
-.dash-grid {
-  display: grid; gap: 14px;
-  grid-template-columns: 1fr 1fr;
-  margin-bottom: 1.2rem;
-}
-@media (max-width: 1080px) { .dash-grid { grid-template-columns: 1fr; } }
-
-.dash-card {
-  background: var(--bg2); border: 1px solid var(--brd);
-  border-radius: var(--radl); box-shadow: var(--sh); overflow: hidden;
-}
-.dash-card-h {
-  padding: .85rem 1.1rem; border-bottom: 1px solid var(--brd);
-  background: var(--bg3); display: flex; justify-content: space-between; align-items: center;
-}
 .dash-card-t { font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--txt2); }
-.dash-card-b { padding: .9rem 1.1rem; }
-
-.movers-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px dashed var(--brd); }
-.movers-row:last-child { border-bottom: 0; }
-.movers-tk { font-weight: 700; font-size: 13px; }
-.movers-sub { font-size: 10px; color: var(--txt2); font-family: var(--mono); }
-.movers-pct { font-family: var(--mono); font-weight: 700; font-size: 14px; }
-
-.divup-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--brd); gap: 10px; }
-.divup-row:last-child { border-bottom: 0; }
-.divup-date { font-family: var(--mono); font-size: 11px; color: var(--txt2); flex-shrink: 0; }
-.divup-tk { font-weight: 700; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.divup-amt { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--p); flex-shrink: 0; }
-
-.repart-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-.repart-bar { flex: 1; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
-.repart-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
-.repart-tk { font-size: 12px; font-weight: 600; min-width: 80px; }
-.repart-pct { font-family: var(--mono); font-size: 11px; color: var(--txt2); min-width: 48px; text-align: right; }
 
 .dash-empty { color: var(--txt3); font-size: 12px; text-align: center; padding: 14px 0; }
 .c-g{color:var(--g)} .c-r{color:var(--r)} .c-b{color:var(--b)} .c-a{color:var(--a)} .c-p{color:var(--p)}
@@ -274,26 +233,10 @@ td:first-child { text-align: left; padding-left: 2px; font-family: var(--font); 
 .realized-year[open] .rz-chev { transform: rotate(90deg); }
 .neu { color: var(--txt2); }
 .pb  { display: inline-block; vertical-align: middle; width: 44px; height: 3px; background: var(--bg4); border-radius: 2px; margin-left: 5px; overflow: hidden; }
-.pb-f{ height: 100%; border-radius: 2px; background: var(--b); }
-
-/* ── Chart grid ──────────────────────────────────── */
-.cgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-@media(max-width:640px){ .cgrid { grid-template-columns: 1fr; } }
 
 /* ── Calendar ────────────────────────────────────── */
 .cal { display: grid; grid-template-columns: repeat(12,1fr); gap: 3px; margin-bottom: 1rem; }
 @media(max-width:700px){ .cal { grid-template-columns: repeat(6,1fr); } }
-.cal-m {
-  background: var(--bg3); border: 1px solid var(--brd);
-  border-radius: var(--rad); padding: 7px 3px;
-  text-align: center; min-height: 70px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-}
-.cal-m.has  { border-color: rgba(22,163,74,.4); background: rgba(22,163,74,.06); }
-.cal-m.past { opacity: .35; }
-.cal-mn  { font-size: 8px; font-weight: 700; color: var(--txt2); text-transform: uppercase; letter-spacing: .04em; }
-.cal-ev  { font-size: 8px; font-weight: 700; padding: 2px 4px; border-radius: 3px; background: var(--g2); color: var(--g); width: 100%; }
-.cal-amt { font-size: 10px; font-weight: 700; color: var(--g); font-family: var(--mono); }
 
 /* ── TX rows ─────────────────────────────────────── */
 .txr {
@@ -376,7 +319,6 @@ td:first-child { text-align: left; padding-left: 2px; font-family: var(--font); 
   border-radius: var(--rad); margin-bottom: 1rem;
   font-family: var(--mono); font-size: 11px;
 }
-.loading-row td { opacity: .5; }
 
 @media(max-width:560px){
   .mets { grid-template-columns: 1fr 1fr; }
@@ -437,7 +379,7 @@ td:first-child { text-align: left; padding-left: 2px; font-family: var(--font); 
 .pac-tot b { font-family: var(--mono); color: var(--txt); font-size: 14px; margin-left: 4px; }
 .pac-cfg { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--brd); }
 .pac-cfg table input { width: 100%; min-width: 70px; padding: 5px 8px; border: 1px solid var(--brd2); border-radius: var(--rad); background: var(--bg2); color: var(--txt); font-size: 12.5px; }
-.pac-cfg .fg-row3, .pac-cfg .fg-row { margin-top: 12px; }
+.pac-cfg .fg-row { margin-top: 12px; }
 
 /* Simulateur d'ordres (Stratégie) : mêmes contrôles que Prochain achat */
 .so-nom { width: 170px; padding: 6px 10px; border: 1px solid var(--brd2); border-radius: var(--rad); background: var(--bg2); color: var(--txt); font-size: 13px; }
@@ -559,11 +501,6 @@ body.has-shell { padding-top: 36px; }
   display: flex; flex-direction: column; padding: 14px 10px; gap: 4px;
   z-index: 9000; overflow-y: auto;
 }
-.sb-section-lbl {
-  font-size: 9px; font-weight: 700; color: var(--txt3);
-  text-transform: uppercase; letter-spacing: .09em;
-  padding: 10px 12px 6px;
-}
 .sb-item {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 7px;
@@ -644,18 +581,6 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
   to   { opacity: 1; transform: translateY(0);    }
 }
 
-/* — Indicateur sante des cours (vert/orange/rouge) — */
-.cours-health {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 99px;
-  border: 1px solid var(--brd);
-  font-size: 11px; font-family: var(--mono); color: var(--txt2);
-  margin-left: 6px;
-}
-.cours-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--g); box-shadow: 0 0 6px rgba(22,163,74,.5); }
-.cours-health.warn .cours-dot { background: var(--a); box-shadow: 0 0 6px rgba(217,119,6,.5); }
-.cours-health.err  .cours-dot { background: var(--r); box-shadow: 0 0 6px rgba(220,38,38,.5); }
-
 /* ── Modal mise a jour ──────────────────────────────── */
 #update-overlay {
   position: fixed; inset: 0; z-index: 9999;
@@ -734,10 +659,6 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
   border-top: 1px dashed var(--brd); padding-top: .6rem;
 }
 .reco-empty { text-align: center; color: var(--txt3); padding: 48px 0; font-size: 13px; }
-.reco-header-bar {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 1rem; flex-wrap: wrap; gap: 8px;
-}
 
 /* ── Secteurs ──────────────────────────────────────── */
 .sector-badge {
@@ -1025,12 +946,6 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
 .fin-toggle-btn.active { background: var(--bg2); color: var(--txt); box-shadow: var(--sh); }
 
 /* Badge sidebar (récurrents en attente) */
-.sb-badge {
-  background: var(--a); color: #fff;
-  border-radius: 99px; padding: 1px 7px;
-  font-size: 10px; font-weight: 700; font-family: var(--mono);
-  margin-left: auto;
-}
 
 /* Bandeau récap année */
 .fin-year-header {
@@ -1206,14 +1121,13 @@ html.sans-pilou .pilou { display: none; }
   font-size: 12px; font-family: var(--font); resize: vertical; min-height: 62px;
 }
 .fg textarea:focus { outline: none; border-color: var(--accent); }
-.fg-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 /* Ligne de champs a largeur variable : les champs masques ne laissent pas de trou */
 .sp-frow { display: flex; flex-wrap: wrap; gap: 10px; }
 .sp-frow > .fg { flex: 1 1 150px; margin-bottom: .8rem; }
 .sp-dur { display: flex; align-items: center; gap: 6px; }
 .sp-dur input { flex: 1; min-width: 0; }
 .sp-dur span { color: var(--txt2); font-size: .85rem; }
-@media (max-width: 620px) { .fg-row, .fg-row3 { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .fg-row { grid-template-columns: 1fr; } }
 
 /* ══════════════════════════════════════════════════
    Sports — agenda
@@ -1384,11 +1298,6 @@ html.sans-pilou .pilou { display: none; }
 /* ══════════════════════════════════════════════════
    Pret etudiant
    ══════════════════════════════════════════════════ */
-.pr-lock {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10px; color: var(--a); font-weight: 700;
-  text-transform: uppercase; letter-spacing: .06em;
-}
 .pr-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 @media (max-width: 980px) { .pr-split { grid-template-columns: 1fr; } }
 .pr-chart { position: relative; height: 290px; }
@@ -2089,7 +1998,6 @@ label.sv-check, label.sv-inline {
 .ga-cycle-leg { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11.5px; color: var(--txt3); }
 .ga-cycle-leg span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; background: var(--c); }
 /* Onglet Notifications : une ligne par type, icône · nom et aide · réglage */
-.ag-notifs-t { font-size: 12px; font-weight: 600; color: var(--txt2); margin: 4px 0 6px; }
 .ag-notifs { display: flex; flex-direction: column; margin-bottom: 16px; }
 .ag-notif { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--brd); }
 .ag-notif:first-child { border-top: none; }
@@ -2216,7 +2124,6 @@ body.sans-cours .refresh-grp { display: none; }
 .refresh-lbl { font-size: 12px; padding: 6px 6px 6px 14px; }
 .refresh-grp .btn { border-left-color: var(--brd2); padding-right: 14px; }
 .refresh-grp .btn:hover { background: var(--hover); }
-.spill, .cours-health { font-size: 12px; }
 
 /* — Boutons — */
 .btn {
@@ -2240,11 +2147,11 @@ body.sans-cours .refresh-grp { display: none; }
 }
 
 /* — Cartes : plus de bordure, une ombre douce ; le titre passe en serif — */
-.card, .dash-card, .reco-card, .fin-header, .fin-kpi, .mkpi,
+.card, .reco-card, .fin-header, .fin-kpi, .mkpi,
 .sp-goal, .sa-goal, .pea-info, .mc, .home-card {
   border-color: transparent;
 }
-.card-h, .dash-card-h {
+.card-h {
   background: transparent; border-bottom-color: transparent;
   padding: 1rem 1.25rem .3rem;
 }
@@ -2252,7 +2159,7 @@ body.sans-cours .refresh-grp { display: none; }
   font-family: var(--serif); font-weight: 500;
   text-transform: none; letter-spacing: -.005em; color: var(--txt);
 }
-.card-b, .dash-card-b { padding: .9rem 1.25rem 1.1rem; }
+.card-b { padding: .9rem 1.25rem 1.1rem; }
 
 /* — Chiffres clés : grands chiffres serif, libellés en casse normale — */
 .mets { grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 14px; }
@@ -2314,7 +2221,7 @@ thead th, .wish-table thead th {
 .set-nav-btn { border-radius: 999px; font-weight: 500; }
 .set-nav-btn:hover { background: var(--hover); }
 .toast-stack .toast { font-weight: 500; font-size: 12.5px; }
-.sbadge, .sb-badge { color: var(--bg2); }
+.sbadge { color: var(--bg2); }
 
 /* — États « choisi » : l'accent, et non plus l'ambre des alertes — */
 .sp-pick.active, .sp-field.active, .sp-group.active {
@@ -2992,8 +2899,8 @@ details.maj-item[open] .maj-chev { transform: rotate(90deg); }
 /* — Grille — */
 .topbar { margin-bottom: var(--space-4); }
 .card { margin-bottom: var(--space-4); }
-.card-h, .dash-card-h { padding: var(--space-4) var(--space-5) var(--space-1); }
-.card-b, .dash-card-b { padding: var(--space-4) var(--space-5); }
+.card-h { padding: var(--space-4) var(--space-5) var(--space-1); }
+.card-b { padding: var(--space-4) var(--space-5); }
 .mets, .mkpis, .dash-duo { gap: var(--space-4); }
 .mc { padding: var(--space-4) var(--space-5); }
 .mkpi { padding: var(--space-4) var(--space-5); }
@@ -3166,7 +3073,7 @@ html.verre #update-modal .upd-fiche { background: var(--bg3); }
 html.verre #update-modal :is(.upd-sub, .upd-step) { font-family: var(--font); }
 
 /* — Les surfaces de verre — */
-html.verre :is(.card, .dash-card, .reco-card, .fin-header, .fin-kpi, .mkpi, .sp-goal, .sa-goal,
+html.verre :is(.card, .reco-card, .fin-header, .fin-kpi, .mkpi, .sp-goal, .sa-goal,
                .pea-info, .mc, .home-card, .pa-cpt, .sa-cell) {
   background: var(--verre);
   border: 1px solid var(--verre-brd);
@@ -3233,7 +3140,7 @@ html.verre .btn-primary, html.verre .btn-primary:hover {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 14px -4px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 html.verre .btn-primary:hover { filter: brightness(1.06); }
-html.verre .refresh-grp, html.verre .spill, html.verre .cours-health {
+html.verre .refresh-grp {
   background: var(--verre); border-color: var(--verre-brd); box-shadow: var(--verre-lum);
 }
 html.verre .refresh-grp .btn { background: transparent; box-shadow: none; border-top: 0; border-bottom: 0; border-right: 0; }
@@ -20564,14 +20471,6 @@ let _spSportFields    = ["duration"];
 let _spSportEmoji     = "\u{1F3C5}";
 let _spSportColor     = SP_SPORT_COLORS[0];
 
-/** Liste de gestion (depuis les Parametres). */
-function spOpenCustomSports() {
-  if (!SP) { showToastModern("Module sport non charg\u00e9", "warn"); return; }
-  _corpsDansFenetre("corps-sp-sports", "ov-sp-sports");
-  spRenderCustomSports();
-  document.getElementById("ov-sp-sports").classList.add("open");
-}
-
 function spRenderCustomSports() {
   const box = document.getElementById("sp-sports-list");
   if (!box) return;
@@ -27535,6 +27434,16 @@ const DASH_WIDGETS = [
 
 const DASH_DEFAUT = ["pea", "sport", "sport-goal"];   // l'accueil historique
 
+/* Tuiles qui affichent des cours ou l'historique du PEA : au lancement, la
+   fenêtre attend ces données (5 s au plus) seulement si l'une d'elles est
+   allumée. Les tuiles d'un CTO ou de la Crypto (« cto:… », « crypto-pv:… »,
+   même motif que ctoLignesPatrimoine) en sont aussi.
+   Une nouvelle tuile qui lit _peaPv, ctoResume, getVar, l'historique ou le
+   Patrimoine (lignes « auto ») s'ajoute ici. */
+const TUILES_A_COURS = new Set(["pea", "pea-valeur", "prochain-achat", "pea-wish",
+  "bourse-totale", "bourse-perf", "marches", "patrimoine", "pa-repartition",
+  "pa-an", "pa-objectif", "pret-gains"]);
+
 function dashConfig() {
   const p = (typeof S !== "undefined" && S && S.uiPrefs) ? S.uiPrefs : {};
   let cfg = Array.isArray(p.dash) ? p.dash.slice() : null;
@@ -31141,7 +31050,6 @@ function tcChange() {
 
 function tcAFaire() { return TC ? TC.taches.filter(t => !t.fait) : []; }
 function tcEnRetard() { const auj = todayISO(); return tcAFaire().filter(t => t.echeance && t.echeance < auj); }
-function tcDuJour() { const auj = todayISO(); return tcAFaire().filter(t => t.echeance === auj); }
 
 /** Plus urgente d'abord, puis la plus proche, puis la plus ancienne */
 function tcTri(a, b) {
@@ -32986,9 +32894,15 @@ function _appReady() {
     }
     // Les cours du jour et l'historique ont 5 s pour arriver : sans réseau, on
     // ouvre avec les derniers connus plutôt que de laisser l'écran de
-    // chargement tourner
-    const donneesPretes = Promise.all([coursPrets, histPret].map(p => Promise.resolve(p).catch(() => null)));
-    await Promise.race([donneesPretes, new Promise(r => setTimeout(r, 5000))]);
+    // chargement tourner. Attendus seulement si une tuile allumée de l'accueil
+    // les affiche (16/11/2026, demande d'Arthur) : sinon la fenêtre s'ouvre
+    // tout de suite, et les cours arrivent derrière.
+    if (dashConfig().some(c => c.on && (TUILES_A_COURS.has(c.id) || /^(cto(-perf)?|crypto(-pv|-courbe)?):/.test(c.id)))) {
+      const donneesPretes = Promise.all([coursPrets, histPret].map(p => Promise.resolve(p).catch(() => null)));
+      await Promise.race([donneesPretes, new Promise(r => setTimeout(r, 5000))]);
+    } else {
+      _jn("aucune tuile de l'accueil n'attend les cours : ouverture sans eux");
+    }
   } catch(e) {
     const box=document.getElementById("errbox");
     if (box) { box.style.display="block"; box.textContent="Pilote n'a pas pu démarrer. Ferme-le et relance-le : tes données ne sont pas touchées. (Détail : "+e.message+")"; }

@@ -55,7 +55,15 @@ logo « P » à la couleur d'accent et « Pilote », dans le thème de l'utilisa
   deux ; le second appel a disparu (historique journalier, voir
   `docs/modules/pea.md`). Délai d'ouverture inchangé : 2,5 s avant comme après, de
   la première requête à l'ouverture (dev, utilisateur de test, 3 titres).
-  Les PER, rendements et mini-courbes des tableaux Positions et Wishlist
+* **Cours attendus seulement si une tuile les affiche (16/11/2026, demande
+  d'Arthur).** Si aucune tuile allumée de l'accueil n'est dans `TUILES_A_COURS`
+  (index.html, à côté de `DASH_DEFAUT`) ni une tuile de CTO ou de Crypto
+  (`cto:…`, `cto-perf:…`, `crypto:…`, `crypto-pv:…`, `crypto-courbe:…`), `boot()` n'attend ni les cours ni l'historique : la fenêtre
+  s'ouvre dès les modules lus, les cours arrivent derrière. Utile avec une
+  connexion lente, où l'attente montait aux 5 s. Une nouvelle tuile qui lit
+  `_peaPv`, `ctoResume`, `getVar`, l'historique ou le Patrimoine s'ajoute à la
+  liste.
+* Les PER, rendements et mini-courbes des tableaux Positions et Wishlist
   (`/keystats`, `/sparkline`, `/analysts`) ne sont toujours **pas** attendus : rien
   ne s'en affiche sur l'accueil.
 * **Filet de sécurité** : `REVEAL_TIMEOUT` (20 s), un `threading.Timer` qui ouvre la

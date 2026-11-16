@@ -10,7 +10,6 @@ Ecriture atomique (.tmp -> rename) + rotation 7 jours, comme storage.py.
 """
 from __future__ import annotations
 
-import shutil
 import datetime
 from pathlib import Path
 from typing import Optional
