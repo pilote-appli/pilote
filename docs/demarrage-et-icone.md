@@ -19,12 +19,12 @@ logo « P » à la couleur d'accent et « Pilote », dans le thème de l'utilisa
   (effets d'animation de Windows coupés), tout s'affiche d'emblée et seule la barre
   glisse, plus lentement. Vérifié dans une vraie fenêtre pywebview (thèmes clair et
   sombre), pas encore dans l'exe compilé.
-* **Style Verre (4.4.58)** : l'écran suit le style de l'utilisateur actif
-  (`uiPrefs.design`, lu par `app.py` avec le thème et l'accent). Verre par défaut :
-  fond à la couleur d'accent, tuile avec un reflet de verre, « P » et « Pilote » droits
-  et gras dans la police du système (`_css_verre`, jetons `_THEMES_VERRE`). Carnet :
-  l'écran d'avant, inchangé (Newsreader en italique, fond papier). L'animation est la
-  même dans les deux.
+* **Style Verre (4.4.58, seul depuis le 16/11/2026)** : fond à la couleur
+  d'accent, tuile avec un reflet de verre, « P » et « Pilote » droits et gras dans
+  la police du système (jetons `_THEMES_VERRE`), au thème et à
+  l'accent de l'utilisateur actif (lus par `app.py`). L'écran Carnet (Newsreader
+  en italique, fond papier) est retiré avec le mode Carnet, et son CSS fusionné
+  avec celui de Verre (plus de `_css_verre`).
 * **Coins arrondis** (03/10/2026, demande d'Arthur). Les coins sont
   arrondis par Windows 11 lui-même (`splash.arrondir_coins`, DWM :
   `DWMWA_WINDOW_CORNER_PREFERENCE` = arrondi, plus `DWMWA_BORDER_COLOR` = `--brd` rendu
@@ -55,7 +55,15 @@ logo « P » à la couleur d'accent et « Pilote », dans le thème de l'utilisa
   deux ; le second appel a disparu (historique journalier, voir
   `docs/modules/pea.md`). Délai d'ouverture inchangé : 2,5 s avant comme après, de
   la première requête à l'ouverture (dev, utilisateur de test, 3 titres).
-  Les PER, rendements et mini-courbes des tableaux Positions et Wishlist
+* **Cours attendus seulement si une tuile les affiche (16/11/2026, demande
+  d'Arthur).** Si aucune tuile allumée de l'accueil n'est dans `TUILES_A_COURS`
+  (index.html, à côté de `DASH_DEFAUT`) ni une tuile de CTO ou de Crypto
+  (`cto:…`, `cto-perf:…`, `crypto:…`, `crypto-pv:…`, `crypto-courbe:…`), `boot()` n'attend ni les cours ni l'historique : la fenêtre
+  s'ouvre dès les modules lus, les cours arrivent derrière. Utile avec une
+  connexion lente, où l'attente montait aux 5 s. Une nouvelle tuile qui lit
+  `_peaPv`, `ctoResume`, `getVar`, l'historique ou le Patrimoine s'ajoute à la
+  liste.
+* Les PER, rendements et mini-courbes des tableaux Positions et Wishlist
   (`/keystats`, `/sparkline`, `/analysts`) ne sont toujours **pas** attendus : rien
   ne s'en affiche sur l'accueil.
 * **Filet de sécurité** : `REVEAL_TIMEOUT` (20 s), un `threading.Timer` qui ouvre la
@@ -70,9 +78,9 @@ logo « P » à la couleur d'accent et « Pilote », dans le thème de l'utilisa
 * La fenêtre principale est créée **en premier** : `webview.windows[0]` reste elle
   (minimize, close, dialogues, updater).
 * Le HTML de l'écran est construit en Python (pas de `splash.html`, qui devrait
-  entrer dans les `datas` de la spec : le piège d'`ocr_win.ps1`). Les polices viennent
-  de `ui/vendor/fonts`, inlinées en `data:` : la page n'a pas d'origine et ne peut
-  rien demander au serveur local.
+  entrer dans les `datas` de la spec : le piège d'`ocr_win.ps1`). La police est celle
+  du système (plus de Newsreader ni d'Onest inlinées depuis le 16/11/2026) : la page
+  n'a pas d'origine et ne peut rien demander au serveur local.
 * Mesuré sur la machine d'Arthur : écran de chargement vers 4 s après le lancement
   (import Python + WebView2), fenêtre complète entre 6,5 et 12,5 s selon la charge.
   Ces chiffres sont ceux du **dev** (`python src/app.py`) : l'exe ajoutait sa

@@ -2,6 +2,18 @@
   "_lisez_moi": "Une fiche par version, la plus récente en tête. Elle s'affiche avant l'installation (lue sur GitHub au tag de la version), une fois après, puis dans Paramètres → Mises à jour. Écrite pour l'utilisateur : ce qui change pour lui, pas pour le code. Clés : version, date (AAAA-MM-JJ), titre, nouveau, ameliore, corrige (listes, chacune facultative). Gras : ce qui précède « : » en tête de ligne l'est tout seul ; **texte** met autre chose en gras, mais seulement à partir de la fiche de la 4.4.54 (une 4.4.52 afficherait les étoiles dans « Mise à jour disponible »).",
   "versions": [
     {
+      "version": "4.4.77",
+      "date": "2026-11-16",
+      "titre": "Pilote s'ouvre plus vite",
+      "ameliore": [
+        "Pilote s'ouvre plus vite : il charge moins de choses au lancement. Et si aucune de tes tuiles d'accueil n'affiche de cours de bourse, la fenêtre n'attend plus internet pour s'ouvrir : les cours arrivent juste après.",
+        "Importer un relevé de banque en CSV, en Excel ou en PDF est plus rapide : Pilote ne prépare plus la lecture des captures d'écran quand il n'y en a pas.",
+        "Barre du haut : Rechercher est maintenant juste à côté du nom de la page, avec son raccourci Ctrl K. Actualiser n'apparaît plus que là où il y a des cours.",
+        "Bilan de la semaine : le PDF se lit mieux sur iPhone, en pages d'un écran, au style Verre.",
+        "Le style Carnet est retiré : Verre est désormais le seul style de Pilote."
+      ]
+    },
+    {
       "version": "4.4.76",
       "date": "2026-11-15",
       "titre": "Toutes les questions aux couleurs de Pilote",

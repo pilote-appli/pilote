@@ -193,7 +193,10 @@ différentes (un en-tête de date gris clair raté rattache ses lignes à
 l'en-tête d'avant) ; un « - » vu par une seule lecture est repris
 (`_completer_signes`). Quelques secondes par image : un message le dit pendant
 la lecture. Un seul PowerShell pour tout l'import
-(`SessionOcr`, comme Santé). Une photo HEIC de l'iPhone est refusée avec la
+(`SessionOcr`, comme Santé), lancé seulement à la première capture
+(`SessionOcr(differe=True)`, 16/11/2026) : avant, chaque import, même de CSV
+ou de PDF seuls, démarrait ce PowerShell pour rien (3 s perdues), et
+`test_entrainement_1020_releves` en démarrait 1 020. Une photo HEIC de l'iPhone est refusée avec la
 marche à suivre (capture en PNG ou JPEG).
 
 **Reconnaissance** (`operations`, sans moteur : testée sur des mots

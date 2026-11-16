@@ -175,9 +175,9 @@ def ouvrir(chemin: str) -> None:
         subprocess.Popen(["xdg-open", chemin])
 
 
-# ─── Page HTML -> PDF d'une seule page (bilan de la semaine, 01/11/2026) ─────
-# Pour le telephone : une page longue, sans coupure, a la largeur d'un ecran de
-# telephone (la page passe sur une colonne). pywebview ne sait pas ecrire un PDF
+# ─── Page HTML -> PDF pour le telephone (bilan de la semaine, 01/11/2026) ────
+# Des pages a la taille d'un ecran de telephone (la page passe sur une
+# colonne). pywebview ne sait pas ecrire un PDF
 # sans la fenetre d'impression ; un navigateur Chromium sans fenetre, si :
 # Edge, present sur tout Windows 10 et 11 ; sur Mac, Chrome, Edge ou Brave
 # s'il y en a un (sinon pas de PDF, la notification reste en texte).
@@ -197,8 +197,8 @@ def _chromium() -> str:
 
 
 def html_vers_pdf(html: str, chemin_pdf: str, largeur: int = 420) -> bool:
-    """Ecrit `html` en PDF d'une seule page de `largeur` px (sa hauteur suit la
-    page). Les polices de Pilote (ui/vendor) sont reprises depuis le disque.
+    """Ecrit `html` en PDF de pages de `largeur` px, a la proportion d'un
+    ecran de telephone. Les polices de Pilote (ui/vendor) sont reprises depuis le disque.
     False sans navigateur ou en cas d'echec, sans lever d'exception."""
     import tempfile
     from pathlib import Path
@@ -208,16 +208,13 @@ def html_vers_pdf(html: str, chemin_pdf: str, largeur: int = 420) -> bool:
     base = Path(getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__))))
     polices = (base / "ui" / "vendor" / "fonts.css").as_uri()
     html = re.sub(r'href="https?://[^"]*/vendor/fonts\.css[^"]*"', f'href="{polices}"', html)
-    # La hauteur de la page une fois dessinee devient celle du papier
-    # (une fois les polices chargees : avant, le texte plus etroit donnait une
-    # page trop courte et la derniere ligne passait sur une 2e page)
-    html = html.replace("</body>", "<script>addEventListener('load',function(){"
-                        f"document.documentElement.style.width='{largeur}px';"
-                        "document.fonts.ready.then(function(){"
-                        "var h=Math.ceil(document.body.getBoundingClientRect().height)+24,"
-                        "s=document.createElement('style');"
-                        f"s.textContent='@page{{size:{largeur}px '+h+'px;margin:0}}';"
-                        "document.head.appendChild(s);});});</script></body>", 1)
+    # Des pages a la proportion d'un ecran de telephone (16/11/2026). Jusque-la
+    # une seule page, haute comme toute la semaine (5 ecrans) : sur l'iPhone,
+    # l'apercu la dessinait floue et passait au noir pendant le defilement.
+    # Les coupures evitent de couper une ligne ou un bloc (CSS de la page).
+    hauteur = round(largeur * 2532 / 1170)   # ecran d'iPhone, 19,5/9
+    html = html.replace("</body>", f"<style>@page{{size:{largeur}px {hauteur}px;margin:0}}"
+                        "</style></body>", 1)
     try:
         with tempfile.TemporaryDirectory(prefix="pilote-pdf-") as tmp:
             source = Path(tmp) / "page.html"

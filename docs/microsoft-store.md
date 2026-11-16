@@ -95,3 +95,11 @@ puis désinstalle et vérifie que les données sont restées.
   version, nouvelle soumission avec le nouveau `Pilote.msix`.
 * État vérifié le 06/11/2026 : fiche **détectable** dans le Store (recherche et
   navigation), public, tous les pays ; soumission n° 4 publiée avec la v4.4.62.0.
+* 15/11/2026, soumission n° 9 : les 7 captures refaites à l'accent fuchsia
+  (mêmes écrans : Accueil, PEA, Positions, Mes comptes, Sports, Patrimoine,
+  Santé ; 2732 × 1536, données de Brice, horloge à 10 h pour « Bonjour »), le
+  paquet inchangé (4.4.74). Copie dans le Drive :
+  `Pilote\Captures de l'app\Microsoft Store (15-11-2026)`. Fabriquées par une
+  page Playwright sur une copie isolée de `src/` (pont remplacé par la vraie
+  classe `Api`, lectures seules) : appeler `_setActiveSidebar` après `goTab`,
+  sinon la barre latérale reste sur Accueil.

@@ -11,19 +11,9 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# Site public (15/11/2026) : galerie de l'accueil du site, en fuchsia sur les
-# donnees de Brice. Un lot = trois lignes = une app relancee : les lots 3 et 4
-# passent en sombre (en memoire seulement) sur leur premiere ligne.
-# (Les lignes de la 4.4.76 sont dans le commit 4680a14.)
-dash
-fin-month
-sp-agenda
-sa-suivi
-pa-vue
+# 4.4.77 (16/11/2026) : barre du haut. Ligne 1 : Rechercher a droite du fil
+# d'Ariane, avec Ctrl K (Cmd K sur Mac) ; ligne 2 : pas d'Actualiser dans Sports ;
+# ligne 3 : Parametres > General sans le choix Verre / Carnet (Verre seul).
 home
-js:applyTheme('dark'),goTab('dash')
-fin-month
 sp-agenda
-js:applyTheme('dark'),goTab('sa-suivi')
-pa-vue
-home
+js:openSettings('general')

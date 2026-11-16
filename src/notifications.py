@@ -16,16 +16,19 @@ from __future__ import annotations
 import sys
 import subprocess
 import threading
+import importlib.util
 from pathlib import Path
 from typing import Optional
 
+# win10toast n'est importe qu'a la premiere notification : il charge
+# pkg_resources, qui coutait a lui seul 2,2 s au lancement de Pilote (mesure
+# du 16/11/2026, python -X importtime). Ici, on regarde seulement s'il est la.
+_toaster = None
 try:
-    from win10toast import ToastNotifier  # type: ignore
-    _toaster = ToastNotifier()
-    _AVAILABLE = True
+    _AVAILABLE = (sys.platform == "darwin"
+                  or importlib.util.find_spec("win10toast") is not None)
 except Exception:
-    _toaster = None
-    _AVAILABLE = sys.platform == "darwin"
+    _AVAILABLE = False
 
 
 def _icon_path() -> Optional[str]:
@@ -54,16 +57,20 @@ _verrou_toast = threading.Lock()
 
 
 def _show(title: str, msg: str, duration: int = 6) -> None:
+    global _toaster
     if sys.platform == "darwin":
         _show_mac(title, msg)
         return
-    if not _AVAILABLE or _toaster is None:
+    if not _AVAILABLE:
         return
     icon = _icon_path()
     try:
         # Deja dans un fil a part (notify) : on attend ici la fin du toast
         # precedent au lieu de bloquer l'interface
         with _verrou_toast:
+            if _toaster is None:
+                from win10toast import ToastNotifier  # type: ignore
+                _toaster = ToastNotifier()
             _toaster.show_toast(
                 title, msg,
                 icon_path=icon,
