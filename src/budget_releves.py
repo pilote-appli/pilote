@@ -740,13 +740,6 @@ class Categories:
                         return c["name"], s["name"]
         return None
 
-    def a_classer(self, typ):
-        nom = "Autres revenus" if typ == "income" else "Autres dépenses"
-        for c in self.cats:
-            if c.get("type", "expense") == typ and _norm(c["name"]) == _norm(nom):
-                return c["name"]
-        return nom
-
 # ─── Classement ──────────────────────────────────────────────────────────────
 
 _REMB = re.compile(r"\b(remboursement|rembt|remb|avoir|refund|retour|annulation|annul|credit carte|reversal)\b")
@@ -977,7 +970,7 @@ def lire(fichiers: list, categories=None, historique=None) -> dict:
     raison, propose, interne, totalCarte, doubleCarte, empreinte, devise,
     fichier, banque."""
     tout, docs, captures = [], [], []
-    with budget_captures.SessionOcr():
+    with budget_captures.SessionOcr(differe=True) as ocr:
         for f in fichiers or []:
             nom = f.get("nom", "")
             try:
@@ -987,6 +980,7 @@ def lire(fichiers: list, categories=None, historique=None) -> dict:
                     # est le jour du fichier (sa date de modification)
                     ms = f.get("date") or 0
                     jour = datetime.date.fromtimestamp(ms / 1000.0) if ms else datetime.date.today()
+                    ocr.demarrer()
                     r = budget_captures.lire_image(data, min(jour, datetime.date.today()))
                 elif budget_captures.est_heic(data):
                     r = {"ok": False, "erreur": "photo au format HEIC de l'iPhone : fais une capture d'écran (PNG) "

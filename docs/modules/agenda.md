@@ -216,9 +216,10 @@ Calendrier doit être autorisé.
   voir le bilan ». La page du bilan est décrite dans `docs/accueil.md`.
 * **La page en pièce jointe** (01/11/2026, « je veux la page sur la notif ») :
   la page en version téléphone (`bilanPageHtml(b, true)`, une colonne) part
-  avec les chiffres ; `plateforme.html_vers_pdf` en fait un PDF d'**une seule
-  page** de 420 px de large (Edge sans fenêtre sous Windows ; sur Mac Chrome,
-  Edge ou Brave s'il y en a un, sinon pas de PDF), dans `users/<slug>/bilans/
+  avec les chiffres ; `plateforme.html_vers_pdf` en fait un PDF de **pages à
+  la taille d'un écran d'iPhone** (420 × 909 px ; Edge sans fenêtre sous
+  Windows ; sur Mac Chrome, Edge ou Brave s'il y en a un, sinon pas de PDF),
+  dans `users/<slug>/bilans/
   <lundi>.pdf`, refait seulement quand les chiffres changent. L'événement porte
   `X-PILOTE-PDF:<lundi>:<empreinte>` ; `_joindre_pdf` le joint (pièce jointe
   gérée, RFC 8607 : iCloud annonce `calendar-managed-attachments`).
@@ -228,6 +229,21 @@ Calendrier doit être autorisé.
   avec la ligne `ATTACH` qu'iCloud a posée. Si ce dernier PUT échoue,
   l'empreinte n'est pas notée et tout repart au prochain envoi. Vérifié sur son
   iPhone avec une page fictive : notification reçue, PDF ouvert en une page.
+  **Une seule page, jusqu'au 16/11/2026 :** haute comme toute la semaine
+  (≈ 5 écrans avec la bourse, le sport, les dépenses et la forme), l'aperçu de
+  l'iPhone la dessinait floue, passait au noir et laissait des bandes blanches
+  pendant le défilement (vidéo d'Arthur du 15/11). Depuis, des pages d'un
+  écran, coupées entre les lignes et les blocs (`break-inside: avoid` dans la
+  CSS `.tel`) ; fond crème jusqu'au bord (`@page` sans marge, marge du `body`
+  reprise sur chaque page par `box-decoration-break: clone`).
+  **Style Verre (16/11/2026, demande d'Arthur)** : la page suit la classe
+  `verre` de `<html>` (`body.verre`) : fond voilé de l'accent, répété à
+  l'identique sur chaque page (`background-size: 100% 100vh`), sections et
+  chiffres en verre, police du système, vert et rouge d'Apple. Sans ombre
+  floue : Chromium l'écrit en image dans le PDF, lourde sur le téléphone.
+  « Segoe UI » et pas « Segoe UI Variable » : Chromium écrit une police
+  variable en Type 3 (chaque lettre est un dessin), c'était le cas d'Onest et
+  Newsreader en Carnet ; Segoe UI part en vraie police.
   Une notification de Calendrier ouvre toujours l'événement, pas le PDF
   (deux gestes) ; un Raccourci iPhone sur un PDF d'iCloud Drive l'ouvrirait
   directement, écarté par Arthur (iCloud Drive pas installé sur son PC).

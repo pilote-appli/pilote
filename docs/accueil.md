@@ -206,6 +206,10 @@ juste après le patch de `goTab` de Garmin) :
   une installation existante ne change pas d'aspect après mise à jour.
 * Un widget ajouté par une version ultérieure apparaît **éteint** en fin de
   liste, jamais activé d'office.
+* Une tuile qui affiche des cours ou l'historique (`_peaPv`, `ctoResume`,
+  `getVar`, Patrimoine) va aussi dans `TUILES_A_COURS` : au lancement, la
+  fenêtre n'attend les cours que si l'une de ces tuiles est allumée (16/11/2026,
+  `docs/demarrage-et-icone.md`).
 
 ### Tuile « Performance du PEA » : la période se choisit sur la tuile (4.2.7)
 
@@ -611,15 +615,29 @@ depuis le 13/11 (ils étaient exclus en 4.4.70).
   feuille au début ») : la couverture seule, un clic sur la carte montre la
   suivante (à gauche, la précédente ; flèches du clavier), les cartes déjà vues
   partent sur la gauche, la suivante dépasse dessous comme une pile ; barres de
-  progression en haut. Sur la dernière : « Télécharger mon année », « Partager »,
+  progression en haut. Sur la dernière : « Télécharger la vidéo », « Partager »,
   « Revoir ».
 * **Image** : chaque carte est un SVG qui embarque Onest et Newsreader en data URL
-  (`anChargerPolices` : une image SVG n'a pas accès aux polices de la page),
-  dessiné dans un canvas (`anPng`). « Télécharger mon année » envoie toutes les
-  cartes à `Api.images_enregistrer` : un dossier choisi, un sous-dossier
-  « Pilote - Mon année 2026 » avec une image numérotée par carte, ouvert ensuite
-  (en-tête PNG vérifié, rien dans `Donnees/`). « Partager » ouvre le partage de
-  Windows quand la page y a accès (`navigator.share`), sinon copie l'image dans
-  le presse-papiers. Couleurs
-  tirées de l'accent choisi. Dans le SVG, la police passe par une classe
+  (`anChargerPolices` : une image SVG n'a pas accès aux polices de la page).
+  Couleurs tirées de l'accent choisi. Dans le SVG, la police passe par une classe
   (`an-serif`) : la règle CSS `text {}` l'emporterait sur un attribut `font-family`.
+* **Vidéo** (15/11/2026, demande d'Arthur : l'ancien téléchargement donnait une
+  image PNG par carte, et « Partager » ne marchait jamais) : `anMonterVideo` fait
+  des cartes une vidéo MP4 1080 × 1920, 3 s par carte, la suivante glisse depuis
+  la droite (37 s pour les 12 cartes de Brice, ~5 Mo). Les images sont encodées
+  en H.264 par WebCodecs (`VideoEncoder`, profil Baseline : jamais d'images dans
+  le désordre) et rangées dans un MP4 écrit à la main (`anMp4`) ; une image
+  toutes les 0,5 s quand rien ne bouge, 30 par seconde dans un glissement :
+  ~15 s de montage sur le PC d'Arthur au lieu de 45. Montée une fois par
+  ouverture du bilan (`_anVideo`), fermer le bilan l'interrompt.
+  **Pas MediaRecorder** : filmer le canvas en temps réel donnait, dans WebView2,
+  une vidéo vide en MP4 et tronquée de moitié en WebM dès que l'image ne bouge
+  pas (mesuré le 15/11). « Télécharger la vidéo » : `Api.video_debut` demande le
+  fichier (« Enregistrer sous »), la vidéo arrive en morceaux de 1,5 Mo
+  (`video_morceau`, en-tête `ftyp` vérifié, 300 Mo au plus) dans un `.part` qui
+  ne prend son nom qu'à la fin (`video_fin`), puis le dossier s'ouvre ; rien
+  dans `Donnees/`. « Partager » donne la vidéo au partage du système
+  (`navigator.share`, présent dans WebView2) ; il n'accepte qu'un clic récent :
+  si la vidéo vient d'être montée, « clique encore sur Partager ». Sans partage
+  possible, elle est enregistrée. Ancienne panne du partage : l'image passait
+  par `fetch()` d'une adresse `data:`, que la CSP (`connect-src 'self'`) refuse.

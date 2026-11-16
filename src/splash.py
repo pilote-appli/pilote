@@ -13,34 +13,24 @@ fluides.
 
 Le HTML est construit ici plutot que dans un fichier a part : un splash.html
 devrait etre ajoute aux datas de build/pilote.spec, et l'oublier ne se
-verrait que dans l'exe compile (le meme piege que ocr_win.ps1). Les polices
-viennent de ui/vendor/fonts, deja embarque, inlinees en data: — la page n'a
-pas d'origine et ne peut rien demander au serveur local.
+verrait que dans l'exe compile (le meme piege que ocr_win.ps1). La police est
+celle du systeme (style Verre) : la page n'a pas d'origine et ne peut rien
+demander au serveur local.
 """
 from __future__ import annotations
 
-import base64
 import re
-from pathlib import Path
 
 # 340 x 260 (maquette validee) agrandi de 35 % a la demande d'Arthur (4.3.19) :
 # .scene { zoom } grossit tout le contenu d'autant, les proportions restent
 SIZE = (460, 350)
 
-# Memes jetons que :root et html[data-theme="dark"] dans index.html.
-# « haut » eclaire le centre du fond ; « bord » = --brd rendu opaque sur --bg,
-# pour le liseré que Windows 11 trace autour des coins arrondis. Pas de grain
-# de papier : essaye en 4.3.20, Arthur l'a trouve laid dans les deux themes.
-_THEMES = {
-    "light": {"bg": "#f1ebe0", "txt": "#2a231b", "txt2": "#6a5e4d", "brd": "rgba(70,45,20,0.17)",
-              "haut": "#f9f5ee", "bord": (212, 203, 189)},
-    "dark":  {"bg": "#191613", "txt": "#efe7d9", "txt2": "#b1a592", "brd": "rgba(255,230,200,0.13)",
-              "haut": "#26211c", "bord": (55, 49, 43)},
-}
 _DEFAULT_ACCENT = "#c026d3"   # ACCENT_DEFAULT (index.html) / DEFAULT_COLOR (appicon.py)
 
-# Style « Verre » (4.4.56, par defaut) : memes jetons que html.verre dans
-# index.html. Le Carnet ci-dessus reste pour qui l'a choisi (uiPrefs.design).
+# Style « Verre », le seul depuis le 16/11/2026 (le Carnet est retire) : memes
+# jetons que html.verre dans index.html. « haut » eclaire le centre du fond ;
+# « bord » = --brd rendu opaque sur --bg, pour le liseré que Windows 11 trace
+# autour des coins arrondis.
 _THEMES_VERRE = {
     "light": {"bg": "#eceef3", "txt": "#1d1d1f", "txt2": "#5f5f66", "brd": "rgba(0,0,0,0.11)",
               "haut": "#f6f7fa", "bord": (206, 208, 214), "fond1": 34, "fond2": 22},
@@ -49,16 +39,15 @@ _THEMES_VERRE = {
 }
 
 
-def _jetons(theme: str, design: str = "verre") -> dict:
-    table = _THEMES if design == "carnet" else _THEMES_VERRE
-    return table.get(theme, table["light"])
+def _jetons(theme: str) -> dict:
+    return _THEMES_VERRE.get(theme, _THEMES_VERRE["light"])
 
 
-def background(theme: str, design: str = "verre") -> str:
-    return _jetons(theme, design)["bg"]
+def background(theme: str) -> str:
+    return _jetons(theme)["bg"]
 
 
-def arrondir_coins(hwnd: int, theme: str, design: str = "verre") -> bool:
+def arrondir_coins(hwnd: int, theme: str) -> bool:
     """Coins arrondis par Windows 11 lui-meme (DWM) : lisses, ombre comprise,
     rayon fixe de 8 px. Une fenetre transparente avec border-radius en CSS
     passerait par la « couleur cle » de pywebview, qui laisse des franges.
@@ -68,7 +57,7 @@ def arrondir_coins(hwnd: int, theme: str, design: str = "verre") -> bool:
         dwm = ctypes.windll.dwmapi
         rond = ctypes.c_int(2)                                     # DWMWCP_ROUND
         ok = dwm.DwmSetWindowAttribute(hwnd, 33, ctypes.byref(rond), 4) == 0  # DWMWA_WINDOW_CORNER_PREFERENCE
-        r, g, b = _jetons(theme, design)["bord"]
+        r, g, b = _jetons(theme)["bord"]
         couleur = ctypes.c_uint(r | (g << 8) | (b << 16))         # COLORREF : 0x00BBGGRR
         dwm.DwmSetWindowAttribute(hwnd, 34, ctypes.byref(couleur), 4)  # DWMWA_BORDER_COLOR
         return ok
@@ -76,43 +65,32 @@ def arrondir_coins(hwnd: int, theme: str, design: str = "verre") -> bool:
         return False
 
 
-def _font_uri(fonts_dir: Path, name: str) -> str:
-    try:
-        data = (fonts_dir / name).read_bytes()
-        return "data:font/woff2;base64," + base64.b64encode(data).decode("ascii")
-    except Exception:
-        return ""
+_POLICE = '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif'
 
 
-def build_html(ui_dir: Path, accent: str, theme: str, design: str = "verre") -> str:
-    t = _jetons(theme, design)
+def build_html(accent: str, theme: str) -> str:
+    """Style Verre : fond a la couleur d'accent (comme le fond de l'app),
+    tuile avec un reflet de verre, nom et P dans la police du systeme."""
+    t = _jetons(theme)
     # L'accent finit dans du CSS : seul un #rrggbb passe
     if not re.fullmatch(r"#[0-9a-fA-F]{6}", accent or ""):
         accent = _DEFAULT_ACCENT
-    fonts = Path(ui_dir) / "vendor" / "fonts"
-    serif = _font_uri(fonts, "newsreader-italic-latin.woff2")
-    sans = _font_uri(fonts, "onest-latin.woff2")
-    faces = ""
-    if serif:
-        faces += ("@font-face{font-family:'Newsreader';font-style:italic;"
-                  "font-weight:400 600;src:url(%s) format('woff2')}" % serif)
-    if sans:
-        faces += ("@font-face{font-family:'Onest';font-style:normal;"
-                  "font-weight:400 600;src:url(%s) format('woff2')}" % sans)
 
     return """<!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><title>Pilote</title>
 <style>
-%(faces)s
 :root { --bg:%(bg)s; --txt:%(txt)s; --txt2:%(txt2)s; --brd:%(brd)s; --accent:%(accent)s; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%%; background: var(--bg); overflow: hidden; user-select: none; cursor: default; }
 body {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   border: 1px solid var(--brd); color: var(--txt);
-  font-family: "Onest", system-ui, sans-serif;
-  /* Fond lisse, a peine plus clair au centre */
-  background: radial-gradient(ellipse 78%% 70%% at 50%% 44%%, %(haut)s, var(--bg));
+  font-family: %(police)s;
+  /* Deux taches d'accent, et le centre a peine plus clair */
+  background:
+    radial-gradient(60%% 70%% at 18%% 20%%, color-mix(in srgb, var(--accent) %(fond1)d%%, var(--bg)), transparent 72%%),
+    radial-gradient(60%% 70%% at 85%% 85%%, color-mix(in srgb, var(--accent) %(fond2)d%%, var(--bg)), transparent 72%%),
+    radial-gradient(ellipse 78%% 70%% at 50%% 44%%, %(haut)s, var(--bg));
 }
 .scene { position: relative; display: flex; flex-direction: column; align-items: center; zoom: 1.35; }
 /* Logo : halo qui respire, deux ondes, tuile qui rebondit, P qui monte, reflet */
@@ -131,9 +109,10 @@ body {
 @keyframes onde { 0%% { transform: scale(1); opacity: .6; } 100%% { transform: scale(1.85); opacity: 0; } }
 .tuile {
   position: relative; width: 72px; height: 72px; border-radius: 19px; overflow: hidden;
-  background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
-  font-family: "Newsreader", Georgia, serif; font-style: italic; font-weight: 500; font-size: 44px;
-  box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--accent) 80%%, transparent);
+  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%%), var(--accent);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 40px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 14px 30px -12px color-mix(in srgb, var(--accent) 80%%, transparent);
   animation: pop .8s cubic-bezier(.2,.9,.3,1.25) both;
 }
 @keyframes pop { 0%% { transform: scale(.25) rotate(-14deg); opacity: 0; } 55%% { opacity: 1; } 100%% { transform: none; opacity: 1; } }
@@ -148,7 +127,7 @@ body {
 /* Nom ecrit lettre par lettre */
 .nom {
   display: flex; overflow: hidden; margin-top: 16px; padding: 0 3px .14em;
-  font-family: "Newsreader", Georgia, serif; font-style: italic; font-size: 31px; line-height: 1.1;
+  font-weight: 700; font-size: 29px; letter-spacing: -.03em; line-height: 1.1;
 }
 .nom span { display: inline-block; animation: lettre .6s cubic-bezier(.2,.8,.2,1) both; }
 .nom span:nth-child(1) { animation-delay: .55s; } .nom span:nth-child(2) { animation-delay: .61s; }
@@ -175,7 +154,6 @@ body {
   .halo { opacity: .7; }
   .piste i { animation-duration: 3s; animation-delay: 0s; }
 }
-%(verre)s
 </style></head>
 <body><div class="scene">
   <div class="logo" aria-hidden="true">
@@ -185,27 +163,4 @@ body {
   <div class="nom" aria-hidden="true"><span>P</span><span>i</span><span>l</span><span>o</span><span>t</span><span>e</span></div>
   <div class="piste" aria-hidden="true"><i></i></div>
   <div class="txt" role="status">Chargement de tes donn&eacute;es&hellip;</div>
-</div></body></html>""" % {"faces": faces, "accent": accent, "verre": _css_verre(t) if design != "carnet" else "", **t}
-
-
-def _css_verre(t: dict) -> str:
-    """Style Verre : fond a la couleur d'accent (comme le fond de l'app),
-    tuile avec un reflet de verre, nom et P dans la police du systeme."""
-    sys_font = '-apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif'
-    return """
-body {
-  font-family: %(f)s;
-  background:
-    radial-gradient(60%% 70%% at 18%% 20%%, color-mix(in srgb, var(--accent) %(f1)d%%, var(--bg)), transparent 72%%),
-    radial-gradient(60%% 70%% at 85%% 85%%, color-mix(in srgb, var(--accent) %(f2)d%%, var(--bg)), transparent 72%%),
-    radial-gradient(ellipse 78%% 70%% at 50%% 44%%, %(haut)s, var(--bg));
-}
-.tuile {
-  font-family: %(f)s; font-style: normal; font-weight: 700; font-size: 40px;
-  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%%), var(--accent);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 14px 30px -12px color-mix(in srgb, var(--accent) 80%%, transparent);
-}
-.onde { border-radius: 19px; }
-.nom { font-family: %(f)s; font-style: normal; font-weight: 700; font-size: 29px; letter-spacing: -.03em; }
-.txt { font-family: %(f)s; }
-""" % {"f": sys_font, "f1": t["fond1"], "f2": t["fond2"], "haut": t["haut"]}
+</div></body></html>""" % {"accent": accent, "police": _POLICE, **t}
