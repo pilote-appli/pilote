@@ -30,7 +30,7 @@ essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
   `html.sans-pilou`, qui cache tout `.pilou` : rien n'est redessiné.
 * Pas de tuile d'accueil : ce n'est pas une donnée à suivre.
 
-## Style « Verre », par défaut depuis la 4.4.56 (03/11/2026)
+## Style « Verre », par défaut depuis la 4.4.56 (03/11/2026), seul depuis le 16/11/2026
 
 Demandé par Arthur : « un nouveau design comme Apple avec le Liquid Glass ».
 Validé sur captures (données de Brice), Carnet à gauche, Verre à droite.
@@ -38,16 +38,22 @@ Validé sur captures (données de Brice), Carnet à gauche, Verre à droite.
 * **Deux styles, une feuille.** Le Carnet reste le style de base de toute la
   feuille de style. Verre s'y ajoute par le bloc « STYLE VERRE », en fin de la
   première feuille, actif seulement avec `<html class="verre">`. La classe est
-  posée dans la balise même (pas de clignotement au démarrage), puis
-  `applyDesign()` la retire si l'utilisateur a choisi le Carnet.
-* **Choix par utilisateur** : `S.uiPrefs.design` (`"verre"` ou `"carnet"`, absent
-  = Verre), Paramètres › Général › Style, appliqué sans relancer l'app
-  (`setDesignPref`). La police des graphiques suit (`Chart.defaults.font.family`
-  relu dans `--font`) et la courbe du PEA est redessinée.
-* **Choix provisoire** : Arthur sonde son entourage pendant au moins une semaine
-  (à partir du 03/11/2026) pour savoir quel style garder. Ensuite, soit on retire
-  le bloc Verre (retour au Carnet), soit on retire le choix et le Carnet devient
-  du code mort à nettoyer. Ne pas retirer le choix avant sa décision.
+  posée dans la balise même (pas de clignotement au démarrage) et ne s'enlève
+  jamais.
+* **Plus de mode Carnet (16/11/2026, décision d'Arthur)** : le choix Verre /
+  Carnet de Paramètres › Général › Style (03/11/2026, le temps d'un sondage) est
+  retiré, avec `applyDesign()` et `setDesignPref()`. Une ancienne préférence
+  `S.uiPrefs.design` reste dans `pea_data.json` mais n'est plus lue, ni par la
+  page ni par l'écran de lancement.
+* **CSS mort du Carnet retiré (16/11/2026)** : 162 déclarations dans 62 règles
+  (13 règles entières), choisies par une règle sûre : une déclaration n'est
+  retirée que si une règle `html.verre …` du **même sélecteur**, hors `@media`,
+  fixe la **même propriété** (elle l'emporte toujours, plus spécifique).
+  Contrôle : style calculé de chaque élément de la page avant/après, en clair et
+  en sombre, identique (seuls des éléments animés varient avec l'instant de la
+  mesure). Le reste des règles du Carnet est la base sur laquelle Verre
+  s'appuie : ne pas le retirer en bloc. Newsreader reste dans `ui/vendor` : la
+  page du bilan et le bilan de l'année s'en servent.
 * **Le verre** : un fond fixe (`body::before`) à la seule couleur d'accent de
   l'utilisateur, mêlée au fond (`--fond-1..3`, 34/22/13 % en clair, 30/19/11 % en
   sombre, plus doux à sa demande) : un voile en diagonale sur toute la fenêtre et sept taches douces

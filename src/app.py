@@ -1739,20 +1739,19 @@ def main() -> int:
     try:
         prefs = data.get("uiPrefs") or {}
         theme = "dark" if prefs.get("theme") == "dark" else "light"
-        design = "carnet" if prefs.get("design") == "carnet" else "verre"
         _splash_window = webview.create_window(
             APP_NAME,
-            html=splash.build_html(os.path.dirname(html_path), prefs.get("accent"), theme, design),
+            html=splash.build_html(prefs.get("accent"), theme),
             width=splash.SIZE[0], height=splash.SIZE[1],
             resizable=False, frameless=True,
-            background_color=splash.background(theme, design),
+            background_color=splash.background(theme),
         )
         _splash_window.events.shown += _paint_accent_icon
 
         def _arrondir_splash():
             # A cet instant la fenetre principale est encore cachee : la seule
             # fenetre visible de Pilote est l'ecran de chargement
-            splash.arrondir_coins(_hwnd_principale(), theme, design)
+            splash.arrondir_coins(_hwnd_principale(), theme)
         _splash_window.events.shown += _arrondir_splash
     except Exception as e:
         print(f"[app] ecran de chargement KO : {e}", flush=True)
