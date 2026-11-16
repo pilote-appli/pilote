@@ -395,15 +395,6 @@ td:first-child { text-align: left; padding-left: 2px; font-family: var(--font); 
 .fg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .mact   { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.1rem; }
 
-/* Cours modal */
-.crow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--brd); }
-.crow:last-child { border-bottom: none; }
-.cinp {
-  width: 110px; background: var(--bg3); border: 1px solid var(--brd2);
-  border-radius: var(--rad); padding: 7px 10px; color: var(--txt);
-  font-size: 13px; font-family: var(--mono); text-align: right;
-}
-.cinp:focus { outline: none; border-color: var(--accent); }
 
 /* Save badge */
 .sbadge {
@@ -2288,6 +2279,10 @@ body { font-variant-numeric: tabular-nums; }
 .topbar-crumb { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--txt2); }
 .topbar-crumb b { color: var(--txt); font-weight: 600; }
 .topbar-crumb .ph { font-size: 11px; color: var(--txt3); }
+/* Raccourci affiché dans le bouton Rechercher (⌘ K sur Mac, voir boot) */
+.tb-kbd { font: 10.5px var(--font); color: var(--txt3); border: 1px solid var(--brd); border-radius: 5px; padding: 0 5px; margin-left: 2px; }
+/* Pas de cours à actualiser hors Bourse, Patrimoine et Prêt (goTab d'origine) */
+body.sans-cours .refresh-grp { display: none; }
 .refresh-grp { border-radius: 999px; background: transparent; border-color: var(--brd2); }
 .refresh-lbl { font-size: 12px; padding: 6px 6px 6px 14px; }
 .refresh-grp .btn { border-left-color: var(--brd2); padding-right: 14px; }
@@ -2312,7 +2307,7 @@ body { font-variant-numeric: tabular-nums; }
 .fg label { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; }
 .fg input, .fg select, .fg textarea { font-size: 13px; }
 .fg input:focus, .fg select:focus, .fg textarea:focus,
-.cinp:focus, .fin-input-sm:focus {
+.fin-input-sm:focus {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -3330,10 +3325,10 @@ html.verre .rng button[aria-pressed="true"], html.verre .rng .btn-primary, html.
 html.verre .set-nav-btn.active { background: var(--verre-fort); box-shadow: var(--verre-lum), 0 2px 6px -2px rgba(0,0,0,.12); }
 
 /* — Champs : remplis, sans bordure, l'accent au focus — */
-html.verre :is(.fg input, .fg select, .fg textarea, .cinp, .fin-input-sm) {
+html.verre :is(.fg input, .fg select, .fg textarea, .fin-input-sm) {
   background: var(--bg3); border-color: transparent; border-radius: var(--rad);
 }
-html.verre :is(.fg input, .fg select, .fg textarea, .cinp, .fin-input-sm):focus {
+html.verre :is(.fg input, .fg select, .fg textarea, .fin-input-sm):focus {
   border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
@@ -3443,7 +3438,7 @@ html.verre .toast-stack .toast {
        (rempli par _updateCrumb() à chaque changement d'onglet). -->
   <div class="topbar-brand">
     <div class="topbar-crumb" id="topbar-crumb"></div>
-    <button class="btn btn-ghost btn-sm" onclick="rgOuvrir()" title="Rechercher dans Pilote (Ctrl+K)"><i class="ph ph-magnifying-glass"></i> Rechercher</button>
+    <button class="btn btn-ghost btn-sm" onclick="rgOuvrir()" title="Rechercher dans Pilote (Ctrl+K)"><i class="ph ph-magnifying-glass"></i> Rechercher <kbd class="tb-kbd">Ctrl K</kbd></button>
   </div>
   <div class="topbar-right">
     <div class="refresh-grp">
@@ -3451,7 +3446,6 @@ html.verre .toast-stack .toast {
       <button class="btn btn-ghost btn-sm" onclick="manualRefresh()" title="Actualiser les cours (Ctrl+R)"><i class="ph ph-arrows-clockwise"></i> Actualiser</button>
     </div>
     <button class="btn btn-ghost btn-sm" id="btn-undo" onclick="undoLast()" disabled title="Annuler la dernière action"><i class="ph ph-arrow-u-up-left"></i> Retour</button>
-    <button class="btn btn-ghost btn-sm" onclick="openCours()"><i class="ph ph-pencil-simple"></i> Cours manuels</button>
   </div>
 </div>
 
@@ -6509,18 +6503,6 @@ html.verre .toast-stack .toast {
   </div>
 </div>
 
-<!-- Modal : Cours manuels -->
-<div class="ov" id="ov-cours" onclick="if(event.target===this)closeOv('ov-cours')">
-  <div class="modal" style="max-width:380px">
-    <h2>Saisir les cours manuellement</h2>
-    <div style="font-size:10px;color:var(--txt2);font-family:var(--mono);margin-bottom:.85rem">Boursorama · Google Finance · Euronext</div>
-    <div id="cours-rows"></div>
-    <div class="mact">
-      <button class="btn btn-ghost" onclick="closeOv('ov-cours')">Annuler</button>
-      <button class="btn btn-primary" onclick="applyCours()">Appliquer</button>
-    </div>
-  </div>
-</div>
 
 
 <!-- ══════════════════════════════════════════════════
@@ -11077,6 +11059,10 @@ function goTab(n) {
   if (n==="dash" && typeof dashRenderOverview === "function") dashRenderOverview();
   // Memorise pour le prochain lancement
   try { document.body.dataset.activeTab = onglet; } catch(e) {}
+  // Actualiser n'a de sens que là où des cours s'affichent (l'Accueil n'a pas de section)
+  const _secCours = typeof _navSectionOf === "function" ? _navSectionOf(onglet) : null;
+  document.body.classList.toggle("sans-cours", !!_secCours &&
+    !["sec-pea", "sec-cto", "sec-crypto", "sec-patri", "sec-pret"].includes(_secCours.id));
   // Ici et pas dans un patch de goTab : chaque patch appelle cette version
   // d'origine, le fil d'Ariane suit donc tous les chemins de navigation.
   if (typeof _updateCrumb === "function") _updateCrumb(onglet);
@@ -11930,30 +11916,6 @@ function saveDepot() {
 }
 function delDepot(id) { pushUndo(); S.depots=S.depots.filter(d=>d.id!==id); persist(); renderDepots(); renderMetrics(); renderPeaInfo(); }
 
-/* Cours manuels */
-function openCours() {
-  document.getElementById("cours-rows").innerHTML=S.positions.map(p=>`
-    <div class="crow">
-      <div>
-        <div style="font-weight:600;font-size:13px">${escHtml(p.ticker)}</div>
-        <div style="font-size:10px;color:var(--txt2)">${escHtml(p.name)}</div>
-      </div>
-      <input class="cinp" id="ci-${p.id}" type="number" step="0.01" value="${p.cours!=null?p.cours:""}" placeholder="ex: 69.12">
-    </div>`).join("");
-  document.getElementById("ov-cours").classList.add("open");
-  setTimeout(()=>{ const f=document.querySelector(".cinp"); if(f)f.focus(); },60);
-}
-function applyCours() {
-  pushUndo();
-  S.positions.forEach(p=>{
-    const inp=document.getElementById("ci-"+p.id); if(!inp)return;
-    const v=parseFloat(inp.value.replace(",",".")); if(!isNaN(v)&&v>0) p.cours=v;
-  });
-  S.lastUpdate=new Date().toLocaleDateString("fr-FR",{day:"2-digit",month:"long",year:"numeric"});
-  persist(); closeOv("ov-cours"); renderPositions();
-  if (document.getElementById("pane-dash")?.classList.contains("active")) renderPerf();
-  updateStatus();
-}
 
 
 
@@ -17565,16 +17527,9 @@ function installShellEnhancements() {
   if (EST_MAC) document.querySelectorAll('[title*="Ctrl+"]').forEach(el => {
     el.title = el.title.replace(/Ctrl\+/g, "⌘");
   });
+  if (EST_MAC) document.querySelectorAll(".tb-kbd").forEach(el => { el.textContent = "⌘ K"; });
   // Pastille utilisateur en bas de la sidebar
   if (typeof _renderUserPill === "function") _renderUserPill();
-
-  // Cacher le bouton "Cours manuels" (legacy GS) : la saisie passe par les positions
-  const right = document.querySelector(".topbar-right");
-  if (right) {
-    const coursBtn = Array.from(right.querySelectorAll("button"))
-      .find(b => /Cours manuels/i.test(b.textContent));
-    if (coursBtn) coursBtn.style.display = "none";
-  }
 
   _setCoursHealth("warn", "Chargement…");
 
