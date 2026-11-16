@@ -28389,7 +28389,9 @@ function bilanResume(b) {
 function bilanPageHtml(b, tel) {
   const css = getComputedStyle(document.documentElement);
   const accent = css.getPropertyValue("--accent").trim() || "#c026d3";
-  const G = "#15803d", R = "#b91c1c";
+  // La page suit le style de Pilote (classe « verre » sur <html>)
+  const verre = document.documentElement.classList.contains("verre");
+  const G = verre ? "#1f7a3a" : "#15803d", R = verre ? "#c4161c" : "#b91c1c";
   const coul = x => x == null ? "#6b6560" : x >= 0 ? G : R;
   const kg = x => x.toFixed(1).replace(".", ",") + "&nbsp;kg";
   const nb = x => Math.round(x).toLocaleString("fr-FR");
@@ -28552,7 +28554,46 @@ function bilanPageHtml(b, tel) {
   .tel .av { grid-template-columns: 96px 1fr; }
   .tel .sem { height: 110px; gap: 5px; }
   .tel .spark { width: 100%; }
-</style></head><body${tel ? ' class="tel"' : ""}>
+  /* PDF du téléphone, en pages d'un écran : ne pas couper une ligne ni un bloc,
+     fond crème jusque dans les marges de chaque page */
+  html:has(> body.tel) { background: #fffdf9; }
+  body.tel { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .tel h2, .tel h3 { break-after: avoid; }
+  .tel .kpi, .tel .cpt, .tel .mvl, .tel .cat, .tel .sem, .tel .chips, .tel .av, .tel .pds, .tel .note { break-inside: avoid; }
+  /* Style Verre (docs/design-carnet.md) : fond voilé de l'accent, sections et
+     chiffres en verre, police du système. Sans ombre floue : dans un PDF elle
+     devient une image, lourde à dessiner sur le téléphone. « Segoe UI » et pas
+     « Segoe UI Variable » : une police variable part en dessins dans le PDF. */
+  html:has(> body.verre) {
+    background-color: #eceef3;
+    background-image:
+      radial-gradient(34% 40% at 8% 12%, color-mix(in srgb, ${accent} 34%, #eceef3), transparent 72%),
+      radial-gradient(32% 40% at 90% 18%, color-mix(in srgb, ${accent} 34%, #eceef3), transparent 72%),
+      radial-gradient(36% 42% at 28% 56%, color-mix(in srgb, ${accent} 22%, #eceef3), transparent 72%),
+      radial-gradient(34% 40% at 72% 70%, color-mix(in srgb, ${accent} 34%, #eceef3), transparent 72%),
+      radial-gradient(36% 40% at 10% 96%, color-mix(in srgb, ${accent} 22%, #eceef3), transparent 72%),
+      linear-gradient(160deg, color-mix(in srgb, ${accent} 13%, #eceef3), #eceef3 55%, color-mix(in srgb, ${accent} 13%, #eceef3));
+    background-size: 100% 100vh; background-repeat: repeat-y;   /* le même fond sur chaque page du PDF */
+  }
+  body.verre { background: transparent; color: #1d1d1f; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .verre h1, .verre h2, .verre .kv { font-family: inherit; font-weight: 700; letter-spacing: -.01em; }
+  .verre h1 em { font-style: normal; }
+  .verre .kv { font-weight: 650; }
+  .verre .sub, .verre .kl, .verre .ks, .verre h3, .verre .cv, .verre .jv, .verre .jl, .verre .note, .verre .avj { color: #5f5f66; }
+  .verre .mvn small, .verre .vide { color: #6e6e75; }
+  .verre .kpi, .verre section, .verre .chip {
+    background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,0.70);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.90);
+  }
+  .verre .kpi { border-radius: 22px; }
+  .verre section { border-radius: 22px; padding: 14px 16px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .verre.tel section { margin-top: 14px; }
+  .verre h2 { border-bottom: 0; padding-bottom: 0; font-size: 18px; }
+  .verre .bar, .verre .bar1, .verre .jb { background: rgba(118,118,128,0.14); }
+  .verre .mvl, .verre .av { border-bottom-color: rgba(0,0,0,0.07); }
+  .verre .jb, .verre .jb i { border-radius: 8px; }
+  .verre footer { color: #6e6e75; }
+</style></head><body${tel || verre ? ` class="${[tel ? "tel" : "", verre ? "verre" : ""].join(" ").trim()}"` : ""}>
 <div class="kick">Bilan de la semaine${enCours ? " · en cours" : ""}</div>
 <h1>Ta semaine <em>${bilanSemaineLbl(b.lundi)}</em></h1>
 <p class="sub">${escHtml(typeof homeDisplayName === "function" ? homeDisplayName() || "" : "")}${typeof homeDisplayName === "function" && homeDisplayName() ? " · " : ""}chiffres du ${quand}</p>
