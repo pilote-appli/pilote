@@ -11,9 +11,9 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.76 (15/11/2026) : plus aucune boite du systeme. Ligne 1 : supprimer une
-# transaction ouvre la fenetre de Pilote ; ligne 2 : un champ manquant de la
-# position, bandeau ; ligne 3 : information a un seul bouton (restauration).
-js:goTab('tx'),delTx(S.transactions[0].id)
-js:document.querySelector('.ov.open').remove(),goTab('pos'),document.getElementById('f-ticker').value='',savePos()
-js:confirmer('Restauration',{ok:'Recharger',annuler:false,texte:'Fenetre_a_un_seul_bouton'})
+# 4.4.77 (16/11/2026) : barre du haut. Ligne 1 : Rechercher a droite du fil
+# d'Ariane, avec Ctrl K (Cmd K sur Mac) ; ligne 2 : pas d'Actualiser dans Sports ;
+# ligne 3 : Parametres > General sans le choix Verre / Carnet (Verre seul).
+home
+sp-agenda
+js:openSettings('general')
