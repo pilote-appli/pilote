@@ -116,6 +116,16 @@ logo « P » à la couleur d'accent et « Pilote », dans le thème de l'utilisa
   n'avait aucune fenêtre au premier plan (`GetForegroundWindow()` = 0), et rien ne
   pouvait passer devant. Test à la main : Pilote ouvert derrière une autre
   fenêtre, double-clic sur son raccourci → il doit revenir devant.
+* **Le verrou d'instance unique (port 50317) ne fait quitter que si un Pilote
+  répond** (16/11/2026). Ce port est dans la plage où Windows pioche ses ports de
+  sortie : ce jour-là, le service de notifications (`WpnService`) l'avait pris, le
+  `bind` échouait (WinError 10013) et Pilote se fermait sans message à chaque
+  lancement, code 0, rien dans `crash.log`. Désormais la 2e instance attend la
+  réponse `pilote` de `_listen_for_focus_pings` ; sans elle (port refusé, programme
+  muet), elle démarre sans verrou. Vérifié : port réellement pris par
+  `WpnService`, port pris par un programme muet, port libre, vrai second Pilote
+  (seul ce dernier quitte). Une version d'avant celle-ci ne répond pas : ouverte en
+  même temps qu'une plus récente, les deux tourneraient.
 
 ## Lenteur du démarrage : mesures du 11/10/2026
 
