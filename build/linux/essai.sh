@@ -90,6 +90,10 @@ if [ "${1:-}" = "--session" ]; then
   done
   sleep 5
   import -window root capture.png 2>/dev/null || echo "capture impossible"
+  # Capture noire au 17/11/2026 : la fenetre est-elle affichee, ou la capture
+  # rate-t-elle ? Les fenetres X, la luminosite, et une seconde methode (xwd)
+  xwd -root -silent > capture.xwd 2>/dev/null && convert xwd:capture.xwd capture-xwd.png 2>/dev/null
+  annot notice "Ecran X" "$(xwininfo -root -tree 2>/dev/null | grep -iE 'pilote|[0-9]+x[0-9]+\+' | head -8) | import : $(convert capture.png -format '%[fx:mean] %[channels] %wx%h' info: 2>&1) | xwd : $(convert capture-xwd.png -format '%[fx:mean] %[channels]' info: 2>&1) | $(xwininfo -name Pilote 2>&1 | grep -E 'Map State|Depth|Visual Class|Width|Height' | tr -s ' ')"
   VENDOR=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7438/vendor/chart.umd.js || true)
   OUVERTE=$(grep -o "fenetre ouverte ([a-z]*)" pilote.log || echo "pas de ligne")
   annot notice Serveur "ping ${UP:-KO} s - /vendor/chart.umd.js HTTP $VENDOR - $OUVERTE"
@@ -132,7 +136,7 @@ fi
 SUDO=""
 [ "$(id -u)" -ne 0 ] && SUDO="sudo"
 export DEBIAN_FRONTEND=noninteractive
-OUTILS="xvfb xauth dbus dbus-x11 gnome-keyring imagemagick curl procps"
+OUTILS="xvfb xauth dbus dbus-x11 gnome-keyring imagemagick curl procps x11-utils x11-apps"
 DEB="$(readlink -f "$1")"
 shift
 $SUDO apt-get update -qq > apt.log 2>&1
