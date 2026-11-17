@@ -1,14 +1,16 @@
-"""Relit, sans compte GitHub, les tests Mac et Windows lancés par un push sur la
-branche mac (build-mac.yml, build-windows.yml) : résultat de chaque étape,
-annotations, et captures d'écran recollées en JPEG.
+"""Relit, sans compte GitHub, les tests Mac, Windows et Linux lancés par un push
+sur la branche mac (build-mac.yml, build-windows.yml, build-linux.yml) :
+résultat de chaque étape, annotations, et captures d'écran recollées en JPEG.
 
 Les artefacts et les journaux ne se lisent qu'avec un compte ; les annotations,
 elles, passent par l'API publique des check-runs (60 lectures par heure sans
 compte). Les captures y sortent en base64 découpé : « Capture i/N » (premier
-job) et « Ecran n i/N » (job ecrans-mac, un écran de tests/ecrans.txt chacun).
+job) et « Ecran n i/N » (job ecrans-mac, un écran de tests/ecrans.txt chacun) ;
+sous Linux, « Capture <machine> i/N » et « Ecran n linux i/N ».
 
 Usage : python tests/lire_tests.py <début du sha du commit> [dossier de sortie]
-Écrit resultats-tests.txt, capture-mac.jpg et ecran-<n>.jpg dans le dossier.
+Écrit resultats-tests.txt, capture-mac.jpg et ecran-<n>.jpg dans le dossier
+(capture-<machine>.jpg et ecran-<n>-linux.jpg pour Linux).
 """
 import base64
 import json
@@ -43,10 +45,13 @@ def lire(sha, sortie):
             images = {}       # nom du fichier -> {i: morceau}
             for a in api("/check-runs/%d/annotations?per_page=100" % job["id"]):
                 titre = a.get("title") or ""
-                m = re.match(r"(Capture|Ecran (\d+)) (\d+)/(\d+)$", titre)
+                # « Capture i/N » (Mac), « Capture ubuntu24 i/N », « Ecran n linux i/N »
+                m = re.match(r"(Capture|Ecran (\d+))(?: ([a-z0-9]+))? (\d+)/(\d+)$", titre)
                 if m:
-                    nom = "capture-mac.jpg" if m.group(1) == "Capture" else "ecran-%s.jpg" % m.group(2)
-                    images.setdefault(nom, {})[int(m.group(3))] = a["message"]
+                    suffixe = "-" + m.group(3) if m.group(3) else ""
+                    nom = ("capture%s.jpg" % (suffixe or "-mac") if m.group(1) == "Capture"
+                           else "ecran-%s%s.jpg" % (m.group(2), suffixe))
+                    images.setdefault(nom, {})[int(m.group(4))] = a["message"]
                 else:
                     lignes.append("  [%s] %s : %s" % (a["annotation_level"], titre, a["message"][:2000]))
             for nom, morceaux in sorted(images.items()):

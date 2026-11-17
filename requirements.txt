@@ -4,6 +4,9 @@
 # un plantage sur puce Apple.
 pywebview==4.4.1; sys_platform == "win32"
 pywebview==6.2.1; sys_platform == "darwin"
+# Linux (docs/linux.md) : la meme que le Mac, avec GTK et WebKitGTK du systeme.
+# Le paquet .deb l'embarque (build/linux/construire_deb.py lit cette ligne)
+pywebview==6.2.1; sys_platform == "linux"
 # Mac : lecture des captures Sante par Vision d'Apple (plateforme.ocr_mac)
 pyobjc-framework-Vision==12.2.2; sys_platform == "darwin"
 pyinstaller==6.11.1

@@ -86,8 +86,8 @@ _store = jsonstore.JsonStore(
 #
 # DPAPI chiffre avec une cle liee a la session Windows : seul ce compte
 # Windows, sur ce PC, sait relire le secret. Pas de dependance, pas de cle a
-# ranger nous-memes. Hors Windows (chantier Mac), le secret est seulement
-# encode : le Trousseau devra prendre le relais.
+# ranger nous-memes. Sur Mac : le Trousseau ; sous Linux : le trousseau du
+# bureau (Secret Service), plus bas. Plus jamais seulement encode.
 
 if sys.platform == "win32":
     import ctypes
@@ -142,6 +142,22 @@ def _security(*args) -> subprocess.CompletedProcess:
     return subprocess.run(["security", *args], capture_output=True, text=True, timeout=15)
 
 
+# Linux : le trousseau du bureau (Secret Service : GNOME Keyring, KWallet),
+# par l'outil secret-tool (paquet libsecret-tools, dependance du .deb).
+# actus.json ne garde que « secret:<compte> ». Sans trousseau, Pilote refuse
+# d'enregistrer le code plutot que de l'ecrire en clair (docs/linux.md).
+_SANS_TROUSSEAU = ("Aucun trousseau sur ce PC : installe gnome-keyring "
+                   "(sudo apt install gnome-keyring), puis réessaie.")
+
+
+def _secret_tool(*args, entree: str = None) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(["secret-tool", *args], input=entree, capture_output=True,
+                              text=True, timeout=30)
+    except FileNotFoundError:
+        raise OSError(_SANS_TROUSSEAU)
+
+
 # service / libelle : le module Agenda range son code iCloud a cote, sous son
 # propre nom de service (un element du Trousseau par service et par compte).
 def _chiffrer(mdp: str, service: str = _TROUSSEAU,
@@ -156,13 +172,24 @@ def _chiffrer(mdp: str, service: str = _TROUSSEAU,
         if r.returncode != 0:
             raise OSError((r.stderr or "").strip() or "le Trousseau a refusé le code")
         return "trousseau:" + compte
-    return "b64:" + base64.b64encode(brut).decode("ascii")
+    compte = _compte_trousseau()
+    # Le code passe par l'entree standard, jamais en argument (visible de ps)
+    r = _secret_tool("store", "--label=" + libelle, "service", service, "account", compte,
+                     entree=mdp)
+    if r.returncode != 0:
+        raise OSError(_SANS_TROUSSEAU + " (" + (r.stderr or "").strip()[:150] + ")")
+    return "secret:" + compte
 
 
 def _oublier(secret: str, service: str = _TROUSSEAU) -> None:
-    """Deconnexion : retire aussi le code du Trousseau (Mac)."""
+    """Deconnexion : retire aussi le code du Trousseau (Mac) ou du trousseau (Linux)."""
     if secret.startswith("trousseau:") and sys.platform == "darwin":
         _security("delete-generic-password", "-s", service, "-a", secret[10:])
+    if secret.startswith("secret:") and sys.platform.startswith("linux"):
+        try:
+            _secret_tool("clear", "service", service, "account", secret[7:])
+        except OSError:
+            pass
 
 
 def _dechiffrer(secret: str, service: str = _TROUSSEAU) -> str:
@@ -172,6 +199,11 @@ def _dechiffrer(secret: str, service: str = _TROUSSEAU) -> str:
         r = _security("find-generic-password", "-s", service, "-a", secret[10:], "-w")
         if r.returncode != 0:
             raise ValueError("code absent du Trousseau")
+        return r.stdout.rstrip("\n")
+    if secret.startswith("secret:") and sys.platform.startswith("linux"):
+        r = _secret_tool("lookup", "service", service, "account", secret[7:])
+        if r.returncode != 0 or not r.stdout:
+            raise ValueError("code absent du trousseau")
         return r.stdout.rstrip("\n")
     if secret.startswith("b64:"):
         return base64.b64decode(secret[4:]).decode("utf-8")

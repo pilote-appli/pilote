@@ -1,10 +1,10 @@
 """
-plateforme.py — Ce qui differe entre Windows et Mac, regroupe ici.
+plateforme.py — Ce qui differe entre Windows, Mac et Linux, regroupe ici.
 
-Pilote est une seule application pour les deux systemes (decision du
-11/10/2026, voir docs/mac.md) : un seul code, un seul format de donnees. Ce
-qui ne peut pas s'ecrire pareil sur les deux vit dans ce module, et le chemin
-Windows y reste celui d'avant.
+Pilote est une seule application pour tous les systemes (decision du
+11/10/2026, voir docs/mac.md ; Linux le 17/11/2026, docs/linux.md) : un seul
+code, un seul format de donnees. Ce qui ne peut pas s'ecrire pareil partout vit
+dans ce module, et le chemin Windows y reste celui d'avant.
 """
 from __future__ import annotations
 
@@ -37,6 +37,16 @@ def version_store() -> bool:
             except Exception:
                 _store = False
     return _store
+
+
+def paquet_linux() -> bool:
+    """Linux : True quand Pilote tourne depuis son paquet .deb, installe dans
+    /opt/pilote (docs/linux.md). Le dossier y est en lecture seule : les
+    donnees vont dans le dossier personnel (storage.get_app_dir). En dev, le
+    depot clone ailleurs garde Donnees/ a sa racine, comme sous Windows."""
+    if not sys.platform.startswith("linux"):
+        return False
+    return os.path.realpath(os.path.abspath(__file__)).startswith("/opt/pilote/")
 
 
 def certificats_mac() -> None:
@@ -179,8 +189,9 @@ def ouvrir(chemin: str) -> None:
 # Des pages a la taille d'un ecran de telephone (la page passe sur une
 # colonne). pywebview ne sait pas ecrire un PDF
 # sans la fenetre d'impression ; un navigateur Chromium sans fenetre, si :
-# Edge, present sur tout Windows 10 et 11 ; sur Mac, Chrome, Edge ou Brave
-# s'il y en a un (sinon pas de PDF, la notification reste en texte).
+# Edge, present sur tout Windows 10 et 11 ; sur Mac et sous Linux, Chrome,
+# Chromium, Edge ou Brave s'il y en a un (sinon pas de PDF, la notification
+# reste en texte).
 
 def _chromium() -> str:
     if sys.platform == "win32":
@@ -192,7 +203,10 @@ def _chromium() -> str:
         candidats = [f"/Applications/{a}.app/Contents/MacOS/{a}" for a in
                      ("Google Chrome", "Microsoft Edge", "Brave Browser", "Chromium")]
     else:
-        candidats = ["/usr/bin/chromium", "/usr/bin/google-chrome"]
+        # Linux : celui du systeme, sinon celui installe en snap (Ubuntu)
+        candidats = ["/usr/bin/" + n for n in ("chromium", "chromium-browser", "google-chrome",
+                                               "google-chrome-stable", "microsoft-edge",
+                                               "brave-browser")] + ["/snap/bin/chromium"]
     return next((c for c in candidats if os.path.isfile(c)), "")
 
 

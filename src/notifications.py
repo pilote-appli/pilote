@@ -2,7 +2,8 @@
 notifications.py — Notifications Windows toast natives.
 
 Utilise win10toast si dispo (pip install win10toast). Sur Mac, osascript
-(fourni avec macOS) fait l'equivalent sans dependance. Ailleurs, ou si la lib
+(fourni avec macOS) fait l'equivalent sans dependance ; sous Linux, notify-send
+(docs/linux.md). Ailleurs, ou si la lib
 manque, les fonctions deviennent des no-ops silencieux, pour ne jamais faire
 crasher l'app.
 
@@ -14,6 +15,7 @@ Les preferences sont lues depuis storage.load_data()['notifs'] :
 from __future__ import annotations
 
 import sys
+import shutil
 import subprocess
 import threading
 import importlib.util
@@ -26,6 +28,8 @@ from typing import Optional
 _toaster = None
 try:
     _AVAILABLE = (sys.platform == "darwin"
+                  # Linux : notify-send (paquet libnotify-bin, dependance du .deb)
+                  or (sys.platform.startswith("linux") and shutil.which("notify-send") is not None)
                   or importlib.util.find_spec("win10toast") is not None)
 except Exception:
     _AVAILABLE = False
@@ -51,6 +55,14 @@ def _show_mac(title: str, msg: str) -> None:
         print(f"[notif] Echec osascript : {e}", flush=True)
 
 
+def _show_linux(title: str, msg: str) -> None:
+    try:
+        subprocess.run(["notify-send", "--app-name=Pilote", "--icon=pilote", title, msg],
+                       capture_output=True, timeout=10)
+    except Exception as e:
+        print(f"[notif] Echec notify-send : {e}", flush=True)
+
+
 # win10toast ne supporte pas deux notifications a la fois (la seconde etait
 # perdue, avec une erreur dans crash.log) : elles passent l'une apres l'autre
 _verrou_toast = threading.Lock()
@@ -60,6 +72,10 @@ def _show(title: str, msg: str, duration: int = 6) -> None:
     global _toaster
     if sys.platform == "darwin":
         _show_mac(title, msg)
+        return
+    if sys.platform.startswith("linux"):
+        if _AVAILABLE:
+            _show_linux(title, msg)
         return
     if not _AVAILABLE:
         return

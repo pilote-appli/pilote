@@ -249,7 +249,8 @@ def ocr_available() -> dict:
             return {"ok": False, "error": f"Lecture d'images indisponible : {e}"}
         return {"ok": True}
     if sys.platform != "win32":
-        return {"ok": False, "error": "OCR disponible uniquement sous Windows et sur Mac."}
+        # Linux : pas encore de moteur de lecture (docs/linux.md)
+        return {"ok": False, "error": "La lecture des captures n'est pas encore disponible sous Linux."}
     if not Path(_ocr_script_path()).exists():
         return {"ok": False, "error": "Script OCR introuvable."}
     try:

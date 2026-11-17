@@ -36,6 +36,8 @@ profiles.json
 # Dossier de build PyInstaller (TOUS les sous-dossiers de build/ sont des
 # artefacts generes — on garde uniquement les fichiers .spec / .iss / .bat).
 build/*/
+# sauf le paquet Linux, des scripts (docs/linux.md)
+!build/linux/
 build/build/
 build/__pycache__/
 
