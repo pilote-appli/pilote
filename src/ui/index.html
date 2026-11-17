@@ -6909,16 +6909,19 @@ function computePos(p, toutes) {
   const txs = (toutes || S.transactions).filter(t => t.asset === p.ticker && (t.type === "Achat" || t.type === "Vente") && normDate(t.date) <= cut)
                              .sort((a,b) => normDate(a.date).localeCompare(normDate(b.date)));
   let qty = 0, cost = 0, realised = 0, totalCost = 0;
+  // Montant de chaque ordre arrondi au centime, comme la banque (brutOrdre) :
+  // sans ça, des fractions de crypto donnaient un prix de revient de quelques
+  // centimes sous ce qui a été payé (« Lignes actuelles » ≠ « Tout le compte »)
   txs.forEach(t => {
     if (t.type === "Achat") {
       qty       += t.qty;
-      cost      += t.qty * t.cours + (t.frais||0);
-      totalCost += t.qty * t.cours + (t.frais||0);
+      cost      += brutOrdre(t) + (t.frais||0);
+      totalCost += brutOrdre(t) + (t.frais||0);
     } else if (t.type === "Vente") {
       if (qty > 0) {
         const r        = Math.min(t.qty, qty) / qty;
         const sold     = cost * r;
-        const proceeds = t.qty * t.cours - (t.frais||0);
+        const proceeds = brutOrdre(t) - (t.frais||0);
         realised      += proceeds - sold;
         cost          -= sold;
         qty           -= t.qty;
@@ -7743,8 +7746,8 @@ function computePnl(series, range) {
     /* Repli : aucun versement saisi → capital net deploye via les transactions */
     const netCapital = (S.transactions || []).reduce((s, t) => {
       if (normDate(t.date) > cutToday) return s;
-      if (t.type === "Achat") return s + t.qty * t.cours + (t.frais || 0);
-      if (t.type === "Vente") return s - (t.qty * t.cours - (t.frais || 0));
+      if (t.type === "Achat") return s + brutOrdre(t) + (t.frais || 0);
+      if (t.type === "Vente") return s - (brutOrdre(t) - (t.frais || 0));
       return s;
     }, 0);
     if (netCapital <= 0) return {pnlEur: null, pnlPct: null};

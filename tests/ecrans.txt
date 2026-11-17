@@ -11,9 +11,10 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.77 (16/11/2026) : barre du haut. Ligne 1 : Rechercher a droite du fil
-# d'Ariane, avec Ctrl K (Cmd K sur Mac) ; ligne 2 : pas d'Actualiser dans Sports ;
-# ligne 3 : Parametres > General sans le choix Verre / Carnet (Verre seul).
-home
-sp-agenda
-js:openSettings('general')
+# 4.4.78 (17/11/2026) : prix de revient arrondi au centime comme la banque.
+# Ligne 1 : Crypto de Brice, case Rendement « Tout le compte » ; ligne 2 : la
+# meme case basculee sur « Lignes actuelles » ; ligne 3 : positions du PEA
+# (PRU), pour voir que rien ne bouge ailleurs.
+crypto-dash
+js:ctoBasculerRendement()
+pos
