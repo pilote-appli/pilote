@@ -97,14 +97,15 @@ def icones(racine: Path) -> None:
         ico.size = max(ico.info.get("sizes") or [ico.size])
         grande = ico.convert("RGBA")
     for cote in (48, 64, 128, 256):
-        dossier = racine / "usr/share/icons/hicolor/%dx%d/apps" % (cote, cote)
+        dossier = racine / ("usr/share/icons/hicolor/%dx%d/apps" % (cote, cote))
         dossier.mkdir(parents=True, exist_ok=True)
         grande.resize((cote, cote), Image.LANCZOS).save(dossier / "pilote.png")
 
 
 def ecrire(chemin: Path, texte: str, mode: int = 0o644) -> None:
     chemin.parent.mkdir(parents=True, exist_ok=True)
-    chemin.write_text(texte, encoding="utf-8", newline="\n")
+    with open(chemin, "w", encoding="utf-8", newline="\n") as f:   # LF, meme fabrique sous Windows
+        f.write(texte)
     chemin.chmod(mode)
 
 
