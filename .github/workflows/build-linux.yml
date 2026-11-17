@@ -135,7 +135,14 @@ jobs:
         if: always()
         run: |
           test -f capture.png || exit 0
-          convert capture.png -resize 720x -quality 25 cap.jpg
+          # La plus claire des deux captures (import, xwd) : l'une peut rester noire
+          CAP=capture.png
+          if [ -f capture-xwd.png ]; then
+            A=$(convert capture.png -format '%[fx:mean]' info: 2>/dev/null || echo 0)
+            B=$(convert capture-xwd.png -format '%[fx:mean]' info: 2>/dev/null || echo 0)
+            awk "BEGIN{exit !($B > $A)}" && CAP=capture-xwd.png
+          fi
+          convert "$CAP" -resize 720x -quality 25 cap.jpg
           { base64 -w0 cap.jpg | fold -w 3800; echo; } > cap.b64
           N=$(grep -c . cap.b64)
           i=0
