@@ -2285,6 +2285,12 @@ def main() -> int:
                 fermeture_mac["demandee"] = True
                 threading.Thread(target=_vider_puis_fermer_mac, daemon=True).start()
             return False
+        if sys.platform != "win32":
+            # Deja enregistree par _fermer_mac. Sous GTK (Linux), destroy()
+            # repasse ici, dans le fil principal : y relire la taille de la
+            # fenetre attend ce meme fil, et Pilote ne quittait plus (vu sur
+            # le test Linux du 17/11/2026, docs/linux.md)
+            return None
         _sauver_fenetre()
 
     global _fermeture_prete
