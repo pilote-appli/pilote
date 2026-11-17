@@ -44,9 +44,7 @@ Debian, dans le dossier du téléchargement :
 sudo apt install ./Pilote_Linux.deb
 ```
 
-Sous Linux, la lecture des captures Santé n'est pas encore disponible, et la
-mise à jour n'est pas automatique : installe le nouveau fichier de la même
-façon, tes données sont gardées.
+Sous Linux, la lecture des captures Santé n'est pas encore disponible.
 
 **Déjà installé ?** Rien à faire : Pilote te propose cette version au prochain
 lancement.

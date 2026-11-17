@@ -93,8 +93,8 @@ sous Linux.
 
 Les mises à jour se font depuis Pilote : au lancement, il te montre ce que change la
 nouvelle version et l'installe si tu le veux. Tes données restent en place. Sous Linux,
-pas encore : installe le nouveau `Pilote_Linux.deb` de la même façon, tes données sont
-gardées.
+il peut te demander ton mot de passe ; s'il ne peut pas installer lui-même, il range le
+nouveau `Pilote_Linux.deb` dans Téléchargements : double-clique dessus.
 
 ## Premier lancement
 
@@ -192,7 +192,7 @@ Chaque module se masque s'il ne sert pas.
   chiffre pas les fichiers, lisibles par quiconque ouvre ta session Windows, macOS ou Linux
 - **Thèmes** clair et sombre, couleur d'accent au choix
 - **Sauvegarde** sur clé USB ou dans un dossier, avec restauration
-- **Mise à jour automatique** depuis les releases GitHub (pas encore sous Linux)
+- **Mise à jour automatique** depuis les releases GitHub
 
 ## 🔒 Confidentialité
 

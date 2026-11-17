@@ -36,8 +36,22 @@ jobs:
           pip install -r requirements.txt
 
       # Les memes tests que sous Windows, ici sous Linux (dont tests/test_linux.py)
+      # Les journaux ne se lisent qu'avec un compte : les tests en echec et la
+      # fin de la sortie sortent en annotations
       - name: Unit tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          set +e
+          python -m unittest discover -s tests > tests.log 2>&1
+          CODE=$?
+          tail -n 3 tests.log
+          if [ $CODE -ne 0 ]; then
+            enc() { python -c "import sys; print(sys.stdin.read()[-3500:].replace('%', '%25').replace(chr(13), '%0D').replace(chr(10), '%0A'))"; }
+            echo "::error title=Tests en echec::$(grep -E '^(FAIL|ERROR):' tests.log | head -30 | enc)"
+            grep -n -E '^(FAIL|ERROR):' tests.log | head -6 | cut -d: -f1 | while read L; do
+              echo "::error title=Detail ligne $L::$(sed -n "$L,$((L+25))p" tests.log | enc)"
+            done
+          fi
+          exit $CODE
 
       - name: Build deb
         run: |
@@ -106,6 +120,13 @@ jobs:
       - name: Install and launch
         run: bash build/linux/essai.sh art/Pilote_Linux.deb
 
+      # Pilote installe lui-meme une « version 99.0.0 » servie en local
+      # (updater._installer_linux) : sudo sans mot de passe ici, comme sur un
+      # Chromebook ; root dans le conteneur Debian
+      - name: Update test
+        if: always()
+        run: bash build/linux/essai.sh art/Pilote_Linux.deb --maj
+
       - name: Capture (annotations)
         # Une petite copie JPEG de la capture, en base64 decoupe : « Capture <id> i/N »
         if: always()
@@ -142,6 +163,7 @@ jobs:
             capture.png
             pilote.log
             apt.log
+            maj.log
           if-no-files-found: ignore
 
   # Captures des ecrans de tests/ecrans.txt sur les donnees d'exemple FICTIVES

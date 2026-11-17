@@ -7,6 +7,7 @@
 # tests/lire_tests.py.
 #
 # Usage : bash build/linux/essai.sh <Pilote_Linux.deb>
+#         bash build/linux/essai.sh <Pilote_Linux.deb> --maj   (mise a jour par Pilote)
 #         bash build/linux/essai.sh <Pilote_Linux.deb> --ecrans "<ecrans>"
 #         (captures des ecrans de tests/ecrans.txt, sur les donnees d'exemple)
 
@@ -34,6 +35,39 @@ if [ "${1:-}" = "--session" ]; then
     done
     kill $PID 2>/dev/null || true
     echo "$FAITES" > ecrans.nombre
+    exit 0
+  fi
+
+  if [ "${1:-}" = "--maj" ]; then
+    # Mise a jour faite par Pilote lui-meme (updater._installer_linux) : une
+    # « version 99.0.0 » (le meme paquet plus un fichier temoin) servie en
+    # local comme une release ; Pilote doit l'installer par apt et se relancer
+    PILOTE_DIAG=1 PILOTE_MAJ_ESSAI="http://127.0.0.1:8765/Pilote_Linux.deb|99.0.0" pilote > maj.log 2>&1 &
+    PID=$!
+    FIN="toujours ouvert apres 150 s"
+    for i in $(seq 1 150); do
+      if ! kill -0 $PID 2>/dev/null; then FIN="ferme apres $i s"; break; fi
+      sleep 1
+    done
+    RELANCE="pas relance"
+    for i in $(seq 1 40); do
+      if pgrep -f "/opt/pilote/src/app.py" > /dev/null; then RELANCE="relance"; break; fi
+      sleep 1
+    done
+    PING="aucun port de 7438 a 7445 apres 60 s"
+    for i in $(seq 1 60); do
+      for P in 7438 7439 7440 7441 7442 7443 7444 7445; do
+        if curl -fsS http://127.0.0.1:$P/ping > /dev/null 2>&1; then PING="200 sur $P en $i s"; break 2; fi
+      done
+      sleep 1
+    done
+    VERSION=$(dpkg-query -W -f '${Version}' pilote)
+    TEMOIN=$(test -f /opt/pilote/temoin-maj.txt && echo "nouvelle version en place" || echo "ancienne version")
+    JOURNAL="${XDG_STATE_HOME:-$HOME/.local/state}/Pilote"
+    annot notice "Mise a jour" "$FIN ; $RELANCE (ping $PING) ; paquet $VERSION ; $TEMOIN ; $(grep "\[maj\]" maj.log)"
+    annot notice "Mise a jour (journaux)" "$(grep "INSTALL" "$JOURNAL/update.log" 2>/dev/null | tail -n 6) | $(tail -c 400 "$JOURNAL/update_sh.log" 2>/dev/null)"
+    pkill -f "/opt/pilote/src/app.py" 2>/dev/null || true
+    [ "$VERSION" = "99.0.0" ] || { annot error "Mise a jour" "le paquet n'a pas ete installe : $(tail -n 20 maj.log)"; exit 1; }
     exit 0
   fi
 
@@ -100,7 +134,16 @@ if ! $SUDO apt-get install -y -qq "$DEB" $OUTILS >> apt.log 2>&1; then
   annot error Installation "$(tail -n 25 apt.log)"
   exit 1
 fi
-if [ "${1:-}" != "--ecrans" ]; then
+if [ "${1:-}" = "--maj" ]; then
+  # La fausse release 99.0.0, servie en local
+  rm -rf maj99 srv && mkdir srv
+  dpkg-deb -R "$DEB" maj99
+  sed -i 's/^Version: .*/Version: 99.0.0/' maj99/DEBIAN/control
+  echo "version d'essai" > maj99/opt/pilote/temoin-maj.txt
+  dpkg-deb --root-owner-group --build maj99 srv/Pilote_Linux.deb > /dev/null
+  python3 -m http.server 8765 --bind 127.0.0.1 --directory srv > http.log 2>&1 &
+  sleep 1
+elif [ "${1:-}" != "--ecrans" ]; then
   annot notice Installation "$(. /etc/os-release; echo "$PRETTY_NAME") $(uname -m) ; $(dpkg-query -W -f '${Package} ${Version}' pilote) ; $(python3 --version) ; WebKit : $(dpkg-query -W -f '${Package} ${Version} ' 'libwebkit2gtk-4.*' 2>/dev/null) ; $(du -sh /opt/pilote | cut -f1) dans /opt/pilote"
 fi
 
