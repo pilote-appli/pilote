@@ -125,6 +125,8 @@ def construire(sortie: Path) -> Path:
                         "--target", str(opt / "lib"), *bibliotheques()],
                        check=True)
         shutil.rmtree(opt / "lib" / "bin", ignore_errors=True)
+        # pywebview livre aussi les DLL de WebView2 pour Windows : inutiles ici
+        shutil.rmtree(opt / "lib" / "webview" / "lib", ignore_errors=True)
         compiles = [str(p.relative_to(opt)) for p in (opt / "lib").rglob("*")
                     if p.suffix in (".so", ".pyd", ".dll", ".dylib")]
         if compiles:
