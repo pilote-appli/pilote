@@ -2,9 +2,10 @@
 updater.py — Verifieur et installateur de mise a jour avec progression et logs.
 
 Tous les evenements sont logges dans %APPDATA%\\Pilote\\update.log
-(Mac : ~/Library/Logs/Pilote/update.log) pour permettre de diagnostiquer
-toute panne d'auto-update. Windows installe le Setup ; Mac remplace son
-Pilote.app par celui de Pilote_Mac.zip (_installer_mac).
+(Mac : ~/Library/Logs/Pilote/update.log ; Linux : ~/.local/state/Pilote)
+pour permettre de diagnostiquer toute panne d'auto-update. Windows installe le
+Setup ; Mac remplace son Pilote.app par celui de Pilote_Mac.zip
+(_installer_mac) ; Linux installe Pilote_Linux.deb par apt (_installer_linux).
 """
 from __future__ import annotations
 
@@ -37,7 +38,11 @@ SETUP_ASSET   = "Pilote_Setup.exe"
 # Mac : l'app zippee, jointe a la meme release par release.yml (job mac). Pas
 # d'installeur : Pilote remplace lui-meme son Pilote.app (_installer_mac).
 MAC_ASSET     = "Pilote_Mac.zip"
-ASSET         = MAC_ASSET if sys.platform == "darwin" else SETUP_ASSET
+# Linux : le paquet .deb de release.yml (job linux), installe par apt
+# (_installer_linux, docs/linux.md)
+LINUX_ASSET   = "Pilote_Linux.deb"
+ASSET         = (MAC_ASSET if sys.platform == "darwin"
+                 else LINUX_ASSET if sys.platform.startswith("linux") else SETUP_ASSET)
 _UA = "Suivi-PEA-Updater/2"
 
 # Fiche des nouveautes : src/nouveautes.json, livre avec l'app (historique de
@@ -75,6 +80,9 @@ def _log_path() -> Path:
         # Pas d'APPDATA sur Mac : sans ce cas, un dossier ~/Pilote serait cree
         # a la racine du compte
         p = Path.home() / "Library" / "Logs" / "Pilote"
+    elif sys.platform.startswith("linux"):
+        # Pas d'APPDATA non plus : sans ce cas, un dossier ~/Pilote serait cree
+        p = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state") / "Pilote"
     else:
         base = os.environ.get("APPDATA") or os.path.expanduser("~")
         p = Path(base) / "Pilote"
@@ -160,7 +168,7 @@ def _latest_from_api() -> tuple:
     download_url = None
     for asset in data.get("assets", []):
         nom = asset.get("name", "")
-        if (nom == MAC_ASSET) if sys.platform == "darwin" else nom.endswith("Setup.exe"):
+        if (nom == ASSET) if sys.platform != "win32" else nom.endswith("Setup.exe"):
             url = asset.get("browser_download_url")
             # Ce fichier sera EXECUTE avec les droits de l'utilisateur.
             # On n'accepte qu'une URL https servie par GitHub : une reponse
@@ -207,7 +215,7 @@ def _latest_from_page() -> tuple:
 def _fetch(current: str) -> None:
     try:
         _log(f"CHECK current_version={current}")
-        essai = _essai_mac()
+        essai = _essai()
         if essai:
             latest, html_url, download_url = essai
         else:
@@ -218,8 +226,10 @@ def _fetch(current: str) -> None:
                 latest, html_url, download_url = _latest_from_page()
                 _log(f"CHECK via page publique : latest={latest}")
 
-        # Ni Windows ni Mac : rien a installer, rien a proposer
-        if sys.platform not in ("win32", "darwin"):
+        # Ni Windows ni Mac ni le paquet Linux (Linux en dev, autre systeme) :
+        # rien a installer, rien a proposer
+        import plateforme
+        if sys.platform not in ("win32", "darwin") and not (plateforme.paquet_linux() or essai):
             download_url = None
 
         # Sans installeur telechargeable, proposer la mise a jour ne menerait
@@ -416,6 +426,9 @@ def _do_install() -> None:
         if sys.platform == "darwin":
             _installer_mac(download_url, version)
             return
+        if sys.platform.startswith("linux"):
+            _installer_linux(download_url, version)
+            return
 
         exe_path = sys.executable
         _log(f"INSTALL: exe_path={exe_path} frozen={getattr(sys, 'frozen', False)}")
@@ -539,11 +552,12 @@ def _do_install() -> None:
 # repasser par « Ouvrir quand meme ». Les donnees vivent dans Application
 # Support, hors de l'app : la remplacer ne les touche pas.
 
-def _essai_mac():
-    """Test du build Mac seulement (PILOTE_DIAG et PILOTE_MAJ_ESSAI="<url>|<version>") :
-    une fausse release servie en local, pour essayer l'installation sans GitHub."""
+def _essai():
+    """Tests des builds Mac et Linux seulement (PILOTE_DIAG et
+    PILOTE_MAJ_ESSAI="<url>|<version>") : une fausse release servie en local,
+    pour essayer l'installation sans GitHub."""
     v = os.environ.get("PILOTE_MAJ_ESSAI") if os.environ.get("PILOTE_DIAG") else None
-    if not v or sys.platform != "darwin":
+    if not v or sys.platform == "win32":
         return None
     url, _, version = v.partition("|")
     return version, "", url
@@ -552,7 +566,7 @@ def _essai_mac():
 def _url_permise(url: str) -> bool:
     if _is_github_https(url):
         return True
-    return _essai_mac() is not None and str(url).startswith("http://127.0.0.1:")
+    return _essai() is not None and str(url).startswith("http://127.0.0.1:")
 
 
 def _bundle_mac():
@@ -744,3 +758,129 @@ def _installer_mac(download_url: str, version: str) -> None:
             webview.windows[0].destroy()
     except Exception as e:
         _log(f"INSTALL MAC: destroy KO {e}")
+
+
+# ── Linux : apt installe le nouveau paquet ──────────────────────────────────
+# Le paquet vit dans /opt/pilote, a root : il faut les droits d'administrateur.
+# Dans l'ordre : sudo sans mot de passe (le Linux d'un Chromebook), puis
+# pkexec (Linux demande le mot de passe dans une fenetre). Sans l'un ni
+# l'autre, le paquet est range dans Telechargements et ouvert avec
+# l'installeur du systeme. Les donnees (~/.local/share/Pilote) ne bougent pas.
+
+def _dossier_telechargements() -> Path:
+    try:
+        r = subprocess.run(["xdg-user-dir", "DOWNLOAD"], capture_output=True, text=True, timeout=5)
+        d = Path(r.stdout.strip())
+        if r.returncode == 0 and d.is_dir() and d != Path.home():
+            return d
+    except Exception:
+        pass
+    for nom in ("Téléchargements", "Downloads"):
+        if (Path.home() / nom).is_dir():
+            return Path.home() / nom
+    return Path.home()
+
+
+def _installer_linux(download_url: str, version: str) -> None:
+    import shlex
+    import shutil
+    import time as _time
+    import plateforme
+    if not plateforme.paquet_linux():
+        _set_progress("error", 0, "La mise à jour ne s'installe que depuis le paquet (pas en développement).")
+        return
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="pilote_maj_"))
+    tmp_dir.chmod(0o755)                    # apt (utilisateur _apt) doit pouvoir le lire
+    deb = tmp_dir / LINUX_ASSET
+    req = urllib.request.Request(download_url, headers={"User-Agent": _UA})
+    with urllib.request.urlopen(req, timeout=300) as r:
+        total = int(r.headers.get("Content-Length", 0))
+        estimated = total or (3 * 1024 * 1024)
+        downloaded = 0
+        with open(deb, "wb") as f:
+            while True:
+                chunk = r.read(65536)
+                if not chunk:
+                    break
+                f.write(chunk)
+                downloaded += len(chunk)
+                _set_progress("downloading", max(1, min(69, int(downloaded / estimated * 70))))
+    deb.chmod(0o644)
+    size = deb.stat().st_size
+    _log(f"INSTALL LINUX: deb {size} octets")
+    if size < 200 * 1024 or not _conforme(deb, size):
+        _set_progress("error", 0, "Téléchargement incomplet ou altéré : réessaie plus tard")
+        return
+    # Le paquet annonce-t-il bien Pilote, a la version attendue ?
+    lu = subprocess.run(["dpkg-deb", "-f", str(deb), "Package", "Version"],
+                        capture_output=True, text=True, timeout=30)
+    champs = dict(l.split(": ", 1) for l in lu.stdout.splitlines() if ": " in l)
+    if champs.get("Package") != "pilote" or champs.get("Version") != version:
+        _log(f"INSTALL LINUX: paquet inattendu {champs}")
+        _set_progress("error", 0, "Le fichier téléchargé n'est pas la bonne version de Pilote")
+        return
+
+    _set_progress("installing", 75)
+    apt = ["apt-get", "install", "-y", "--no-install-recommends", str(deb)]
+    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+    installe, cause = False, ""
+    prefixes = [["sudo", "-n"], ["pkexec"]]
+    if getattr(os, "geteuid", lambda: 1)() == 0:
+        prefixes.insert(0, [])                # deja administrateur (conteneur)
+    for prefixe in prefixes:
+        if prefixe and not shutil.which(prefixe[0]):
+            continue
+        try:
+            r = subprocess.run(prefixe + apt, capture_output=True, text=True, timeout=900, env=env)
+        except Exception as e:
+            cause = str(e)
+            continue
+        _log(f"INSTALL LINUX: {(prefixe or ['root'])[0]} -> {r.returncode} {(r.stderr or '')[-400:]}")
+        if r.returncode == 0:
+            installe = True
+            break
+        cause = (r.stderr or r.stdout or "").strip()[-200:]
+
+    if not installe:
+        # Dernier recours : l'utilisateur installe lui-meme, d'un double-clic
+        dest = _dossier_telechargements() / LINUX_ASSET
+        try:
+            shutil.copy2(deb, dest)
+            subprocess.Popen(["xdg-open", str(dest)], start_new_session=True,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            _log(f"INSTALL LINUX: copie ou ouverture KO {e}")
+        _log(f"INSTALL LINUX: pas installe ({cause}), paquet laisse dans {dest}")
+        _set_progress("error", 0, f"Installation automatique impossible. Le fichier {LINUX_ASSET} est "
+                                  f"dans {dest.parent} : double-clique dessus pour l'installer, puis "
+                                  f"relance Pilote. Tes données sont gardées.")
+        return
+
+    # Installe : un script attend la fin de Pilote, puis le relance
+    q = shlex.quote
+    journal = _log_path().parent / "update_sh.log"
+    script = tmp_dir / "relance.sh"
+    script.write_text(
+        "#!/bin/sh\n"
+        f"exec >> {q(str(journal))} 2>&1\n"
+        f"echo \"[$(date)] v{version} installee\"\n"
+        f"while kill -0 {os.getpid()} 2>/dev/null; do sleep 0.5; done\n"
+        "sleep 1\n"
+        # La nouvelle version ne doit pas heriter des reglages d'un test (PILOTE_*)
+        "unset PILOTE_DIAG PILOTE_MAJ_ESSAI\n"
+        "nohup /usr/bin/pilote > /dev/null 2>&1 &\n"
+        "echo \"[$(date)] relancee\"\n"
+        f"rm -rf {q(str(tmp_dir))}\n",
+        encoding="utf-8")
+    subprocess.Popen(["/bin/sh", str(script)], start_new_session=True, close_fds=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    _log("INSTALL LINUX: installee, relance programmee")
+    _set_progress("launching", 100)
+    _time.sleep(3.5)          # le temps pour la page d'afficher le dernier message
+    try:
+        import webview
+        if webview.windows:
+            webview.windows[0].destroy()
+    except Exception as e:
+        _log(f"INSTALL LINUX: destroy KO {e}")

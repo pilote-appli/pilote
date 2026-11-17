@@ -32,12 +32,12 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
 
 | # | Étape | État |
 |---|---|---|
-| 1 | Socle : données, fenêtre, fermeture, notifications, paquet .deb | fait (17/11/2026), à valider par le test |
-| 2 | Codes chiffrés dans le trousseau de Linux | fait (17/11/2026), à valider par le test |
-| 3 | Rapport, PDF du bilan, clés USB, lecture des captures coupée | fait (17/11/2026), à valider par le test |
+| 1 | Socle : données, fenêtre, fermeture, notifications, paquet .deb | fait (17/11/2026) |
+| 2 | Codes chiffrés dans le trousseau de Linux | fait (17/11/2026) |
+| 3 | Rapport, PDF du bilan, clés USB, lecture des captures coupée | fait (17/11/2026) |
 | 4 | Paquet joint à chaque release (`release.yml`, job `linux`), README, notes de release | fait (17/11/2026) |
-| 5 | Mise à jour : d'abord signaler la nouvelle version et ouvrir la page de téléchargement ; ensuite, installer le .deb (mot de passe demandé par Linux) | à faire |
-| 6 | Règle « Mac, Windows et Linux avant le tag » dans `CLAUDE.md` | à faire (`tests/lire_tests.py` lit déjà le test Linux) |
+| 5 | Mise à jour installée par Pilote (`updater._installer_linux`) | fait (17/11/2026) : voir « Mise à jour » |
+| 6 | Règle « Mac, Windows et Linux avant le tag » dans `CLAUDE.md`, `tests/lire_tests.py` | fait (17/11/2026) |
 
 ## Ce qui est en place
 
@@ -83,8 +83,7 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
 * **Lecture des captures** (Santé, relevés en image) : coupée, avec le
   message « pas encore disponible sous Linux ». La saisie à la main marche.
   Piste : Tesseract, mais il alourdit le paquet.
-* **Mise à jour** : aucune proposée sous Linux (`updater.py`, « Ni Windows ni
-  Mac »). Étape 5.
+* **Mise à jour** : voir plus bas.
 * **« Signaler un problème »** : système lu dans `/etc/os-release`
   (« Linux Debian GNU/Linux 12 (bookworm) (aarch64) »).
 
@@ -105,6 +104,28 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
 * **Ne pas renommer `Pilote_Linux.deb`** : la future mise à jour (étape 5) le
   cherchera sous ce nom dans chaque release, comme `Pilote_Mac.zip`.
 
+## Mise à jour (étape 5, 17/11/2026)
+
+* `updater.py` cherche `Pilote_Linux.deb` (`LINUX_ASSET`) dans la release,
+  par l'API ou la page publique, comme le Setup. Proposée seulement depuis le
+  paquet (`plateforme.paquet_linux()`), jamais en dev.
+* `_installer_linux` : téléchargement, taille et SHA-256 comparés à ceux de
+  l'API (`_conforme`), puis `dpkg-deb -f` : le paquet doit s'appeler `pilote`
+  et porter la version annoncée. Installation par `apt-get install` du
+  fichier, avec les droits d'administrateur, dans l'ordre : déjà root
+  (conteneur), `sudo -n` (sans mot de passe : le Linux d'un Chromebook),
+  `pkexec` (Linux demande le mot de passe dans une fenêtre). Puis un script
+  attend la fin de Pilote et le relance (`/usr/bin/pilote`).
+* Sans `sudo` ni `pkexec` qui aboutissent (mot de passe refusé, pas d'agent
+  polkit) : le paquet est copié dans Téléchargements (`xdg-user-dir`), ouvert
+  par `xdg-open` (l'installeur du système), et l'écran dit de double-cliquer
+  dessus. Les données ne bougent jamais.
+* Journal : `~/.local/state/Pilote/update.log` (avant, hors Windows et Mac,
+  `updater` aurait créé un dossier `~/Pilote`).
+* Test : `essai.sh --maj` sert en local une version 99.0.0 (le même paquet et
+  un fichier témoin) avec `PILOTE_MAJ_ESSAI` (`updater._essai`, Mac et Linux) ;
+  Pilote doit l'installer et se relancer.
+
 ## Test (`build-linux.yml`)
 
 * Job `paquet` : tests unitaires sous Linux, fabrication, contenu vérifié
@@ -113,7 +134,11 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
   apt, lance Pilote dans Xvfb et une session D-Bus avec un trousseau
   déverrouillé, et relit `PILOTE_DIAG` : serveur, page, HTTPS, trousseau,
   fermeture avec une écriture en attente. Capture en annotations
-  « Capture <machine> i/N ».
+  « Capture <machine> i/N ». Puis l'essai de mise à jour (`--maj`).
+* Les tests unitaires tournent aussi sous Linux (job `paquet`) : les tests en
+  échec sortent en annotations. Piège rencontré : `test_agenda`, `test_garmin`
+  et `test_coros` remplacent `actus._chiffrer` hors Windows pour toute la
+  série ; `test_linux.py` travaille donc sur une copie neuve du module.
 * Job `ecrans-linux` : les écrans de `tests/ecrans.txt` sur les données de
   Brice, « Ecran n linux i/N ».
 * `python tests/lire_tests.py <sha>` recolle `capture-<machine>.jpg` et

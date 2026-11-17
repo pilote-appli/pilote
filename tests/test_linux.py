@@ -19,10 +19,21 @@ from unittest import mock
 RACINE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "src"))
 
-import actus  # noqa: E402
 import chiffrement  # noqa: E402
 import plateforme  # noqa: E402
 import sauvegarde  # noqa: E402
+
+
+def _module_neuf(nom):
+    """Une copie neuve d'un module de src/ : d'autres tests en remplacent des
+    fonctions pour de bon (test_agenda, test_garmin et test_coros imitent
+    actus._chiffrer hors Windows ; test_agenda et test_donnees,
+    storage.get_app_dir)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(nom + "_essai_linux", str(RACINE / "src" / (nom + ".py")))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class FauxTrousseau:
@@ -54,7 +65,9 @@ class FauxTrousseau:
 class TrousseauLinux(unittest.TestCase):
     def setUp(self):
         self.faux = FauxTrousseau()
+        actus = self.actus = _module_neuf("actus")
         for p in (mock.patch.object(sys, "platform", "linux"),
+                  mock.patch.dict(sys.modules, {"actus": actus}),   # chiffrement.py : import actus
                   mock.patch.object(actus.subprocess, "run", self.faux),
                   mock.patch.object(actus, "_compte_trousseau", return_value="pilote-essai"),
                   mock.patch.object(chiffrement, "_compte_mac", return_value="pilote-sauvegarde-essai")):
@@ -62,42 +75,42 @@ class TrousseauLinux(unittest.TestCase):
             self.addCleanup(p.stop)
 
     def test_code_range_et_relu(self):
-        s = actus._chiffrer("abcd efgh ijkl mnop", "Pilote Garmin", "Pilote : essai")
+        s = self.actus._chiffrer("abcd efgh ijkl mnop", "Pilote Garmin", "Pilote : essai")
         self.assertEqual(s, "secret:pilote-essai")
         self.assertNotIn("abcd", s)               # rien du code dans le fichier
-        self.assertEqual(actus._dechiffrer(s, "Pilote Garmin"), "abcd efgh ijkl mnop")
+        self.assertEqual(self.actus._dechiffrer(s, "Pilote Garmin"), "abcd efgh ijkl mnop")
 
     def test_code_jamais_en_argument(self):
-        actus._chiffrer("abcd efgh ijkl mnop")
+        self.actus._chiffrer("abcd efgh ijkl mnop")
         cmd, entree = self.faux.appels[0]
         self.assertEqual(entree, "abcd efgh ijkl mnop")
         self.assertFalse(any("abcd" in a for a in cmd))
 
     def test_un_element_par_service(self):
-        a = actus._chiffrer("code gmail")
-        b = actus._chiffrer("code icloud", "Pilote Agenda", "Pilote : iCloud")
-        self.assertEqual(actus._dechiffrer(a), "code gmail")
-        self.assertEqual(actus._dechiffrer(b, "Pilote Agenda"), "code icloud")
+        a = self.actus._chiffrer("code gmail")
+        b = self.actus._chiffrer("code icloud", "Pilote Agenda", "Pilote : iCloud")
+        self.assertEqual(self.actus._dechiffrer(a), "code gmail")
+        self.assertEqual(self.actus._dechiffrer(b, "Pilote Agenda"), "code icloud")
 
     def test_oubli_a_la_deconnexion(self):
-        s = actus._chiffrer("abcd")
-        actus._oublier(s)
+        s = self.actus._chiffrer("abcd")
+        self.actus._oublier(s)
         with self.assertRaises(ValueError):
-            actus._dechiffrer(s)
+            self.actus._dechiffrer(s)
 
     def test_sans_secret_tool_refus_clair(self):
         def absent(*a, **kw):
             raise FileNotFoundError("secret-tool")
-        with mock.patch.object(actus.subprocess, "run", absent):
+        with mock.patch.object(self.actus.subprocess, "run", absent):
             with self.assertRaises(OSError) as e:
-                actus._chiffrer("abcd")
+                self.actus._chiffrer("abcd")
         self.assertIn("gnome-keyring", str(e.exception))
 
     def test_trousseau_qui_refuse(self):
         refus = lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, "", "Cannot create an item")
-        with mock.patch.object(actus.subprocess, "run", refus):
+        with mock.patch.object(self.actus.subprocess, "run", refus):
             with self.assertRaises(OSError):
-                actus._chiffrer("abcd")
+                self.actus._chiffrer("abcd")
 
     def test_cle_des_sauvegardes(self):
         cle = os.urandom(32)
@@ -159,20 +172,86 @@ class ClesUsbLinux(unittest.TestCase):
             self.assertEqual(sauvegarde._lsblk(), [])
 
 
-def _storage_d_origine():
-    """Une copie neuve de storage.py : d'autres tests remplacent pour de bon
-    storage.get_app_dir par leur dossier temporaire (test_agenda, test_donnees)."""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("storage_essai_linux", str(RACINE / "src" / "storage.py"))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+class MiseAJourLinux(unittest.TestCase):
+    """updater._installer_linux, sans reseau ni apt : sudo, pkexec, ou repli."""
+
+    class _Reponse:
+        def __init__(self, donnees):
+            self.donnees, self.headers = donnees, {"Content-Length": str(len(donnees))}
+
+        def read(self, n):
+            morceau, self.donnees = self.donnees[:n], self.donnees[n:]
+            return morceau
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def setUp(self):
+        import updater
+        self.updater = updater
+        self.tmp = Path(tempfile.mkdtemp(prefix="pilote_maj_linux_"))
+        self.commandes = []
+        self.codes = {}                       # premier mot -> code de retour
+        lances = self.lances = []
+
+        def run(cmd, **kw):
+            self.commandes.append(list(cmd))
+            if cmd[0] == "dpkg-deb":
+                return subprocess.CompletedProcess(cmd, 0, "Package: pilote\nVersion: 9.9.9\n", "")
+            if cmd[0] == "xdg-user-dir":
+                return subprocess.CompletedProcess(cmd, 0, str(self.tmp) + "\n", "")
+            return subprocess.CompletedProcess(cmd, self.codes.get(cmd[0], 1), "", "refus")
+
+        for p in (mock.patch.object(plateforme, "paquet_linux", return_value=True),
+                  mock.patch.object(updater.urllib.request, "urlopen",
+                                    lambda req, timeout=0: self._Reponse(b"x" * 300000)),
+                  mock.patch.object(updater.subprocess, "run", run),
+                  mock.patch.object(updater.subprocess, "Popen", lambda cmd, **kw: lances.append(cmd)),
+                  mock.patch("shutil.which", lambda n: "/usr/bin/" + n),
+                  mock.patch.object(updater, "_log", lambda m: None),
+                  mock.patch.object(updater, "_log_path", lambda: self.tmp / "update.log"),
+                  mock.patch("time.sleep", lambda s: None)):
+            p.start()
+            self.addCleanup(p.stop)
+        updater._attendu.clear()
+
+    def test_sudo_sans_mot_de_passe_puis_relance(self):
+        self.codes["sudo"] = 0
+        self.updater._installer_linux("https://github.com/x/Pilote_Linux.deb", "9.9.9")
+        self.assertEqual(self.updater.get_progress()["step"], "launching")
+        apt = [c for c in self.commandes if c[0] == "sudo"][0]
+        self.assertEqual(apt[:4], ["sudo", "-n", "apt-get", "install"])
+        self.assertFalse(any(c[0] == "pkexec" for c in self.commandes))
+        self.assertEqual(self.lances[0][0], "/bin/sh")          # script de relance
+
+    def test_pkexec_si_sudo_demande_un_mot_de_passe(self):
+        self.codes["pkexec"] = 0
+        self.updater._installer_linux("https://github.com/x/Pilote_Linux.deb", "9.9.9")
+        self.assertEqual(self.updater.get_progress()["step"], "launching")
+        self.assertTrue(any(c[0] == "pkexec" for c in self.commandes))
+
+    def test_repli_dans_telechargements(self):
+        self.updater._installer_linux("https://github.com/x/Pilote_Linux.deb", "9.9.9")
+        p = self.updater.get_progress()
+        self.assertEqual(p["step"], "error")
+        self.assertIn("double-clique", p["error"])
+        self.assertTrue((self.tmp / "Pilote_Linux.deb").is_file())
+        self.assertEqual(self.lances[0][0], "xdg-open")
+
+    def test_mauvaise_version_refusee(self):
+        self.codes["sudo"] = 0
+        self.updater._installer_linux("https://github.com/x/Pilote_Linux.deb", "9.9.8")
+        self.assertEqual(self.updater.get_progress()["step"], "error")
+        self.assertFalse(any(c[0] == "sudo" for c in self.commandes))
 
 
 class DossierDeDonnees(unittest.TestCase):
     def test_paquet_dans_le_dossier_personnel(self):
         tmp = tempfile.mkdtemp(prefix="pilote_xdg_")
-        storage = _storage_d_origine()
+        storage = _module_neuf("storage")
         with mock.patch.object(plateforme, "paquet_linux", return_value=True), \
              mock.patch.object(plateforme, "version_store", return_value=False), \
              mock.patch.object(sys, "platform", "linux"), \

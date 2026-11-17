@@ -142,6 +142,7 @@ secours de 20 s. Rien de cassé, mais la marge est mince.
 ### Captures sur données d'exemple (job `ecrans-mac`, 12/10/2026)
 
 Règle d'Arthur : une fonctionnalité doit être vérifiée sur Mac **et** Windows
+(et Linux depuis le 17/11/2026, `docs/linux.md`)
 avant d'être dite finie. Or le premier job démarre sur un utilisateur vierge :
 sa capture ne montre que les Premiers pas, jamais la fonctionnalité.
 
