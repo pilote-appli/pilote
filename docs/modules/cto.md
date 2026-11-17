@@ -360,5 +360,12 @@ Un clic sur la case (CTO seulement) bascule `_cptPrefs().rendement` entre
 revient frais compris, en % de ce prix). Le (i) (`ctoInfoRendement`) explique
 la différence et les frais. Tuile d'accueil et Patrimoine gardent « Tout le compte ».
 
+Sans vente ni dividende, les deux doivent tomber au centime près. Jusqu'au
+17/11/2026, `computePos` comptait chaque ordre en `qty × cours` brut, alors que
+l'investi net l'arrondit au centime comme la banque (`brutOrdre`) : sur des
+fractions de bitcoin, 16 achats donnaient 2 centimes d'écart entre les deux
+cases. `computePos` (prix de revient, ventes) et le repli de la courbe sans
+versements passent désormais par `brutOrdre`, comme le PEA et l'investi net.
+
 Plan d'épargne (achats programmés) : voir `docs/modules/pea.md`, même code
 sur un CTO (`plansProg` du compte dans cto.json).
