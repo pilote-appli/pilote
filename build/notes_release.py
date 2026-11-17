@@ -33,6 +33,21 @@ curl -fL {depot}/releases/latest/download/Pilote_Mac.zip -o /tmp/Pilote_Mac.zip 
 
 Pilote ne fonctionne pas sur un Mac Intel.
 
+**Sur Linux (Ubuntu, Debian, Mint…) ou sur un Chromebook** : télécharge
+**Pilote_Linux.deb**, le même fichier pour toutes les puces (Intel, AMD, ARM).
+Sur un Chromebook, active d'abord Linux (Paramètres › À propos de ChromeOS ›
+Développeurs › Environnement de développement Linux), puis double-clique sur le
+fichier dans l'application Fichiers et choisis *Installer*. Sous Ubuntu ou
+Debian, dans le dossier du téléchargement :
+
+```bash
+sudo apt install ./Pilote_Linux.deb
+```
+
+Sous Linux, la lecture des captures Santé n'est pas encore disponible, et la
+mise à jour n'est pas automatique : installe le nouveau fichier de la même
+façon, tes données sont gardées.
+
 **Déjà installé ?** Rien à faire : Pilote te propose cette version au prochain
 lancement.
 

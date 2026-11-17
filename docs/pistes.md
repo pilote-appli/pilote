@@ -123,6 +123,13 @@ Autres pistes :
   données plus de 7 jours, alors que Pilote garde les séances dans Sports. Coros
   passe par son serveur MCP, toute autre montre par ses fichiers .fit
   (`docs/modules/montres.md`).
+- **Import par captures d'écran pour la bourse (PEA, CTO, Crypto)** : écarté
+  par Arthur le 15/11/2026, « pas assez de détail dans un screen pour la
+  bourse ». Les positions se recalculent à partir des ordres (titre, parts,
+  cours, frais), et l'historique d'une appli de courtier ne montre souvent que
+  le montant ; l'écran des positions ne donne ni dates ni dividendes. Les
+  captures restent réservées aux dépenses (`docs/modules/comptes.md`) ; pour la
+  bourse, CSV conseillé et PDF en secours (`docs/import-releves.md`).
 
 **Traité depuis** : la recherche globale (Ctrl+K) et le bilan de l'année avec
 Pilou (12/11/2026, `docs/accueil.md`). Avant : l'emoji par défaut des catégories créées par l'utilisateur est

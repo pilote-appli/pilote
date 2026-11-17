@@ -486,12 +486,15 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--brd2); }
 .tb-btn.tb-close:hover { background: #e81123; color: #fff; }
 /* Mac : la barre de titre est celle du système (app.py, frameless sous Windows
    seulement) ; la nôtre n'est pas créée, ses 36 px disparaissent avec elle */
-html.os-mac body.has-shell { padding-top: 0; }
+html.os-mac body.has-shell, html.os-linux body.has-shell { padding-top: 0; }
 /* Textes propres à un système : .txt-win sous Windows, .txt-mac sur Mac ;
-   .win-seul : réglage qui n'existe que sous Windows */
-.txt-mac { display: none; }
-html.os-mac .txt-mac { display: inline; }
+   .win-seul : réglage qui n'existe que sous Windows. Linux (docs/linux.md) :
+   les .txt-win restent (« ce PC »), sauf .txt-windows qui nomme Windows,
+   remplacé par .txt-lin */
+.txt-mac, .txt-lin { display: none; }
+html.os-mac .txt-mac, html.os-linux .txt-lin { display: inline; }
 html.os-mac .txt-win, html.os-mac .win-seul { display: none !important; }
+html.os-linux .txt-windows, html.os-linux .win-seul { display: none !important; }
 
 /* — Sidebar gauche — */
 body.has-shell { padding-top: 36px; }
@@ -3106,7 +3109,7 @@ html.verre .sidebar {
   box-shadow: var(--verre-lum), var(--sh);
   backdrop-filter: var(--verre-flou); -webkit-backdrop-filter: var(--verre-flou);
 }
-html.verre.os-mac .sidebar { top: 10px; }
+html.verre.os-mac .sidebar, html.verre.os-linux .sidebar { top: 10px; }
 html.verre .sb-item, html.verre .sb-sec-btn { font-weight: 500; font-size: 13.5px; }
 html.verre .sb-item.active, html.verre .sb-sub .sb-item.active {
   background: var(--verre-fort); box-shadow: var(--verre-lum), 0 2px 8px -2px rgba(0,0,0,.12);
@@ -4361,7 +4364,7 @@ html.verre .toast-stack .toast {
       <div class="card-b">
         <div id="ac-cnx-boite"></div>
         <div class="ac-pied">
-          <p>Pilote garde le code <span class="txt-win">chiffré par Windows sur ce PC</span><span
+          <p>Pilote garde le code <span class="txt-win txt-windows">chiffré par Windows sur ce PC</span><span class="txt-lin">chiffré dans le trousseau de ce PC</span><span
             class="txt-mac">dans le Trousseau de ce Mac</span>, et ne l'envoie qu'à Gmail.</p>
           <p><b>Pour le retirer</b>&nbsp;: sur la page des mots de passe d'application, clique sur
             <b>Supprimer</b> à côté de «&nbsp;Pilote&nbsp;». Google l'annule aussi tout seul si tu
@@ -4411,7 +4414,7 @@ html.verre .toast-stack .toast {
       <div class="card-b">
         <div id="ga-cnx-boite"></div>
         <div class="ac-pied">
-          <p>Pilote garde la clé <span class="txt-win">chiffrée par Windows sur ce PC</span><span
+          <p>Pilote garde la clé <span class="txt-win txt-windows">chiffrée par Windows sur ce PC</span><span class="txt-lin">chiffrée dans le trousseau de ce PC</span><span
             class="txt-mac">dans le Trousseau de ce Mac</span>, et ne l'envoie qu'à Garmin. Il ne fait que
             lire&nbsp;: rien de Pilote ne part vers ton compte Garmin.</p>
           <p><b>Pour la retirer</b>&nbsp;: sur la page de la clé, supprime-la. Pilote ne peut alors plus rien lire.</p>
@@ -4449,7 +4452,7 @@ html.verre .toast-stack .toast {
       <div class="card-b">
         <div id="co-cnx-boite"></div>
         <div class="ac-pied">
-          <p>Pilote garde la connexion <span class="txt-win">chiffrée par Windows sur ce PC</span><span
+          <p>Pilote garde la connexion <span class="txt-win txt-windows">chiffrée par Windows sur ce PC</span><span class="txt-lin">chiffrée dans le trousseau de ce PC</span><span
             class="txt-mac">dans le Trousseau de ce Mac</span>, et ne parle qu'à Coros. Il ne fait que
             lire&nbsp;: aucun entraînement n'est créé ni modifié sur ton compte.</p>
           <p><b>Pour la retirer</b>&nbsp;: «&nbsp;Déconnecter&nbsp;» ci-dessus.</p>
@@ -6349,6 +6352,10 @@ _jn("script principal : debut");
    sous Windows rien ne change. */
 const EST_MAC = /Macintosh|Mac OS X/.test(navigator.userAgent);
 if (EST_MAC) document.documentElement.classList.add("os-mac");
+/* Linux (WebKitGTK, docs/linux.md) : barre de titre du système comme sur Mac,
+   mais Ctrl et « ce PC » comme sous Windows */
+const EST_LINUX = !EST_MAC && /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+if (EST_LINUX) document.documentElement.classList.add("os-linux");
 
 /* ─── Graphiques : la police et le gris du texte courant (identité « Carnet ») ───
    Les graphiques sont dessinés dans un <canvas> : ils n'héritent pas du CSS.
@@ -12153,9 +12160,10 @@ ${divs.length ? divs.sort((a,b)=>a.date.localeCompare(b.date)).map(d=>`<tr><td>$
 async function _rapportImprimer(frame, html, nom) {
   // Mac : pywebview n'imprime que la page principale, pas cette iframe. Le
   // rapport s'ouvre donc dans le navigateur, où ⌘P l'imprime ou en fait un PDF.
-  if (EST_MAC) {
+  // Linux : même chemin (WebKitGTK, impression de l'iframe non essayée)
+  if (EST_MAC || EST_LINUX) {
     const r = await pywebview.api.ouvrir_rapport(html, nom);
-    if (r && r.ok) showToastModern("Rapport ouvert dans ton navigateur : ⌘P pour l'imprimer ou l'enregistrer en PDF", "ok");
+    if (r && r.ok) showToastModern("Rapport ouvert dans ton navigateur : " + (EST_MAC ? "⌘P" : "Ctrl+P") + " pour l'imprimer ou l'enregistrer en PDF", "ok");
     else showToastModern("Ouverture du rapport impossible : " + ((r && r.error) || ""), "err");
     return;
   }
@@ -13405,7 +13413,7 @@ function setChercher(q) {
       vus.add(id + "|" + _setNorm(secNom));
     }
     sec.querySelectorAll(_SET_CHERCHABLES).forEach(el => {
-      if (mac && el.closest(".win-seul")) return;
+      if ((mac || EST_LINUX) && el.closest(".win-seul")) return;
       if (el.closest('[style*="display:none"], [style*="display: none"]')) return;
       const txt = el.textContent.replace(/\s+/g, " ").trim();
       const court = _setCourt(txt);
@@ -13525,6 +13533,7 @@ async function svRefresh() {
       box.innerHTML = `<span class="sv-ok">✓ Prête</span> — ${escHtml(dest.path)}`
         + (cfg.volumeLabel ? `<br><span class="sv-none">Clé « ${escHtml(cfg.volumeLabel)} »`
             + (EST_MAC ? " · retrouvée par son identifiant, même renommée par macOS"
+                       : EST_LINUX ? " · retrouvée par son identifiant, où qu'elle soit montée"
                        : " · retrouvée même si Windows change sa lettre") + `</span>` : "");
     } else {
       box.innerHTML = `<span class="sv-warn">✕ ${escHtml(dest.message || "Indisponible")}</span>`
@@ -16808,7 +16817,7 @@ window._fermerApresVidange = async function () {
 };
 
 function _injectTitlebar() {
-  if (EST_MAC) return;     // barre de titre du système (app.py)
+  if (EST_MAC || EST_LINUX) return;     // barre de titre du système (app.py)
   const html = `
     <div class="titlebar" id="app-titlebar">
       <div class="titlebar-brand">
@@ -17367,7 +17376,7 @@ function _diag(msg, kind) {
   if (!bar) {
     bar = document.createElement("div");
     bar.id = "pea-diag";
-    bar.style.cssText = "position:fixed;top:" + (EST_MAC ? 0 : 36) + "px;left:0;right:0;z-index:9999;"
+    bar.style.cssText = "position:fixed;top:" + (EST_MAC || EST_LINUX ? 0 : 36) + "px;left:0;right:0;z-index:9999;"
       + "padding:8px 16px;font-family:JetBrains Mono,monospace;font-size:11px;"
       + "border-bottom:1px solid var(--brd2);background:#fff7e6;color:#92400e;";
     document.body.appendChild(bar);
@@ -19157,7 +19166,7 @@ function finAClasser(tx) { return !!tx.aClasser && tx.categoryId === tx.aClasser
 
 /* Mac : pywebview filtre le sélecteur par types MIME, pas par extensions (docs/mac.md) */
 function finImportPrep(inp) {
-  if (EST_MAC) inp.accept = inp.accept.split(",").filter(a => a.startsWith(".")).join(",");
+  if (EST_MAC || EST_LINUX) inp.accept = inp.accept.split(",").filter(a => a.startsWith(".")).join(",");
 }
 
 /* Ce que l'utilisateur a déjà classé : le libellé saisi, et celui de la
@@ -22994,7 +23003,7 @@ async function homeSuggestion(probleme) {
 
 function _sugTexteRapport() {
   const r = _sugRapport || {};
-  return "Pilote " + (r.version || "?") + " · " + (r.systeme || (EST_MAC ? "Mac" : "Windows"))
+  return "Pilote " + (r.version || "?") + " · " + (r.systeme || (EST_MAC ? "Mac" : EST_LINUX ? "Linux" : "Windows"))
     + "\n\nDerniers plantages :\n" + (r.journal || "aucun");
 }
 
@@ -23010,7 +23019,7 @@ async function homeSuggestionEcrire(gmail) {
   const corps = _sugProbleme
     ? (vu ? vu.replace(/\r?\n/g, "\r\n") : "Ce que je faisais :\r\n\r\nCe qui s'est passé :")
       + "\r\n\r\n\r\n--\r\n" + _sugTexteRapport().replace(/\n/g, "\r\n")
-    : "\r\n\r\n\r\n--\r\nPilote" + version + (EST_MAC ? " sur Mac" : " sur Windows");
+    : "\r\n\r\n\r\n--\r\nPilote" + version + (EST_MAC ? " sur Mac" : EST_LINUX ? " sur Linux" : " sur Windows");
   const url = gmail
     ? "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(adresse)
       + "&su=" + encodeURIComponent(objet) + "&body=" + encodeURIComponent(corps)
@@ -26244,7 +26253,7 @@ function ctoOuvrirImport() {
   // Mac : pywebview ne filtre le sélecteur que par les types MIME d'« accept »
   // (text/csv, application/pdf, application/zip), pas par les extensions : un
   // .xlsx, .xml ou .txt y était grisé. Sans type MIME, aucun filtre (docs/mac.md).
-  if (EST_MAC) inp.accept = inp.accept.split(",").filter(a => a.startsWith(".")).join(",");
+  if (EST_MAC || EST_LINUX) inp.accept = inp.accept.split(",").filter(a => a.startsWith(".")).join(",");
   openOvTop("ov-cto-import");
 }
 
@@ -29289,7 +29298,7 @@ function agRender() {
         <input id="ag-mdp" type="password" autocomplete="off" spellcheck="false"
                placeholder="xxxx-xxxx-xxxx-xxxx"></div>
       <p class="ac-note">Pilote vérifie le mot de passe auprès d'iCloud avant de l'enregistrer, le garde
-        <span class="txt-win">chiffré par Windows sur ce PC</span><span class="txt-mac">dans le Trousseau
+        <span class="txt-win txt-windows">chiffré par Windows sur ce PC</span><span class="txt-lin">chiffré dans le trousseau de ce PC</span><span class="txt-mac">dans le Trousseau
         de ce Mac</span>, et ne l'envoie qu'à iCloud.</p>
       <div class="ac-btns">
         <button type="button" class="btn btn-primary" id="ag-btn-cnx" onclick="agConnecter()"><i class="ph ph-plug"></i> Connecter</button>

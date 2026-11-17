@@ -1,6 +1,6 @@
 # Pilote
 
-Application Windows et Mac de suivi personnel : bourse (PEA, comptes-titres et crypto), budget,
+Application Windows, Mac et Linux de suivi personnel : bourse (PEA, comptes-titres et crypto), budget,
 sport, patrimoine, santé et newsletters réunis dans une seule app, sans compte ni
 serveur. Pilote va chercher les cours de tes titres sur Internet et les actualise automatiquement.
 
@@ -10,12 +10,12 @@ serveur. Pilote va chercher les cours de tes titres sur Internet et les actualis
 
 ### Ce qu'il faut avoir
 
-| | Windows | Mac |
-|---|---|---|
-| Ordinateur | Windows 10 ou 11, 64 bits | Mac à puce Apple (M1 et suivants). **Pas un Mac Intel** |
-| Système essayé | Windows 11 (Windows sur processeur ARM : pas essayé) | macOS 15 Sequoia (un macOS plus ancien n'a pas été essayé) |
-| Composant | Microsoft Edge WebView2, qui dessine la fenêtre. Déjà là sur Windows 11 et sur un Windows 10 à jour ; sinon, le programme d'installation l'ajoute | rien |
-| Internet | pour l'installation, les cours de bourse et les mises à jour. Sans connexion, Pilote s'ouvre et montre les derniers cours connus | pareil |
+| | Windows | Mac | Linux et Chromebook |
+|---|---|---|---|
+| Ordinateur | Windows 10 ou 11, 64 bits | Mac à puce Apple (M1 et suivants). **Pas un Mac Intel** | Ubuntu, Debian, Mint… (paquet .deb), puce Intel, AMD ou ARM ; Chromebook avec Linux activé |
+| Système essayé | Windows 11 (Windows sur processeur ARM : pas essayé) | macOS 15 Sequoia (un macOS plus ancien n'a pas été essayé) | Ubuntu 22.04 et 24.04, Debian 12, sur des machines de test (pas encore sur un vrai Chromebook) |
+| Composant | Microsoft Edge WebView2, qui dessine la fenêtre. Déjà là sur Windows 11 et sur un Windows 10 à jour ; sinon, le programme d'installation l'ajoute | rien | WebKitGTK et Python 3, installés avec Pilote s'ils manquent |
+| Internet | pour l'installation, les cours de bourse et les mises à jour. Sans connexion, Pilote s'ouvre et montre les derniers cours connus | pareil | pareil |
 
 Pilote n'a pas besoin de compte. Seuls quatre modules, facultatifs, demandent quelque chose
 de plus :
@@ -28,8 +28,8 @@ de plus :
 - **Garmin** : une montre Garmin et un compte Garmin Connect (Pilote lit ta montre avec une
   clé API personnelle, que l'onglet Connexion t'aide à créer) ;
 - **Santé**, pour lire des captures de l'app FitDays : sur Windows, le français ou
-  l'anglais parmi les langues de Windows (c'est le cas d'un Windows en français). La
-  saisie à la main marche partout.
+  l'anglais parmi les langues de Windows (c'est le cas d'un Windows en français) ; pas
+  encore sous Linux. La saisie à la main marche partout.
 
 ### Sur Windows
 
@@ -67,10 +67,34 @@ par un navigateur.
 4. Ouvert depuis Téléchargements, Pilote propose de se ranger lui-même dans le dossier
    Applications : accepter (sans ça, il ne pourrait pas se mettre à jour).
 
+### Sous Linux ou sur un Chromebook
+
+1. **Chromebook seulement** : activer Linux, une fois pour toutes (Paramètres → À propos
+   de ChromeOS → Développeurs → Environnement de développement Linux). Les Chromebooks
+   d'une école ou d'une entreprise l'interdisent souvent.
+2. Télécharger **`Pilote_Linux.deb`** depuis la [dernière version](../../releases/latest).
+   Le même fichier sert à toutes les puces (Intel, AMD, ARM).
+3. L'installer :
+   - sur un Chromebook, double-cliquer sur le fichier dans l'application Fichiers, puis
+     *Installer* ;
+   - sous Ubuntu ou Debian, dans le dossier du téléchargement :
+
+     ```bash
+     sudo apt install ./Pilote_Linux.deb
+     ```
+
+4. Lancer Pilote depuis la liste des applications.
+
+Les codes d'Actus, de l'Agenda et des montres vont dans le trousseau de ta session
+(GNOME Keyring), jamais en clair. La lecture des captures Santé n'existe pas encore
+sous Linux.
+
 ### Ensuite
 
 Les mises à jour se font depuis Pilote : au lancement, il te montre ce que change la
-nouvelle version et l'installe si tu le veux. Tes données restent en place.
+nouvelle version et l'installe si tu le veux. Tes données restent en place. Sous Linux,
+pas encore : installe le nouveau `Pilote_Linux.deb` de la même façon, tes données sont
+gardées.
 
 ## Premier lancement
 
@@ -105,6 +129,9 @@ de la dernière version : tes données sont conservées.
 *Ouvrir quand même* dans Réglages Système → Confidentialité et sécurité. Sur un Mac Intel,
 Pilote ne peut pas fonctionner.
 
+**Linux : « Aucun trousseau sur ce PC ».** Pilote ne garde pas un code en clair :
+installe le trousseau (`sudo apt install gnome-keyring`), puis réessaie.
+
 **Les cours ne bougent pas.** Pilote a besoin d'internet pour les actualiser ; sans
 connexion, il garde les derniers connus. Le bouton Actualiser est en haut de la fenêtre.
 
@@ -112,8 +139,9 @@ connexion, il garde les derniers connus. Le bouton Actualiser est en haut de la 
 l'anglais dans Paramètres de Windows → Heure et langue → Langue, puis réessaie.
 
 **Désinstaller.** Windows : Paramètres → Applications. Mac : glisser Pilote d'Applications
-à la Corbeille. Dans les deux cas, tes données restent sur le disque (voir « Où sont les
-données ») : réinstaller Pilote les retrouve.
+à la Corbeille. Linux : `sudo apt remove pilote` (Chromebook : clic droit sur Pilote dans
+les applications → Désinstaller). Dans tous les cas, tes données restent sur le disque
+(voir « Où sont les données ») : réinstaller Pilote les retrouve.
 
 ## ✨ Les modules
 
@@ -148,7 +176,8 @@ repos, pas, minutes intenses, SpO2, respiration et âge physique sur 30 jours, e
 menstruel si tu le suis dans Garmin. Pilote ne fait que lire.
 
 **Actus** : la boîte Gmail qui reçoit tes newsletters, lue dans Pilote, avec un mot de passe
-d'application Google gardé chiffré par Windows, ou dans le Trousseau sur Mac.
+d'application Google gardé chiffré par Windows, dans le Trousseau sur Mac, ou dans le
+trousseau de ta session sous Linux.
 
 **Agenda** : un calendrier de tout ce que Pilote sait dater, tes notes, et ton agenda
 iCloud, qui fait sonner ton iPhone.
@@ -160,10 +189,10 @@ Chaque module se masque s'il ne sert pas.
 - **Accueil** avec les chiffres qui comptent, en tuiles à choisir
 - **Multi-utilisateurs** : chaque utilisateur a tous ses modules à lui, rien n'est partagé
 - **Code PIN** à 4 chiffres par utilisateur. Il sépare les espaces dans Pilote ; il ne
-  chiffre pas les fichiers, lisibles par quiconque ouvre ta session Windows ou macOS
+  chiffre pas les fichiers, lisibles par quiconque ouvre ta session Windows, macOS ou Linux
 - **Thèmes** clair et sombre, couleur d'accent au choix
 - **Sauvegarde** sur clé USB ou dans un dossier, avec restauration
-- **Mise à jour automatique** depuis les releases GitHub
+- **Mise à jour automatique** depuis les releases GitHub (pas encore sous Linux)
 
 ## 🔒 Confidentialité
 
@@ -194,6 +223,7 @@ Pour signaler une faille de sécurité : voir [SECURITY.md](SECURITY.md).
 - Windows : `%LocalAppData%\Programs\Suivi PEA\Donnees\` (nom historique du dossier
   d'installation), un dossier par utilisateur dans `users/`
 - Mac : `~/Library/Application Support/Pilote/Donnees/`
+- Linux : `~/.local/share/Pilote/Donnees/`
 
 Le chemin exact s'affiche aussi dans Pilote : Paramètres → Données.
 
@@ -202,7 +232,8 @@ Le chemin exact s'affiche aussi dans Pilote : Paramètres → Données.
 - Python 3.8 sur le poste de développement, 3.11 pour l'app fabriquée par GitHub Actions
 - `pip install -r requirements.txt`, puis `python src/app.py`
 - Build Windows : `python -m PyInstaller build/pilote.spec --clean --noconfirm`, puis
-  `ISCC.exe build/installer.iss` (Inno Setup 6) ; build Mac : `build/pilote-mac.spec`
+  `ISCC.exe build/installer.iss` (Inno Setup 6) ; build Mac : `build/pilote-mac.spec` ;
+  paquet Linux : `python3 build/linux/construire_deb.py` (sur Linux, avec `dpkg-deb`)
 - Avant une version : `python tests/verifier_release.py vX.Y.Z` et `python -m unittest discover tests`
 
 L'architecture, les données sur disque et les règles du projet sont décrites dans

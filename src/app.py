@@ -1327,6 +1327,13 @@ class Api:
             import platform
             if sys.platform == "darwin":
                 systeme = "macOS " + platform.mac_ver()[0]
+            elif sys.platform.startswith("linux"):
+                # « Debian GNU/Linux 12 (bookworm) » : celle d'un Chromebook
+                try:
+                    nom = platform.freedesktop_os_release().get("PRETTY_NAME", "")
+                except (AttributeError, OSError):    # Python 3.8-3.9 : pas de freedesktop_os_release
+                    nom = ""
+                systeme = "Linux " + (nom or platform.release()) + " (" + platform.machine() + ")"
             else:
                 # platform.release() dit « 10 » sous Windows 11 (vu le 09/11/2026) :
                 # c'est le numero de build qui les distingue (22000 et plus = 11)
@@ -1728,20 +1735,25 @@ def main() -> int:
         text_select=True,
         confirm_close=False,
         # Windows : titlebar custom dans l'UI. Mac : celle du systeme (boutons a
-        # gauche, deplacement, plein ecran), l'UI cache la sienne (html.os-mac)
-        frameless=sys.platform != "darwin",
+        # gauche, deplacement, plein ecran), l'UI cache la sienne (html.os-mac).
+        # Linux : celle du systeme aussi (html.os-linux, docs/linux.md)
+        frameless=sys.platform == "win32",
         easy_drag=False,        # le drag est gere via -webkit-app-region: drag
         hidden=True,            # ouverte par reveal_main_window() une fois prete
     )
     if pos and isinstance(pos, (list, tuple)) and len(pos) == 2:
         window_kwargs["x"] = int(pos[0])
         window_kwargs["y"] = int(pos[1])
+    # Linux : la taille de l'ecran n'est pas lue (ni ctypes ni AppKit), le
+    # gestionnaire de fenetres l'agrandit lui-meme (pywebview 6, GTK)
+    if sys.platform.startswith("linux") and saved_maximized:
+        window_kwargs["maximized"] = True
 
     # Creee la premiere : webview.windows[0] reste la fenetre principale
     window = webview.create_window(**window_kwargs)
-    # Mac : le pont JS <-> Python ne doit pas evaluer de texte, la CSP de la
-    # page l'interdit (voir plateforme.adapter_pont_mac)
-    if sys.platform == "darwin":
+    # Mac et Linux (WebKit) : le pont JS <-> Python ne doit pas evaluer de
+    # texte, la CSP de la page l'interdit (voir plateforme.adapter_pont_mac)
+    if sys.platform != "win32":
         plateforme.adapter_pont_mac(window)
 
     global _main_window, _splash_window
@@ -1927,48 +1939,53 @@ def main() -> int:
             import time as _t
             import tempfile
             _t.sleep(30)
-            if sys.platform != "darwin":
+            # Linux (docs/linux.md) : pas de lecture d'images, mais le trousseau
+            # et le rapport s'y essaient comme sur Mac
+            if sys.platform == "win32":
                 return
-            try:
-                from PIL import Image, ImageDraw, ImageFont
-                img = Path(tempfile.gettempdir()) / "pilote_essai_ocr.png"
-                # Ecran Details de FitDays construit comme une vraie capture du 14/10/2026 :
-                # bloc « Contraste » EN HAUT (ecarts, libelle sous le chiffre,
-                # date d'une autre pesee), libelles sur deux lignes, valeurs
-                # colorees. Attendu (valeurs inventees) : poids 72.6, imc 23.1, graisse
-                # 17.6, graisse_viscerale 6.0, age_corporel 27, pas de date.
-                im = Image.new("RGB", (1170, 1500), "white")
-                d = ImageDraw.Draw(im)
-                police = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 46)
-                turq, gris, vert, pale, orange = (102, 204, 204), (120, 120, 120), (55, 142, 40), (80, 212, 58), (255, 144, 0)
-                for xy, t, c in (((98, 40), "Contraste 08:48 13/09/2026", turq),
-                                 ((150, 150), "2.1 kg", turq), ((470, 150), "0.8%", turq), ((900, 150), "0.6", turq),
-                                 ((180, 250), "Poids", gris), ((480, 230), "Graisse", gris),
-                                 ((480, 280), "corporelle", gris), ((900, 250), "IMC", gris),
-                                 ((225, 420), "Détails", turq),
-                                 ((242, 560), "Poids", gris), ((780, 560), "72.6 kg", vert),
-                                 ((242, 740), "IMC", gris), ((850, 740), "23.1", vert),
-                                 ((242, 895), "Graisse", gris), ((800, 925), "17.6 %", vert),
-                                 ((242, 955), "corporelle", gris),
-                                 ((242, 1075), "Graisse", gris), ((880, 1105), "6.0", pale),
-                                 ((242, 1135), "Viscérale", gris),
-                                 ((242, 1290), "Âge corporel", gris), ((900, 1290), "27", orange)):
-                    d.text(xy, t, fill=c, font=police)
-                im.save(img)
+            if sys.platform != "darwin":
                 print(f"[ocr] disponible : {sante.ocr_available()}", flush=True)
-                r = plateforme.ocr_mac(str(img))
-                mots = " ".join(w["t"] for w in r.get("words", []))
-                # Boites resserrees (x y w h) et brutes de Vision, a comparer a
-                # celles de Windows sur la meme image (docs/mac.md, etape 5)
-                boites = [f"{w['t']} {w['x']} {w['y']} {w['w']} {w['h']} (brut {w.get('brut')})"
-                          for w in r.get("words", [])]
-                print(f"[ocr] ok={r.get('ok')} {r.get('error', '')} mots : {mots}", flush=True)
-                print(f"[ocr] boites : {' | '.join(boites)}", flush=True)
-                lu = sante.read_screenshots([str(img)])
-                print(f"[ocr] lecture Sante : {lu.get('values')} date={lu.get('date')!r} "
-                      f"doutes={lu.get('doutes')} manquent={len(lu.get('missing') or [])}", flush=True)
-            except Exception as e:
-                print(f"[ocr] KO : {e}", flush=True)
+            else:
+                try:
+                    from PIL import Image, ImageDraw, ImageFont
+                    img = Path(tempfile.gettempdir()) / "pilote_essai_ocr.png"
+                    # Ecran Details de FitDays construit comme une vraie capture du 14/10/2026 :
+                    # bloc « Contraste » EN HAUT (ecarts, libelle sous le chiffre,
+                    # date d'une autre pesee), libelles sur deux lignes, valeurs
+                    # colorees. Attendu (valeurs inventees) : poids 72.6, imc 23.1, graisse
+                    # 17.6, graisse_viscerale 6.0, age_corporel 27, pas de date.
+                    im = Image.new("RGB", (1170, 1500), "white")
+                    d = ImageDraw.Draw(im)
+                    police = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 46)
+                    turq, gris, vert, pale, orange = (102, 204, 204), (120, 120, 120), (55, 142, 40), (80, 212, 58), (255, 144, 0)
+                    for xy, t, c in (((98, 40), "Contraste 08:48 13/09/2026", turq),
+                                     ((150, 150), "2.1 kg", turq), ((470, 150), "0.8%", turq), ((900, 150), "0.6", turq),
+                                     ((180, 250), "Poids", gris), ((480, 230), "Graisse", gris),
+                                     ((480, 280), "corporelle", gris), ((900, 250), "IMC", gris),
+                                     ((225, 420), "Détails", turq),
+                                     ((242, 560), "Poids", gris), ((780, 560), "72.6 kg", vert),
+                                     ((242, 740), "IMC", gris), ((850, 740), "23.1", vert),
+                                     ((242, 895), "Graisse", gris), ((800, 925), "17.6 %", vert),
+                                     ((242, 955), "corporelle", gris),
+                                     ((242, 1075), "Graisse", gris), ((880, 1105), "6.0", pale),
+                                     ((242, 1135), "Viscérale", gris),
+                                     ((242, 1290), "Âge corporel", gris), ((900, 1290), "27", orange)):
+                        d.text(xy, t, fill=c, font=police)
+                    im.save(img)
+                    print(f"[ocr] disponible : {sante.ocr_available()}", flush=True)
+                    r = plateforme.ocr_mac(str(img))
+                    mots = " ".join(w["t"] for w in r.get("words", []))
+                    # Boites resserrees (x y w h) et brutes de Vision, a comparer a
+                    # celles de Windows sur la meme image (docs/mac.md, etape 5)
+                    boites = [f"{w['t']} {w['x']} {w['y']} {w['w']} {w['h']} (brut {w.get('brut')})"
+                              for w in r.get("words", [])]
+                    print(f"[ocr] ok={r.get('ok')} {r.get('error', '')} mots : {mots}", flush=True)
+                    print(f"[ocr] boites : {' | '.join(boites)}", flush=True)
+                    lu = sante.read_screenshots([str(img)])
+                    print(f"[ocr] lecture Sante : {lu.get('values')} date={lu.get('date')!r} "
+                          f"doutes={lu.get('doutes')} manquent={len(lu.get('missing') or [])}", flush=True)
+                except Exception as e:
+                    print(f"[ocr] KO : {e}", flush=True)
             try:
                 s = actus._chiffrer("abcd efgh ijkl mnop")
                 relu = actus._dechiffrer(s)
@@ -2051,6 +2068,14 @@ def main() -> int:
                     from PyObjCTools import AppHelper
                     AppHelper.callAfter(AppKit.NSApplication.sharedApplication().terminate_, None)
                     print("[fenetre] Quitter demande (comme Cmd+Q)", flush=True)
+                elif sys.platform.startswith("linux"):
+                    # La croix du systeme : GTK emet delete-event, comme un clic
+                    lire("S.uiPrefs = S.uiPrefs || {}; S.uiPrefs.essaiMac = 'ecrit avant de quitter';"
+                         " persist(); 1")
+                    from gi.repository import GLib
+                    from webview.platforms import gtk as _gtk
+                    GLib.idle_add(_gtk.BrowserView.instances[window.uid].window.close)
+                    print("[fenetre] Quitter demande (comme la croix)", flush=True)
             except Exception as e:
                 print(f"[fenetre] KO : {e}", flush=True)
         threading.Thread(target=_diag_fenetre, daemon=True).start()
@@ -2138,6 +2163,16 @@ def main() -> int:
             print("[ecran] fin", flush=True)
         threading.Thread(target=_diag_ecrans, daemon=True).start()
 
+    # Linux : ni ctypes ni AppKit pour savoir si la fenetre couvre l'ecran ;
+    # GTK previent quand elle est agrandie ou rendue a sa taille
+    etat_linux = {"agrandie": bool(saved_maximized)}
+    if sys.platform.startswith("linux"):
+        try:
+            window.events.maximized += lambda *a: etat_linux.update(agrandie=True)
+            window.events.restored += lambda *a: etat_linux.update(agrandie=False)
+        except Exception as e:
+            print(f"[app] evenements de la fenetre KO : {e}", flush=True)
+
     # Sauvegarde de la taille/position avant fermeture
     def _sauver_fenetre():
         try:
@@ -2193,6 +2228,9 @@ def main() -> int:
             # Mac : pas de ctypes, la zone utile vient de plateforme.zone_ecran_mac
             if zone_mac and actual_w and actual_h:
                 maximized = (actual_w >= zone_mac[2] * 0.95 and actual_h >= zone_mac[3] * 0.95)
+            # Linux : ce que le gestionnaire de fenetres a dit (evenements GTK)
+            if sys.platform.startswith("linux"):
+                maximized = etat_linux["agrandie"]
 
             d["ui"]["windowMaximized"] = maximized
             if maximized:
@@ -2217,6 +2255,7 @@ def main() -> int:
     # premiere fois, la fermeture est donc annulee : la page ecrit, rappelle
     # Api.fermeture_prete(), et _fermer_mac() ferme pour de bon. Filet de 5 s.
     # NSWindow.close (destroy) ne repasse pas par cet evenement.
+    # Linux : meme chemin, la croix est celle du systeme (docs/linux.md).
     fermeture_mac = {"demandee": False, "faite": False}
 
     def _fermer_mac(origine: str = "page"):
@@ -2241,7 +2280,7 @@ def main() -> int:
         filet.start()
 
     def _on_closing():
-        if sys.platform == "darwin" and not fermeture_mac["faite"]:
+        if sys.platform != "win32" and not fermeture_mac["faite"]:
             if not fermeture_mac["demandee"]:
                 fermeture_mac["demandee"] = True
                 threading.Thread(target=_vider_puis_fermer_mac, daemon=True).start()
@@ -2262,7 +2301,19 @@ def main() -> int:
 
     try:
         # debug=False pour la prod ; True pour ouvrir les devtools
-        if sys.platform == "darwin":
+        if sys.platform.startswith("linux"):
+            # Nom de la fenetre pour le bureau (WM_CLASS « pilote ») : il la
+            # rattache au lanceur pilote.desktop du paquet, avec son icone
+            try:
+                from gi.repository import GLib
+                GLib.set_prgname("pilote")
+                GLib.set_application_name(APP_NAME)
+            except Exception as e:
+                print(f"[app] nom de la fenetre KO : {e}", flush=True)
+            icone = "/usr/share/icons/hicolor/256x256/apps/pilote.png"
+            webview.start(debug=False, localization=plateforme.LOCALISATION_MAC,
+                          icon=icone if os.path.isfile(icone) else None)
+        elif sys.platform != "win32":
             # Menus et boites de dialogue de pywebview en francais
             webview.start(debug=False, localization=plateforme.LOCALISATION_MAC)
         else:
@@ -2287,7 +2338,7 @@ def main() -> int:
                 _sauvegarde_auto_une()
         except Exception as e:
             print(f"[app] sauvegarde a la fermeture KO : {e}", flush=True)
-        if sys.platform == "darwin":
+        if sys.platform != "win32":
             # Filet : un fil de pywebview encore en attente d'une page fermee
             # garderait l'app ouverte (icone dans le Dock) ; 3 s apres, on sort
             fin = threading.Timer(3.0, lambda: os._exit(0))

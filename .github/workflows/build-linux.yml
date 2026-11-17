@@ -1,0 +1,246 @@
+name: Build Linux (test)
+
+# Fabrique Pilote_Linux.deb sur une machine Linux de GitHub, l'installe par apt
+# (comme un double-clic sur un Chromebook) sur plusieurs Linux, x64 et ARM, la
+# lance et verifie qu'elle demarre (docs/linux.md). Rien n'est publie : les
+# constats sortent en annotations, lisibles sans compte (tests/lire_tests.py).
+# Ne se declenche que sur la branche mac, comme les tests Mac et Windows.
+
+on:
+  push:
+    branches: [mac]
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paquet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Les memes tests que sous Windows, ici sous Linux (dont tests/test_linux.py)
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Build deb
+        run: |
+          set +e
+          python build/linux/construire_deb.py dist > construire.log 2>&1
+          CODE=$?
+          if [ $CODE -ne 0 ]; then
+            MSG=$(tail -n 30 construire.log | python -c "import sys; print(sys.stdin.read().replace('%', '%25').replace(chr(13), '%0D').replace(chr(10), '%0A'))")
+            echo "::error title=Paquet::$MSG"
+          fi
+          exit $CODE
+
+      - name: Check deb
+        run: |
+          dpkg-deb -I dist/Pilote_Linux.deb > infos.txt
+          dpkg-deb -c dist/Pilote_Linux.deb > contenu.txt
+          # Les pieges de CLAUDE.md, version Linux : sans eux, tout marche en dev
+          for f in ./opt/pilote/src/app.py ./opt/pilote/src/ui/index.html ./opt/pilote/src/ui/vendor/chart.umd.js \
+                   ./opt/pilote/src/nouveautes.json ./opt/pilote/lib/webview/__init__.py ./opt/pilote/lib/pypdf/__init__.py \
+                   ./usr/bin/pilote ./usr/share/applications/pilote.desktop ./usr/share/icons/hicolor/256x256/apps/pilote.png; do
+            grep -q " $f$" contenu.txt || { echo "::error title=Paquet::$f absent"; exit 1; }
+          done
+          echo "::notice title=Paquet::$(du -h dist/Pilote_Linux.deb | cut -f1) ; $(grep -E '^ (Version|Architecture|Installed-Size):' infos.txt | tr '\n' ' ')"
+          echo "::notice title=Dependances::$(grep -E '^ (Depends|Recommends):' infos.txt | tr '\n' ' ')"
+
+      - name: Upload deb
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: pilote-linux
+          path: dist/Pilote_Linux.deb
+
+  # Le meme paquet sur quatre Linux : Ubuntu 24.04 et 22.04 (PC), Ubuntu 24.04
+  # sur puce ARM (Chromebooks ARM), Debian 12, le Linux d'un Chromebook
+  essai:
+    needs: paquet
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: ubuntu24
+            os: ubuntu-24.04
+          - id: ubuntu24arm
+            os: ubuntu-24.04-arm
+          - id: ubuntu22
+            os: ubuntu-22.04
+          - id: debian12
+            os: ubuntu-24.04
+            image: debian:12
+    runs-on: ${{ matrix.os }}
+    # Debian : un conteneur ; --privileged laisse WebKitGTK isoler ses pages
+    # (bubblewrap), comme sur un vrai systeme
+    container: ${{ matrix.image && fromJSON(format('{{"image":"{0}","options":"--privileged"}}', matrix.image)) || null }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Paquet
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: pilote-linux
+          path: art
+
+      - name: Install and launch
+        run: bash build/linux/essai.sh art/Pilote_Linux.deb
+
+      - name: Capture (annotations)
+        # Une petite copie JPEG de la capture, en base64 decoupe : « Capture <id> i/N »
+        if: always()
+        run: |
+          test -f capture.png || exit 0
+          convert capture.png -resize 720x -quality 25 cap.jpg
+          { base64 -w0 cap.jpg | fold -w 3800; echo; } > cap.b64
+          N=$(grep -c . cap.b64)
+          i=0
+          while read -r ligne; do
+            [ -n "$ligne" ] || continue
+            i=$((i+1))
+            if [ $i -le 10 ]; then echo "::notice title=Capture ${{ matrix.id }} $i/$N::$ligne"; fi
+          done < cap.b64
+
+      - name: Capture (suite)
+        if: always()
+        run: |
+          test -f cap.b64 || exit 0
+          N=$(grep -c . cap.b64)
+          i=0
+          while read -r ligne; do
+            [ -n "$ligne" ] || continue
+            i=$((i+1))
+            if [ $i -gt 10 ] && [ $i -le 20 ]; then echo "::notice title=Capture ${{ matrix.id }} $i/$N::$ligne"; fi
+          done < cap.b64
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: essai-linux-${{ matrix.id }}
+          path: |
+            capture.png
+            pilote.log
+            apt.log
+          if-no-files-found: ignore
+
+  # Captures des ecrans de tests/ecrans.txt sur les donnees d'exemple FICTIVES
+  # (Brice), comme le job ecrans-mac : trois ecrans par job.
+  lots:
+    runs-on: ubuntu-latest
+    outputs:
+      lots: ${{ steps.n.outputs.lots }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Nombre de lots
+        id: n
+        run: |
+          N=$(grep -v '^[[:space:]]*#' tests/ecrans.txt | sed '/^[[:space:]]*$/d' | wc -l)
+          L=$(( (N + 2) / 3 )); [ "$L" -gt 15 ] && L=15; [ "$L" -lt 1 ] && L=1
+          echo "lots=[$(seq -s, 1 $L)]" >> "$GITHUB_OUTPUT"
+
+  ecrans-linux:
+    needs: [paquet, lots]
+    if: ${{ !cancelled() }}
+    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        lot: ${{ fromJSON(needs.lots.outputs.lots) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Paquet
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: pilote-linux
+          path: art
+
+      - name: Captures
+        run: |
+          export DEBUT=$(( (${{ matrix.lot }} - 1) * 3 ))
+          LIGNES=$(grep -v '^[[:space:]]*#' tests/ecrans.txt | sed '/^[[:space:]]*$/d' | sed -n "$((DEBUT+1)),$((DEBUT+3))p")
+          ECRANS=$(echo "$LIGNES" | sed 's/^plein //' | paste -sd ';' -)
+          if [ -z "$ECRANS" ]; then echo "lot ${{ matrix.lot }} : aucun ecran"; exit 0; fi
+          python3 tests/donnees_exemple.py "$HOME/.local/share/Pilote/Donnees"
+          bash build/linux/essai.sh art/Pilote_Linux.deb --ecrans "$ECRANS"
+          # Taille et qualite : les plus grandes qui tiennent en 45 morceaux
+          for REGLAGE in "1024 45" "1024 35" "900 27" "800 20" "600 12"; do
+            set -- $REGLAGE
+            TOTAL=0
+            for f in ecran-*.png; do
+              [ -f "$f" ] || continue
+              convert "$f" -resize "$1x" -quality $2 "${f%.png}.jpg"
+              T=$(base64 -w0 "${f%.png}.jpg" | wc -c)
+              TOTAL=$((TOTAL + (T + 3799) / 3800))
+            done
+            [ "$TOTAL" -le 45 ] && break
+          done
+          # Une ligne d'annotation par morceau : « Ecran n linux i/N »
+          : > ecrans.lignes
+          for f in ecran-*.jpg; do
+            [ -f "$f" ] || continue
+            K=$(echo "$f" | sed 's/[^0-9]//g' | sed 's/^0*//')
+            { base64 -w0 "$f" | fold -w 3800; echo; } > morceaux.txt
+            M=$(grep -c . morceaux.txt)
+            i=0
+            while read -r ligne; do
+              [ -n "$ligne" ] || continue
+              i=$((i+1))
+              echo "::notice title=Ecran $K linux $i/$M::$ligne" >> ecrans.lignes
+            done < morceaux.txt
+          done
+          echo "::notice title=Ecrans::$(cat ecrans.nombre 2>/dev/null || echo 0) captures ($1 px, qualite $2, $TOTAL morceaux) ; $(grep -E '\[ecran\]|Traceback|Error' ecrans.log | tr '\n' ' ' | head -c 1500)"
+
+      - name: Ecrans (1)
+        if: always()
+        run: sed -n '1,9p' ecrans.lignes 2>/dev/null || true
+      - name: Ecrans (2)
+        if: always()
+        run: sed -n '10,18p' ecrans.lignes 2>/dev/null || true
+      - name: Ecrans (3)
+        if: always()
+        run: sed -n '19,27p' ecrans.lignes 2>/dev/null || true
+      - name: Ecrans (4)
+        if: always()
+        run: sed -n '28,36p' ecrans.lignes 2>/dev/null || true
+      - name: Ecrans (5)
+        if: always()
+        run: sed -n '37,45p' ecrans.lignes 2>/dev/null || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ecrans-linux-${{ matrix.lot }}
+          path: |
+            ecran-*.png
+            ecrans.log
+          if-no-files-found: ignore

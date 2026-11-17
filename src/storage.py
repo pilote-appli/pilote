@@ -90,12 +90,19 @@ def get_app_dir() -> Path:
     dossier prive du paquet (AppData\\Local\\Packages) est efface a la
     desinstallation. Donc C:\\Users\\<nom>\\Pilote\\Donnees, hors de OneDrive
     (choix d'Arthur, 02/11/2026, docs/microsoft-store.md).
+
+    Paquet .deb Linux (/opt/pilote, lecture seule) : ~/.local/share/Pilote/Donnees
+    (docs/linux.md).
     """
     import plateforme
     if sys.platform == "darwin" and getattr(sys, "frozen", False):
         base = Path.home() / "Library" / "Application Support" / APP_NAME / "Donnees"
     elif plateforme.version_store():
         base = Path.home() / APP_NAME / "Donnees"
+    elif plateforme.paquet_linux():
+        # Paquet .deb : /opt/pilote est en lecture seule (docs/linux.md)
+        xdg = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        base = Path(xdg) / APP_NAME / "Donnees"
     else:
         base = _exe_dir() / "Donnees"
     try:
@@ -521,7 +528,9 @@ def scan_orphan_data() -> list:
     # Sur Mac, les donnees ne suivent jamais l'app (voir get_app_dir) : rien a
     # recuperer. Et lire Bureau, Documents ou Telechargements y declenche une
     # demande d'autorisation du systeme pour chacun, des le premier lancement.
-    if sys.platform == "darwin":
+    # Paquet Linux : les donnees ne suivent pas l'app non plus.
+    import plateforme
+    if sys.platform == "darwin" or plateforme.paquet_linux():
         return []
     home = Path.home()
     candidates = []

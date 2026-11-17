@@ -153,3 +153,45 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: Pilote_Mac.zip
+
+  # Paquet Linux (docs/linux.md), joint lui aussi APRES le Setup : s'il
+  # echoue, Windows et Mac sont deja publies. Un seul .deb pour toutes les
+  # puces (Architecture: all : le Python du systeme fait tourner Pilote).
+  linux:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build deb
+        run: python build/linux/construire_deb.py dist
+
+      - name: Check deb
+        run: |
+          dpkg-deb -c dist/Pilote_Linux.deb > contenu.txt
+          for f in ./opt/pilote/src/app.py ./opt/pilote/src/ui/vendor/chart.umd.js ./opt/pilote/src/nouveautes.json \
+                   ./opt/pilote/lib/webview/__init__.py ./usr/bin/pilote; do
+            grep -q " $f$" contenu.txt || { echo "::error title=Paquet::$f absent"; exit 1; }
+          done
+          dpkg-deb -f dist/Pilote_Linux.deb Version | grep -qx "${GITHUB_REF_NAME#v}"
+
+      - name: Attach to the release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: dist/Pilote_Linux.deb

@@ -84,7 +84,7 @@ def default_config() -> dict:
         # Chiffrement par mot de passe (chiffrement.py). La cle derivee, jamais
         # le mot de passe, gardee par Windows (DPAPI) ou le Trousseau du Mac
         "chiffrer":       False,
-        "cleChiffree":    "",       # « dpapi:… » / « trousseau:… »
+        "cleChiffree":    "",       # « dpapi:… » / « trousseau:… » / « secret:… » (Linux)
         "sel":            "",       # hex, sel du mot de passe actuel
         "iterations":     chiffrement.ITERATIONS,
         "empreinte":      "",       # reconnait les archives du mot de passe actuel
@@ -213,11 +213,90 @@ def _mac_cles() -> list:
     return cles
 
 
+# Chromebook : ChromeOS partage une cle avec Linux sous ce dossier, une fois
+# la cle cochee dans « Gerer le partage avec Linux » ; aucun bloc visible
+_CHROMEOS_AMOVIBLES = "/mnt/chromeos/removable"
+
+
+def _oui(v) -> bool:
+    """lsblk rend RM et HOTPLUG en booleen ou en "0"/"1" selon sa version."""
+    return v is True or str(v).strip().lower() in ("1", "true")
+
+
+def _lsblk() -> list:
+    """Linux : les volumes montes que lsblk connait, chacun avec `amovible`
+    (lui ou son disque : RM, HOTPLUG ou branche en USB). [] si illisible."""
+    import json
+    import subprocess
+    try:
+        r = subprocess.run(["lsblk", "-J", "-o", "NAME,MOUNTPOINT,LABEL,UUID,FSTYPE,RM,HOTPLUG,TRAN"],
+                           capture_output=True, text=True, timeout=10)
+        arbre = (json.loads(r.stdout).get("blockdevices") or []) if r.returncode == 0 else []
+    except Exception:
+        return []
+    vus = []
+
+    def parcourir(noeuds, amovible, tran):
+        for n in noeuds:
+            amov = amovible or _oui(n.get("rm")) or _oui(n.get("hotplug"))
+            t = n.get("tran") or tran
+            if n.get("mountpoint"):
+                vus.append(dict(n, amovible=amov or t == "usb"))
+            parcourir(n.get("children") or [], amov, t)
+    parcourir(arbre, False, None)
+    return vus
+
+
+def _linux_cles() -> list:
+    """Linux : cles USB et disques externes montes (/media/<compte>/CLE en
+    general), retrouves par l'UUID de leur volume comme sur Mac. Le disque du
+    PC, ses partitions de demarrage et les snaps sont ecartes ; sur un
+    Chromebook, les cles partagees avec Linux s'y ajoutent (sans UUID : on les
+    suit par leur nom, resolve_destination)."""
+    cles = []
+    for v in _lsblk():
+        point = v.get("mountpoint") or ""
+        if (not v.get("amovible") or not point.startswith("/") or point == "/"
+                or point.startswith(("/boot", "/snap/"))):
+            continue
+        free, total = _disk_space(point)
+        if not total:
+            continue
+        cles.append({
+            "root":   point,
+            "letter": "",
+            "label":  v.get("label") or os.path.basename(point) or "Volume amovible",
+            "serial": v.get("uuid") or "",
+            "fs":     v.get("fstype") or "",
+            "free":   free,
+            "total":  total,
+            "device": "/dev/" + (v.get("name") or ""),
+        })
+    try:
+        partages = sorted(Path(_CHROMEOS_AMOVIBLES).iterdir())
+    except Exception:
+        partages = []
+    for p in partages:
+        try:
+            if not p.is_dir() or any(c["root"] == str(p) for c in cles):
+                continue
+        except Exception:
+            continue
+        free, total = _disk_space(str(p))
+        if not total:
+            continue
+        cles.append({"root": str(p), "letter": "", "label": p.name, "serial": "",
+                     "fs": "", "free": free, "total": total, "device": ""})
+    return cles
+
+
 def list_removable_drives() -> list:
     """Cles USB et disques externes actuellement branches."""
     drives = []
     if sys.platform == "darwin":
         return _mac_cles()
+    if sys.platform.startswith("linux"):
+        return _linux_cles()
     if sys.platform != "win32":
         return drives
     try:
@@ -442,6 +521,15 @@ def set_destination(path: str) -> dict:
                 cfg["volumeSerial"] = cle["serial"]
                 cfg["volumeLabel"]  = cle["label"]
                 cfg["relativePath"] = "/".join(parts[3:])
+    elif sys.platform.startswith("linux"):
+        # /media/<compte>/CLE/... : la cle la plus longue qui contient le chemin
+        chemin = str(p.resolve())
+        for cle in sorted(_linux_cles(), key=lambda d: -len(d["root"])):
+            if chemin == cle["root"] or chemin.startswith(cle["root"].rstrip("/") + "/"):
+                cfg["volumeSerial"] = cle["serial"]
+                cfg["volumeLabel"]  = cle["label"]
+                cfg["relativePath"] = chemin[len(cle["root"]):].strip("/")
+                break
 
     save_config(cfg)
     return {"ok": True, "config": cfg, "destination": resolve_destination(cfg)}
@@ -672,9 +760,27 @@ def _cle_de(chemin: str) -> Optional[dict]:
 
 def ejecter(root: str) -> dict:
     """Ejecte une cle detectee (reglage « Ejecter apres copie »).
-    Windows : verbe Ejecter de l'Explorateur ; Mac : diskutil eject."""
+    Windows : verbe Ejecter de l'Explorateur ; Mac : diskutil eject ;
+    Linux : udisksctl (sans mot de passe pour une cle montee par le bureau)."""
     import subprocess
     try:
+        if sys.platform.startswith("linux"):
+            if root.startswith(_CHROMEOS_AMOVIBLES + "/"):
+                return {"ok": False, "error": "Éjecte la clé depuis l'application Fichiers de ChromeOS."}
+            cle = next((d for d in _linux_cles() if d["root"] == root), None)
+            if not cle or not cle.get("device"):
+                return {"ok": False, "error": "Lecteur inconnu"}
+            r = subprocess.run(["udisksctl", "unmount", "-b", cle["device"]],
+                               capture_output=True, text=True, timeout=30)
+            if r.returncode != 0:
+                return {"ok": False, "error": (r.stderr or r.stdout or "").strip()[:200]
+                                              or "Éjection impossible"}
+            # Le disque entier hors tension, comme « Ejecter » du bureau ; sans
+            # effet sur un disque qui n'en est pas capable
+            disque = re.sub(r"p?\d+$", "", cle["device"]) if re.search(r"(sd[a-z]+|mmcblk\d+p)\d+$", cle["device"]) else cle["device"]
+            subprocess.run(["udisksctl", "power-off", "-b", disque],
+                           capture_output=True, text=True, timeout=30)
+            return {"ok": True}
         if sys.platform == "darwin":
             r = subprocess.run(["diskutil", "eject", root],
                                capture_output=True, text=True, timeout=30)

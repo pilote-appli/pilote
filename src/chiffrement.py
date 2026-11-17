@@ -24,7 +24,6 @@ archive est perdue : il n'existe aucune porte derobee.
 """
 from __future__ import annotations
 
-import base64
 import hashlib
 import hmac
 import json
@@ -137,7 +136,8 @@ def dechiffrer_flux(chemin, dst, cle: bytes) -> None:
 # ─── La cle gardee sur le PC ─────────────────────────────────────────────────
 # Windows : DPAPI (celle d'Actus), liee a la session Windows. Mac : Trousseau,
 # sous un compte fixe (la sauvegarde est au niveau de l'installation, pas d'un
-# utilisateur de Pilote ; actus._chiffrer range par utilisateur).
+# utilisateur de Pilote ; actus._chiffrer range par utilisateur). Linux : le
+# trousseau du bureau, sous le meme compte fixe (docs/linux.md).
 
 _SERVICE_MAC = "Pilote Sauvegarde"
 
@@ -160,17 +160,23 @@ def garder_cle(cle: bytes) -> str:
         if r.returncode != 0:
             raise OSError((r.stderr or "").strip() or "le Trousseau a refusé la clé")
         return "trousseau:" + compte
-    return "b64:" + base64.b64encode(texte.encode("ascii")).decode("ascii")
+    import actus
+    compte = _compte_mac()
+    r = actus._secret_tool("store", "--label=Pilote : cle des sauvegardes chiffrees",
+                           "service", _SERVICE_MAC, "account", compte, entree=texte)
+    if r.returncode != 0:
+        raise OSError(actus._SANS_TROUSSEAU + " (" + (r.stderr or "").strip()[:150] + ")")
+    return "secret:" + compte
 
 
 def relire_cle(secret: str) -> bytes:
     import actus
-    if secret.startswith("trousseau:"):
+    if secret.startswith(("trousseau:", "secret:")):
         return bytes.fromhex(actus._dechiffrer(secret, _SERVICE_MAC))
     return bytes.fromhex(actus._dechiffrer(secret))
 
 
 def oublier_cle(secret: str) -> None:
-    if secret.startswith("trousseau:"):
+    if secret.startswith(("trousseau:", "secret:")):
         import actus
         actus._oublier(secret, _SERVICE_MAC)
