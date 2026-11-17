@@ -49,9 +49,12 @@ if [ "${1:-}" = "--session" ]; then
       if ! kill -0 $PID 2>/dev/null; then FIN="ferme apres $i s"; break; fi
       sleep 1
     done
+    # Relancee par le script de l'updater (journal update_sh.log), pas
+    # l'ancien processus encore la
+    JOURNAL="${XDG_STATE_HOME:-$HOME/.local/state}/Pilote"
     RELANCE="pas relance"
     for i in $(seq 1 40); do
-      if pgrep -f "/opt/pilote/src/app.py" > /dev/null; then RELANCE="relance"; break; fi
+      if grep -q relancee "$JOURNAL/update_sh.log" 2>/dev/null && pgrep -f "/opt/pilote/src/app.py" > /dev/null; then RELANCE="relance"; break; fi
       sleep 1
     done
     PING="aucun port de 7438 a 7445 apres 60 s"
@@ -63,11 +66,12 @@ if [ "${1:-}" = "--session" ]; then
     done
     VERSION=$(dpkg-query -W -f '${Version}' pilote)
     TEMOIN=$(test -f /opt/pilote/temoin-maj.txt && echo "nouvelle version en place" || echo "ancienne version")
-    JOURNAL="${XDG_STATE_HOME:-$HOME/.local/state}/Pilote"
     annot notice "Mise a jour" "$FIN ; $RELANCE (ping $PING) ; paquet $VERSION ; $TEMOIN ; $(grep "\[maj\]" maj.log)"
     annot notice "Mise a jour (journaux)" "$(grep "INSTALL" "$JOURNAL/update.log" 2>/dev/null | tail -n 6) | $(tail -c 400 "$JOURNAL/update_sh.log" 2>/dev/null)"
     pkill -f "/opt/pilote/src/app.py" 2>/dev/null || true
     [ "$VERSION" = "99.0.0" ] || { annot error "Mise a jour" "le paquet n'a pas ete installe : $(tail -n 20 maj.log)"; exit 1; }
+    case "$FIN" in toujours*) annot error "Mise a jour" "l'ancien Pilote ne s'est pas ferme"; exit 1;; esac
+    [ "$RELANCE" = "relance" ] || { annot error "Mise a jour" "Pilote n'a pas ete relance"; exit 1; }
     exit 0
   fi
 
@@ -118,6 +122,8 @@ if [ "${1:-}" = "--session" ]; then
   grep -q "fenetre ouverte (page)" pilote.log || { annot error Interface "la page n'a pas fini de demarrer : $(grep -iE "error|erreur|traceback" pilote.log | head -c 2500)"; exit 1; }
   if grep "\[diag\]" pilote.log | grep -q "ERREUR "; then annot error Diag "erreur JavaScript au demarrage"; exit 1; fi
   test -d "$DONNEES" || { annot error Donnees "dossier absent"; exit 1; }
+  case "$FIN" in ferme*) ;; *) annot error Fermeture "Pilote ne s'est pas ferme apres la croix"; exit 1;; esac
+  [ "$ECRIT" -ge 1 ] || { annot error Fermeture "l'ecriture en attente a ete perdue"; exit 1; }
   test ! -e /opt/pilote/Donnees || { annot error Donnees "ecrit dans /opt/pilote"; exit 1; }
   exit 0
 fi
