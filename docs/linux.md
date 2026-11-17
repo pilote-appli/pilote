@@ -61,6 +61,15 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
 * **Fermeture** : le chemin du Mac (`_on_closing`) : la croix du système est
   annulée une première fois, la page écrit ce qui attend, puis Pilote se
   ferme. Filet de 5 s, puis `os._exit` 3 s après la fin de `webview.start()`.
+  **Piège (vu sur le test du 17/11/2026)** : sous GTK, `destroy()` repasse
+  par l'évènement `closing`, dans le fil principal de GTK (pas sur Mac). Y
+  relire la taille de la fenêtre (`_sauver_fenetre`) attend ce même fil :
+  Pilote ne quittait plus, et la relance après une mise à jour attendait pour
+  toujours. `_on_closing` ne la relit donc pas une seconde fois hors Windows.
+* **Rendu** : `WEBKIT_DISABLE_DMABUF_RENDERER=1` (posé par `main()`, sauf si
+  déjà réglé). Avec le rendu DMA-BUF de WebKitGTK, la fenêtre restait noire
+  sur les captures du test (écran virtuel) ; le même défaut est connu sur des
+  cartes NVIDIA et des machines virtuelles.
 * **Codes chiffrés** (Actus, Agenda, Garmin, Coros, clé des sauvegardes) :
   trousseau de la session (Secret Service : GNOME Keyring, KWallet), par
   `secret-tool` (`actus._secret_tool`). Le fichier garde `secret:<compte>`. Le
