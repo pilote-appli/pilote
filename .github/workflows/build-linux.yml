@@ -41,7 +41,10 @@ jobs:
       - name: Unit tests
         run: |
           set +e
-          python -m unittest discover -s tests > tests.log 2>&1
+          # Un vrai trousseau (GNOME Keyring, deverrouille) : la sauvegarde
+          # chiffree y range sa cle par secret-tool, comme chez un utilisateur
+          sudo apt-get install -y -qq libsecret-tools gnome-keyring dbus-x11 > /dev/null 2>&1
+          dbus-run-session -- bash -c 'echo -n essai | gnome-keyring-daemon --unlock --components=secrets > /dev/null 2>&1; python -m unittest discover -s tests' > tests.log 2>&1
           CODE=$?
           tail -n 3 tests.log
           if [ $CODE -ne 0 ]; then
