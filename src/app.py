@@ -1508,6 +1508,12 @@ def reveal_main_window(origine: str = "delai") -> None:
     print(f"[app] fenetre ouverte ({origine})", flush=True)
     _repere("fenetre ouverte")
     try:
+        # Linux (pywebview 6.2.1, GTK) : show() recache aussitot une fenetre
+        # creee cachee tant que son drapeau hidden reste vrai, et rien ne le
+        # remet a faux : la fenetre ne s'ouvrait jamais (test du 17/11/2026,
+        # docs/linux.md)
+        if sys.platform.startswith("linux"):
+            _main_window.hidden = False
         _main_window.show()
     except Exception as e:
         print(f"[app] ouverture fenetre KO : {e}", flush=True)
@@ -1724,8 +1730,8 @@ def main() -> int:
         "--disable-features=ElasticOverscroll --disable-background-timer-throttling"
         " --disable-renderer-backgrounding --disable-backgrounding-occluded-windows")
     # Linux : le rendu DMA-BUF de WebKitGTK laisse la fenetre noire sur
-    # certaines machines (ecran virtuel du test, cartes NVIDIA, machines
-    # virtuelles) : rendu classique, comme beaucoup d'applis WebKitGTK
+    # certaines machines (cartes NVIDIA, machines virtuelles) : rendu
+    # classique par precaution, comme beaucoup d'applis WebKitGTK
     # (docs/linux.md)
     if sys.platform.startswith("linux"):
         os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")

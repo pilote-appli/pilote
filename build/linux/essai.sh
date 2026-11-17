@@ -93,7 +93,10 @@ if [ "${1:-}" = "--session" ]; then
   # Capture noire au 17/11/2026 : la fenetre est-elle affichee, ou la capture
   # rate-t-elle ? Les fenetres X, la luminosite, et une seconde methode (xwd)
   xwd -root -silent > capture.xwd 2>/dev/null && convert xwd:capture.xwd capture-xwd.png 2>/dev/null
-  annot notice "Ecran X" "$(xwininfo -root -tree 2>/dev/null | grep -iE 'pilote|[0-9]+x[0-9]+\+' | head -8) | import : $(convert capture.png -format '%[fx:mean] %[channels] %wx%h' info: 2>&1) | xwd : $(convert capture-xwd.png -format '%[fx:mean] %[channels]' info: 2>&1) | $(xwininfo -name Pilote 2>&1 | grep -E 'Map State|Depth|Visual Class|Width|Height' | tr -s ' ')"
+  # Luminosite moyenne de l'ecran : 0 = tout noir, la fenetre n'est pas affichee
+  MOY=$(convert capture.png -format '%[fx:mean]' info: 2>/dev/null || echo 0)
+  ID=$(xwininfo -root -tree 2>/dev/null | grep -E '"Pilote".*[0-9]{3,}x[0-9]{3,}' | head -1 | awk '{print $1}')
+  annot notice "Ecran X" "luminosite moyenne $MOY ; fenetre $ID : $(xwininfo -id "$ID" 2>&1 | grep -E 'Map State|Width|Height' | tr -s ' ')"
   VENDOR=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:7438/vendor/chart.umd.js || true)
   OUVERTE=$(grep -o "fenetre ouverte ([a-z]*)" pilote.log || echo "pas de ligne")
   annot notice Serveur "ping ${UP:-KO} s - /vendor/chart.umd.js HTTP $VENDOR - $OUVERTE"
@@ -126,6 +129,7 @@ if [ "${1:-}" = "--session" ]; then
   grep -q "fenetre ouverte (page)" pilote.log || { annot error Interface "la page n'a pas fini de demarrer : $(grep -iE "error|erreur|traceback" pilote.log | head -c 2500)"; exit 1; }
   if grep "\[diag\]" pilote.log | grep -q "ERREUR "; then annot error Diag "erreur JavaScript au demarrage"; exit 1; fi
   test -d "$DONNEES" || { annot error Donnees "dossier absent"; exit 1; }
+  awk "BEGIN{exit !($MOY > 0.02)}" || { annot error Interface "ecran noir : la fenetre de Pilote n'est pas affichee"; exit 1; }
   case "$FIN" in ferme*) ;; *) annot error Fermeture "Pilote ne s'est pas ferme apres la croix"; exit 1;; esac
   [ "$ECRIT" -ge 1 ] || { annot error Fermeture "l'ecriture en attente a ete perdue"; exit 1; }
   test ! -e /opt/pilote/Donnees || { annot error Donnees "ecrit dans /opt/pilote"; exit 1; }
