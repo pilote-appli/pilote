@@ -66,10 +66,16 @@ couvrir aussi les Chromebooks, qui font tourner Linux.
   relire la taille de la fenêtre (`_sauver_fenetre`) attend ce même fil :
   Pilote ne quittait plus, et la relance après une mise à jour attendait pour
   toujours. `_on_closing` ne la relit donc pas une seconde fois hors Windows.
+* **Fenêtre qui ne s'ouvrait pas (vu le 17/11/2026)** : Pilote crée sa fenêtre
+  cachée (`hidden=True`) et l'affiche quand la page est prête. Sous GTK,
+  pywebview 6.2.1 la recache aussitôt dans `show()` tant que
+  `Window.hidden` reste vrai, et rien ne le remet à faux : la fenêtre ne
+  s'ouvrait jamais. `reveal_main_window` le remet à faux avant `show()`. Le
+  test échoue désormais si l'écran reste noir.
 * **Rendu** : `WEBKIT_DISABLE_DMABUF_RENDERER=1` (posé par `main()`, sauf si
-  déjà réglé). Avec le rendu DMA-BUF de WebKitGTK, la fenêtre restait noire
-  sur les captures du test (écran virtuel) ; le même défaut est connu sur des
-  cartes NVIDIA et des machines virtuelles.
+  déjà réglé), par précaution : le rendu DMA-BUF de WebKitGTK laisse la
+  fenêtre noire ou blanche sur certaines cartes NVIDIA et machines virtuelles.
+  Ce n'était pas la cause de l'écran noir du test (c'était `hidden`, plus haut).
 * **Codes chiffrés** (Actus, Agenda, Garmin, Coros, clé des sauvegardes) :
   trousseau de la session (Secret Service : GNOME Keyring, KWallet), par
   `secret-tool` (`actus._secret_tool`). Le fichier garde `secret:<compte>`. Le
