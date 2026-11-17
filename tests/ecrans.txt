@@ -13,7 +13,8 @@
 #
 # 4.4.80 (17/11/2026) : Pilou dans la barre du haut de chaque page, dans la
 # tenue de sa section (docs/design-carnet.md, « Tenues »). Une page par
-# tenue, l'accueil (costard), une section sans tenue, puis le theme sombre.
+# tenue, l'accueil (costard), une section sans tenue, puis le theme sombre
+# (accueil et PEA : le costard ressort le moins sur le fond fonce).
 home
 dash
 fin-month
@@ -23,3 +24,4 @@ pa-vue
 ac-boite
 ag-cal
 js:applyTheme('dark')
+dash
