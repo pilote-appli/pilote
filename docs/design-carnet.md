@@ -10,7 +10,7 @@ voit au travers). Essayés puis écartés par Arthur : l'écharpe d'aviateur, le
 lunettes relevées sur le front, « Pilou » écrit sur le ventre. Planche des
 essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
 
-* **Dessin** : `pilouSvg(humeur)` dans index.html (à côté d'`applyDesign`), SVG
+* **Dessin** : `pilouSvg(humeur, tenue)` dans index.html (à côté d'`applyDesign`), SVG
   fait main dont les couleurs sont des classes `pl-*` tirées de `--accent` par
   `color-mix()` : il suit l'accent et les deux thèmes sans être redessiné.
   Humeurs : `content`, `salut` (bras qui fait trois signes), `joyeux`, `pensif`,
@@ -25,6 +25,25 @@ essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
   usage (`pilouVide(humeur)`, 84 px) : Positions, Santé (suivi, objectifs),
   Patrimoine, Mes comptes (transactions), objectifs de Sports, achats
   programmés. Pas dans les petits vides (« — », lignes d'un tableau, jour sans séance).
+* **Dans la barre du haut** (17/11/2026, demande d'Arthur : « qu'on le voie »
+  dans chaque section, « grand ») : avant le fil d'Ariane, sur chaque page sauf
+  l'Accueil, qui l'a déjà (`pilouBarre`, appelée par le patch de `goTab` de
+  Pilou ; `.pilou-barre`, 62 px, marges négatives : la barre ne grandit pas).
+  Essayé puis remplacé le même jour : Pilou assis sur le haut de la première
+  carte (il tombait entre deux cartes, ou sur un bouton).
+* **Tenues** (17/11/2026, choisies par Arthur sur planches) : une par section,
+  `PILOU_TENUES` et `PILOU_TENUE_SECTION`, `pilouSvg(humeur, tenue)`. Costard
+  anthracite, cravate et pochette dorées comme la monture des lunettes : Accueil,
+  PEA, CTO, Crypto. Débardeur turquoise, bandeau et poignets éponge : Sports.
+  Blouse blanche et stéthoscope : Santé. Gilet marine sur chemise, crayon sur
+  l'oreille : Mes comptes. Peignoir bordeaux : Patrimoine. Reporter (trench
+  beige, chapeau feutre) : Actus. Sans tenue : Agenda, Montres, Pense-bête, Prêt,
+  Premiers pas, bilan de l'année. Les tissus sont des couleurs fixes, le pelage
+  suit l'accent. Écartés par Arthur : chemise à bretelles et visière de
+  comptable, salopette, casque de chantier et gilet orange, tweed et chapeau
+  melon, pilote de ligne, sweat à capuche et casque audio. En thème sombre, le
+  costard et le gilet ressortent peu sur le fond ; chemise, cravate et visage
+  restent lisibles.
 * **Réglage** : Paramètres → Général → « Pilou, la mascotte », Afficher /
   Masquer, par utilisateur (`S.uiPrefs.pilou`, absent = visible). Masquer pose
   `html.sans-pilou`, qui cache tout `.pilou` : rien n'est redessiné.
