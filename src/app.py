@@ -1723,6 +1723,12 @@ def main() -> int:
         "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
         "--disable-features=ElasticOverscroll --disable-background-timer-throttling"
         " --disable-renderer-backgrounding --disable-backgrounding-occluded-windows")
+    # Linux : le rendu DMA-BUF de WebKitGTK laisse la fenetre noire sur
+    # certaines machines (ecran virtuel du test, cartes NVIDIA, machines
+    # virtuelles) : rendu classique, comme beaucoup d'applis WebKitGTK
+    # (docs/linux.md)
+    if sys.platform.startswith("linux"):
+        os.environ.setdefault("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
 
     window_kwargs = dict(
         title=APP_NAME,
