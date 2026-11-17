@@ -51,6 +51,10 @@ Autres pistes :
   Les JSON sont en clair et le PIN ne chiffre rien ; exposer le serveur local, même
   derrière un VPN, sortait les données du PC. Si la question revient, le prérequis
   serait le chiffrement au repos, pas le réseau.
+- **Tutos vidéo d'installation Mac et Linux** : écartés par Arthur le 17/11/2026.
+  Étude faite ce jour-là : faisable pour Mac (Mac loué en ligne) et Ubuntu
+  (machine virtuelle), pas pour le Chromebook sans en emprunter un. Les tutos
+  écrits du site (`mac.html`, `linux.html`) suffisent.
 - **Agrégation bancaire automatique** : contrat pro + validation réglementaire,
   hors de portée d'une app locale. D'où la saisie mensuelle du patrimoine.
 - **Passer le dépôt en privé** : écarté par Arthur le 20/09/2026. `updater.py`

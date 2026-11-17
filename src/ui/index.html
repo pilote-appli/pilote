@@ -1083,6 +1083,9 @@ body.has-shell .wrap { margin-left: 220px; max-width: calc(1120px + 220px); }
    négatives pour ne pas grossir le bandeau (108 px mesuré à 1366 × 720) */
 .pilou-accueil { display: inline-block; width: 1.5em; vertical-align: -.28em; margin: -.32em 0 -.18em .2em; }
 html.sans-pilou .pilou { display: none; }
+/* Pilou dans la barre du haut, avant le fil d'Ariane (pilouBarre) : grand,
+   marges négatives pour ne pas grossir la barre */
+.pilou-barre { display: block; width: 62px; margin: -18px 2px -16px -4px; flex-shrink: 0; }
 .pl-b { fill: var(--accent); }
 .pl-d { fill: color-mix(in oklab, var(--accent) 70%, #1b0f18); }
 .pl-l { fill: color-mix(in oklab, var(--accent) 20%, #fff8f2); }
@@ -7173,7 +7176,7 @@ function renderPositions() {
   document.getElementById("pos-th-div").style.display = avecDiv ? "" : "none";
   // Aucune ligne : une phrase et les deux façons de commencer (UX-13)
   if (!eps.length) {
-    body.innerHTML = `<tr><td colspan="12"><div class="m-empty">${pilouVide("content")}Aucune ligne pour l'instant. Ajoute ton premier achat, ou importe un relevé de ta banque.
+    body.innerHTML = `<tr><td colspan="12"><div class="m-empty">${pilouVide("content", "costard")}Aucune ligne pour l'instant. Ajoute ton premier achat, ou importe un relevé de ta banque.
       <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
         <button type="button" class="btn btn-primary btn-sm" onclick="openAddPos()"><i class="ph ph-plus"></i> Premier achat</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="ctoOuvrirImport()"><i class="ph ph-file-arrow-down"></i> Importer un relevé</button>
@@ -12872,8 +12875,82 @@ function _wireThemeButtons() {
    ni nom écrit. Visible par défaut, propre à chaque utilisateur
    (S.uiPrefs.pilou === false le masque, classe « sans-pilou » sur <html>).
    Humeurs : content, salut, joyeux, pensif, endormi, inquiet (14/11/2026 : la
-   bourse du jour baisse, voir homePilouBourse). */
-function pilouSvg(humeur) {
+   bourse du jour baisse, voir homePilouBourse).
+   Tenues (17/11/2026, choisies par Arthur) : une par section, PILOU_TENUES.
+   Les tissus sont des couleurs fixes ; le pelage suit toujours l'accent. */
+const PL_OR = "#c79a55";   // la monture des lunettes : cravate, pochette, boutons
+const _plVeste = (tissu, revers, chemise) =>
+  '<rect x="40" y="130" width="120" height="90" fill="' + tissu + '"/>'
+  + '<path d="M78 140 L122 140 L100 192 Z" fill="' + (chemise || "#fff") + '"/>'
+  + '<path d="M70 140 L92 140 L100 192 L83 172 L90 165 Z M130 140 L108 140 L100 192 L117 172 L110 165 Z" fill="' + revers + '"/>'
+  + '<path d="M100 190 V212" stroke="' + revers + '" stroke-width="1.6"/>';
+const _plCravate = (c, d) => '<path d="M95 155 L105 155 L103 162 L97 162 Z" fill="' + d + '"/>'
+  + '<path d="M97 162 L103 162 L106.5 181 L100 188 L93.5 181 Z" fill="' + c + '"/>';
+/* corps : dans la silhouette du ventre ; dessus : par-dessus (cravate,
+   stéthoscope) ; tete : chapeau, bandeau, crayon ; manche + poignet : les bras
+   habillés, sinon bras nus (eponge : poignets éponge) */
+const PILOU_TENUES = {
+  costard: { manche: "#33363f",
+    corps: _plVeste("#33363f", "#24262d"),
+    dessus: _plCravate(PL_OR, "#a67c3c") + '<circle cx="100" cy="196" r="2.8" fill="#24262d"/>'
+      + '<path d="M120 170 L134 168" stroke="#24262d" stroke-width="2" stroke-linecap="round"/>'
+      + '<path d="M122 169 l3 -6 l3 5 l3 -5 l2 5" fill="' + PL_OR + '"/>' },
+  sport: { eponge: "#fff",
+    corps: '<rect x="40" y="130" width="120" height="90" fill="#0f9f9a"/><ellipse class="pl-b" cx="100" cy="146" rx="20" ry="14"/>'
+      + '<path d="M40 178 H160" stroke="#fff" stroke-width="6"/><path d="M40 186 H160" stroke="' + PL_OR + '" stroke-width="3"/>',
+    tete: '<path d="M50 62 Q100 48 150 62 L155 75 Q100 61 45 75 Z" fill="#fff"/><path d="M48 68.5 Q100 54.5 152 68.5" stroke="#0f9f9a" stroke-width="3" fill="none"/>' },
+  sante: { manche: "#f4f6f8", poignet: "#dfe4ea",
+    corps: '<rect x="40" y="130" width="120" height="90" fill="#f4f6f8"/><path d="M80 140 L120 140 L100 196 Z" fill="#7cc4d6"/>'
+      + '<path d="M72 140 L92 140 L100 196 L84 174 L90 166 Z M128 140 L108 140 L100 196 L116 174 L110 166 Z" fill="#dfe4ea"/>'
+      + '<path d="M100 194 V212" stroke="#c9d0d8" stroke-width="1.6"/>'
+      + '<rect x="118" y="176" width="16" height="12" rx="2" fill="none" stroke="#c9d0d8" stroke-width="1.6"/>'
+      + '<path d="M123 176 v-7" stroke="#3b6fd8" stroke-width="2.4" stroke-linecap="round"/>',
+    dessus: '<ellipse cx="100" cy="174" rx="51" ry="33" fill="none" stroke="#d3d9e1" stroke-width="2"/>'
+      + '<path d="M80 150 Q78 172 96 178 M120 150 Q122 172 104 178 M96 178 Q100 181 104 178 M100 180 V186" fill="none" stroke="#4a505c" stroke-width="3.2" stroke-linecap="round"/>'
+      + '<circle cx="100" cy="190" r="5.5" fill="#cfd5dd" stroke="#8a929e" stroke-width="1.6"/>' },
+  gilet: { manche: "#2c3e63", poignet: "#d6e6f7",
+    corps: '<rect x="40" y="130" width="120" height="90" fill="#2c3e63"/><path d="M80 140 L120 140 L100 192 Z" fill="#d6e6f7"/>'
+      + '<path d="M40 204 H160" stroke="#24344f" stroke-width="5"/>',
+    dessus: '<path d="M86 150 L100 160 L96 149 Z M114 150 L100 160 L104 149 Z" fill="#fff"/>'
+      + '<circle cx="100" cy="197" r="2.6" fill="' + PL_OR + '"/><circle cx="100" cy="206" r="2.6" fill="' + PL_OR + '"/>',
+    tete: '<g transform="rotate(-28 146 40)"><rect x="128" y="36" width="38" height="7" rx="1.5" fill="#f2c14e"/>'
+      + '<rect x="128" y="36" width="7" height="7" fill="#e88b9a"/><rect x="134" y="36" width="3" height="7" fill="#b9bec7"/>'
+      + '<path d="M166 36 L174 39.5 L166 43 Z" fill="#e8c9a0"/><path d="M171.5 38.3 L174 39.5 L171.5 40.7 Z" fill="#2a1822"/></g>' },
+  peignoir: { manche: "#8e2b45", poignet: "#b0506a",
+    corps: '<rect x="40" y="130" width="120" height="90" fill="#8e2b45"/><path class="pl-l" d="M84 140 L116 140 L100 182 Z"/>'
+      + '<path d="M72 138 L88 138 L104 186 L96 190 Z M128 138 L112 138 L100 182 L94 178 Z" fill="#b0506a"/>'
+      + '<path d="M40 186 H160" stroke="#6e1f34" stroke-width="7"/>',
+    dessus: '<path d="M112 186 l10 14 M114 186 l4 17" stroke="#6e1f34" stroke-width="5" stroke-linecap="round"/><circle cx="112" cy="186" r="5" fill="#6e1f34"/>' },
+  reporter: { manche: "#c8a979", poignet: "#b0915f",
+    corps: _plVeste("#c8a979", "#b0915f") + '<path d="M40 184 H160" stroke="#9c7d4b" stroke-width="6"/>',
+    dessus: _plCravate("#5a4632", "#45362a") + '<rect x="94" y="180" width="12" height="9" rx="2" fill="none" stroke="' + PL_OR + '" stroke-width="2"/>'
+      + '<circle cx="80" cy="172" r="2.4" fill="#8a6c3e"/><circle cx="120" cy="172" r="2.4" fill="#8a6c3e"/>',
+    tete: '<path d="M62 50 Q58 18 82 14 Q100 22 118 14 Q142 18 138 50 Z" fill="#8a7458"/>'
+      + '<path d="M62 40 Q100 36 138 40 L138 50 L62 50 Z" fill="#3e3226"/><ellipse cx="100" cy="51" rx="62" ry="9" fill="#7a6549"/>' },
+};
+/* Section -> tenue. Accueil en costard (choix d'Arthur) ; sections absentes :
+   Pilou sans tenue. */
+const PILOU_TENUE_SECTION = { "sec-pea": "costard", "sec-cto": "costard", "sec-crypto": "costard",
+  "sec-sport": "sport", "sec-sante": "sante", "sec-comptes": "gilet", "sec-patri": "peignoir", "sec-actus": "reporter" };
+function pilouTenueDe(tabId) {
+  if (String(tabId || "").split("@")[0] === "home") return "costard";
+  const sec = typeof _navSectionOf === "function" ? _navSectionOf(tabId) : null;
+  return (sec && PILOU_TENUE_SECTION[sec.id]) || "";
+}
+let _plNum = 0;   // identifiant propre à chaque dessin (clipPath du ventre)
+/** Un bras : nu (pelage), ou dans sa manche avec le poignet et la patte au bout */
+function _plBras(cx, cy, rot, ry, t, versHaut) {
+  const k = versHaut ? -1 : 1, tr = ' transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"';
+  if (!t || !t.manche) {
+    return '<ellipse class="pl-d" cx="' + cx + '" cy="' + cy + '" rx="13" ry="' + ry + '"' + tr + '/>'
+      + (t && t.eponge ? '<rect x="' + (cx - 13) + '" y="' + (cy + k * (ry - 10) - 4) + '" width="26" height="8" rx="3" fill="' + t.eponge + '"' + tr + '/>' : "");
+  }
+  return '<g' + tr + '><ellipse cx="' + cx + '" cy="' + cy + '" rx="13" ry="' + ry + '" fill="' + t.manche + '"/>'
+    + '<rect x="' + (cx - 11) + '" y="' + (cy + k * (ry - 9) - 2.5) + '" width="22" height="5" rx="2.5" fill="' + (t.poignet || "#fff") + '"/>'
+    + '<ellipse class="pl-d" cx="' + cx + '" cy="' + (cy + k * (ry - 2)) + '" rx="10" ry="8"/></g>';
+}
+function pilouSvg(humeur, tenue) {
+  const t = PILOU_TENUES[tenue] || null;
   const salut = humeur === "salut";
   const h = salut ? "content" : humeur;
   let yeux, bouche, extra = "";
@@ -12899,17 +12976,21 @@ function pilouSvg(humeur) {
          + '<circle cx="78.2" cy="91.8" r="2.2" fill="#fff"/><circle cx="126.2" cy="91.8" r="2.2" fill="#fff"/></g>';
     bouche = '<path class="pl-trait" d="M100 115 v4 M100 119 q-6 6 -11 1 M100 119 q6 6 11 1"/>';
   }
-  return '<svg viewBox="0 0 200 212" focusable="false">'
-    // oreilles, corps assis, pieds, bras
+  const clip = "pl-ventre-" + (++_plNum);
+  return '<svg viewBox="0 0 200 212" focusable="false" overflow="visible">'
+    // oreilles, corps assis (ou sa tenue), pieds, bras
     + '<circle class="pl-b" cx="56" cy="54" r="24"/><circle class="pl-l" cx="56" cy="56" r="12"/>'
     + '<circle class="pl-b" cx="144" cy="54" r="24"/><circle class="pl-l" cx="144" cy="56" r="12"/>'
-    + '<ellipse class="pl-b" cx="100" cy="174" rx="52" ry="34"/><ellipse class="pl-l" cx="100" cy="179" rx="30" ry="22"/>'
+    + (t
+      ? '<clipPath id="' + clip + '"><ellipse cx="100" cy="174" rx="52" ry="34"/></clipPath>'
+        + '<g clip-path="url(#' + clip + ')">' + t.corps + '</g>' + (t.dessus || "")
+      : '<ellipse class="pl-b" cx="100" cy="174" rx="52" ry="34"/><ellipse class="pl-l" cx="100" cy="179" rx="30" ry="22"/>')
     + '<ellipse class="pl-d" cx="70" cy="200" rx="19" ry="10"/><ellipse class="pl-d" cx="130" cy="200" rx="19" ry="10"/>'
     + '<ellipse class="pl-l" cx="70" cy="200" rx="8" ry="5"/><ellipse class="pl-l" cx="130" cy="200" rx="8" ry="5"/>'
-    + '<ellipse class="pl-d" cx="54" cy="172" rx="13" ry="21" transform="rotate(18 54 172)"/>'
+    + _plBras(54, 172, 18, 21, t)
     + (salut
-      ? '<g class="pl-salut"><ellipse class="pl-d" cx="160" cy="138" rx="13" ry="22" transform="rotate(38 160 138)"/></g>'
-      : '<ellipse class="pl-d" cx="146" cy="172" rx="13" ry="21" transform="rotate(-18 146 172)"/>')
+      ? '<g class="pl-salut">' + _plBras(160, 138, 38, 22, t, true) + '</g>'
+      : _plBras(146, 172, -18, 21, t))
     // tête et visage
     + '<ellipse class="pl-b" cx="100" cy="98" rx="64" ry="56"/>'
     + '<ellipse class="pl-l" cx="100" cy="116" rx="25" ry="19"/>'
@@ -12920,11 +13001,12 @@ function pilouSvg(humeur) {
     + '<path d="M93 92 q7 -5 14 0" fill="none" stroke="#c79a55" stroke-width="4.5" stroke-linecap="round"/>'
     + '<circle class="pl-verre" cx="76" cy="94" r="17"/><circle class="pl-verre" cx="124" cy="94" r="17"/>'
     + '<path d="M65 87 q4 -6 11 -6 M113 87 q4 -6 11 -6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/>'
+    + (t && t.tete ? t.tete : "")
     + '</svg>';
 }
-/** Pilou au-dessus du texte d'un écran vide (.m-empty) */
-function pilouVide(humeur) {
-  return '<span class="pilou pilou-vide" aria-hidden="true">' + pilouSvg(humeur || "endormi") + '</span>';
+/** Pilou au-dessus du texte d'un écran vide (.m-empty), dans la tenue de sa section */
+function pilouVide(humeur, tenue) {
+  return '<span class="pilou pilou-vide" aria-hidden="true">' + pilouSvg(humeur || "endormi", tenue) + '</span>';
 }
 function applyPilou(on) {
   const visible = on !== false;
@@ -18541,7 +18623,7 @@ function finRenderTxList() {
   finRenderSelBar();
 
   if (!txs.length) {
-    list.innerHTML = `<div class="fin-empty">${pilouVide("endormi")}Aucune transaction.</div>`;
+    list.innerHTML = `<div class="fin-empty">${pilouVide("endormi", "gilet")}Aucune transaction.</div>`;
     return;
   }
 
@@ -21039,7 +21121,7 @@ function spRenderGoals() {
 
   document.getElementById("sp-goals-list").innerHTML = active.length
     ? active.map(spGoalCard).join("")
-    : `<div class="m-empty">${pilouVide("pensif")}Aucun objectif en cours. Clique sur « + Objectif » pour t'en fixer un.</div>`;
+    : `<div class="m-empty">${pilouVide("pensif", "sport")}Aucun objectif en cours. Clique sur « + Objectif » pour t'en fixer un.</div>`;
 
   document.getElementById("sp-goals-done-list").innerHTML = rest.length
     ? rest.map(spGoalCard).join("")
@@ -21216,7 +21298,7 @@ function spRenderInjuries() {
       <span class="mkpi-sub">au total</span></div>`;
 
   document.getElementById("sp-inj-cur").innerHTML = cur.length ? cur.map(spInjuryRow).join("")
-    : `<div class="m-empty">${pilouVide("joyeux")}Aucune blessure en cours. Si tu te blesses, clique sur « + Blessure ».</div>`;
+    : `<div class="m-empty">${pilouVide("joyeux", "sport")}Aucune blessure en cours. Si tu te blesses, clique sur « + Blessure ».</div>`;
   document.getElementById("sp-inj-past").innerHTML = past.length ? past.map(spInjuryRow).join("")
     : `<div class="m-empty">Rien ici pour l'instant.</div>`;
 }
@@ -22916,7 +22998,7 @@ function homeRenderGreeting() {
   el.innerHTML = escHtml(homeGreeting()) + (nom ? " <em>" + escHtml(nom) + "</em>" : "");
   // Pilou salue à côté du prénom (dessiné une fois : le salut ne se rejoue pas)
   const pl = document.getElementById("home-pilou");
-  if (pl && !pl.firstChild) { pl.innerHTML = pilouSvg("salut"); pl.dataset.humeur = "salut"; }
+  if (pl && !pl.firstChild) { pl.innerHTML = pilouSvg("salut", "costard"); pl.dataset.humeur = "salut"; }
   homePilouBourse();
 }
 
@@ -22943,7 +23025,7 @@ function homePilouBourse() {
            : humeur === "inquiet" ? "La bourse baisse aujourd'hui : " + pct(p) + "\n" + titre : titre;
   if (pl.dataset.humeur === humeur) return;
   pl.dataset.humeur = humeur;
-  pl.innerHTML = pilouSvg(humeur);
+  pl.innerHTML = pilouSvg(humeur, "costard");
 }
 
 /** Nom affiche : celui de l'utilisateur actif, sinon le prenom saisi dans le PEA.
@@ -23296,7 +23378,7 @@ function saRenderKpis() {
   const last = saLast(), prev = saRef();
   saRenderCompare();
   if (!last) {
-    box.innerHTML = `<div class="m-empty" style="grid-column:1/-1">${pilouVide("endormi")}
+    box.innerHTML = `<div class="m-empty" style="grid-column:1/-1">${pilouVide("endormi", "sante")}
       Aucune pesée. Ajoute la première à la main, ou depuis des captures de l'app FitDays.</div>`;
     return;
   }
@@ -23799,7 +23881,7 @@ function saRenderGoals() {
   if (!box) return;
   const gs = saGoals();
   if (!gs.length) {
-    box.innerHTML = `<div class="m-empty">${pilouVide("pensif")}Aucun objectif.
+    box.innerHTML = `<div class="m-empty">${pilouVide("pensif", "sante")}Aucun objectif.
       Par exemple : atteindre 75 kg, ou descendre à 18 % de masse grasse.</div>`;
     return;
   }
@@ -24221,7 +24303,7 @@ function paRenderKpis() {
   const box = document.getElementById("pa-kpis");
   if (!box) return;
   if (!_paNet || !paReleves().length) {
-    box.innerHTML = `<div class="m-empty" style="grid-column:1/-1">${pilouVide("endormi")}
+    box.innerHTML = `<div class="m-empty" style="grid-column:1/-1">${pilouVide("endormi", "peignoir")}
       Aucun relevé. Commence par « Relevé du mois » : tu ne le feras qu'une fois par mois.</div>`;
     return;
   }
@@ -25643,7 +25725,7 @@ function peRender() {
     </div>`).join("");
   const liste = document.getElementById("pe-liste");
   if (!plans.length) {
-    liste.innerHTML = `<div class="m-empty">${pilouVide("pensif")}Aucun achat programmé. Ajoute ton premier plan : Pilote te préviendra le jour de l'achat pour que tu saisisses le cours payé.</div>`;
+    liste.innerHTML = `<div class="m-empty">${pilouVide("pensif", "costard")}Aucun achat programmé. Ajoute ton premier plan : Pilote te préviendra le jour de l'achat pour que tu saisisses le cours payé.</div>`;
   } else {
     const total = plans.reduce((s, p) => s + p.montant * ({ hebdo: 52, "2sem": 26, mois: 12, trim: 4 }[p.rythme] || 12) / 12, 0);
     liste.innerHTML = `<div class="tw"><table><thead><tr><th>Actif</th><th>Montant</th><th>Rythme</th><th>Parts prévues</th><th>Prochain achat</th><th></th></tr></thead><tbody>
@@ -32639,7 +32721,7 @@ async function _visiteMontrer() {
   box.className = "pl-flot" + (a.fin ? " pl-centre" : "");
   box.setAttribute("role", "dialog");
   box.setAttribute("aria-label", "Visite avec Pilou");
-  box.innerHTML = `<span class="pilou" aria-hidden="true">${pilouSvg(a.h || "content")}</span>
+  box.innerHTML = `<span class="pilou" aria-hidden="true">${pilouSvg(a.h || "content", pilouTenueDe(a.tab))}</span>
     <div class="pp-bulle">
       <div class="pl-flot-kick">Visite avec Pilou · ${n} sur ${total}</div>
       <div class="pl-flot-t">${a.t}</div>${a.x}
@@ -32723,7 +32805,7 @@ function pilouApresNavigation(n) {
   const box = document.createElement("div");
   box.id = "pilou-astuce";
   box.className = "pl-flot";
-  box.innerHTML = `<span class="pilou" aria-hidden="true">${pilouSvg("content")}</span>
+  box.innerHTML = `<span class="pilou" aria-hidden="true">${pilouSvg("content", PILOU_TENUE_SECTION[sec.id])}</span>
     <div class="pp-bulle"><button type="button" class="pl-flot-x" aria-label="Fermer"><i class="ph ph-x"></i></button>
       <div class="pl-flot-t">Premier passage dans ${escHtml(sec.label)}&#8239;!</div>
       ${escHtml(m.pas)}${m.besoin ? `<small><i class="ph ph-info"></i> ${escHtml(m.besoin)}</small>` : ""}
@@ -32739,8 +32821,30 @@ function pilouApresNavigation(n) {
   window.goTab = function(n) {
     _prev.call(this, n);
     try { pilouApresNavigation(n); } catch (e) {}
+    try { pilouBarre(n); } catch (e) {}
   };
 })();
+
+/* Pilou dans la barre du haut, avant le fil d'Ariane, dans la tenue de la
+   section (17/11/2026, demande d'Arthur : qu'on le voie dans chaque section,
+   « grand »). Pas sur l'accueil, qui l'a déjà à côté de « Bonjour ». */
+function pilouBarre(n) {
+  const brand = document.querySelector(".topbar-brand");
+  if (!brand) return;
+  let el = document.getElementById("pilou-barre");
+  if (String(n).split("@")[0] === "home") { if (el) el.remove(); return; }
+  const tenue = pilouTenueDe(n);
+  if (el && el.dataset.tenue === tenue) return;   // même tenue : rien à redessiner
+  if (!el) {
+    el = document.createElement("span");
+    el.id = "pilou-barre";
+    el.className = "pilou pilou-barre";
+    el.setAttribute("aria-hidden", "true");
+    brand.insertBefore(el, brand.firstChild);
+  }
+  el.dataset.tenue = tenue;
+  el.innerHTML = pilouSvg("content", tenue);
+}
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
   const b = document.querySelector('#pilou-visite [data-vis="passer"], #pilou-astuce .pl-flot-x');
