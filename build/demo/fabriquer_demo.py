@@ -58,8 +58,9 @@ def preparer_copie(tmp):
 
 def enregistrer(tmp):
     import storage
-    assert os.path.abspath(str(storage.get_app_dir())).startswith(os.path.abspath(tmp)), \
-        "la copie lit un autre dossier que le sien : arrêt"
+    lu = os.path.realpath(str(storage.get_app_dir()))
+    if not os.path.normcase(lu).startswith(os.path.normcase(tmp)):
+        raise SystemExit("ARRET : la copie lit %s au lieu de son propre dossier %s" % (lu, tmp))
     import server
     import app
     api = app.Api()
@@ -189,7 +190,9 @@ def main():
         print(__doc__)
         return 2
     sortie = os.path.abspath(sys.argv[1])
-    tmp = tempfile.mkdtemp(prefix="pilote-demo-")
+    # realpath : sur les Windows de GitHub, le dossier temporaire a un nom court
+    # (C:\Users\RUNNER~1\...) alors que Pilote lit le nom long (runneradmin)
+    tmp = os.path.realpath(tempfile.mkdtemp(prefix="pilote-demo-"))
     try:
         preparer_copie(tmp)
         print("Enregistrement sur les données de Brice…".encode("ascii", "replace").decode())
