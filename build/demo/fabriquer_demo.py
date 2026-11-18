@@ -87,6 +87,7 @@ def enregistrer(tmp):
     with open(os.path.join(ICI, "demo.js"), encoding="utf-8") as f:
         shim = f.read()
     with sync_playwright() as p:
+        # Edge, déjà installé sous Windows (sur le PC d'Arthur comme sur la CI)
         nav = p.chromium.launch(channel="msedge")
         # bypass_csp : les attentes de Playwright évaluent du texte, que la CSP de Pilote refuse
         page = nav.new_page(viewport={"width": 1366, "height": 768}, bypass_csp=True)
@@ -141,7 +142,19 @@ def anonymiser(texte, tmp):
     return texte
 
 
+def verifier_cours(requetes):
+    """Sans les cours de Yahoo (réseau coupé, Yahoo qui refuse), la démo
+    montrerait un PEA sans valeur : on s'arrête, l'ancienne démo reste en ligne."""
+    for cle, texte in requetes.items():
+        if cle.startswith("/cours?"):
+            prix = json.loads(texte).get("prices") or {}
+            if any(isinstance(v, dict) and v.get("prix") for v in prix.values()):
+                return
+    raise SystemExit("ARRET : aucun cours de bourse lu, la demo serait vide")
+
+
 def ecrire_demo(tmp, sortie, methodes, pont, requetes):
+    verifier_cours(requetes)
     os.makedirs(sortie, exist_ok=True)
     with open(os.path.join(tmp, "src", "ui", "index.html"), encoding="utf-8") as f:
         html = f.read()
@@ -164,6 +177,11 @@ def ecrire_demo(tmp, sortie, methodes, pont, requetes):
     if os.path.isdir(cible):
         shutil.rmtree(cible)
     shutil.copytree(os.path.join(tmp, "src", "ui", "vendor"), cible)
+    # Version de Pilote dont vient la démo : le workflow du site la compare à
+    # la dernière release pour savoir s'il faut la refaire
+    import app
+    with open(os.path.join(sortie, "version.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(app.APP_VERSION + "\n")
 
 
 def main():

@@ -53,8 +53,26 @@ Les vraies données ne sont jamais lues. Il écrit `index.html`, `demo.js`,
   `C:\Users\Brice\…` et **arrête tout** si le nom de session reste quelque
   part : la démo va sur un site public.
 * Les cours et les courbes sont ceux du jour de la fabrication, et les dates de
-  Brice sont relatives à ce jour : **refaire la démo à chaque version**, sinon
-  elle montre une interface et des dates qui vieillissent.
+  Brice sont relatives à ce jour : la démo se refait à chaque version, **toute
+  seule** (ci-dessous). Sans aucun cours lu (Yahoo qui ne répond pas), le
+  script s'arrête (`verifier_cours`) : l'ancienne démo reste en ligne.
+* `demo/version.txt` : la version de Pilote dont vient la démo.
+
+## Refaite toute seule à chaque version
+
+Le workflow `.github/workflows/demo.yml` **du site** (pas de Pilote) tourne
+toutes les deux heures : il lit la dernière release de Pilote et, si
+`demo/version.txt` est en retard, refait la démo sur un Windows de GitHub
+(Edge y est installé) et la commite. Le code de l'app vient du tag de la
+release ; le script, de `main` (ses corrections servent aussi aux versions
+déjà publiées). Choisi ainsi pour n'avoir aucune clé à créer : Pilote est
+public, et le site ne s'écrit qu'avec son propre jeton. Le bouton « Run
+workflow » de l'onglet Actions du site la refait tout de suite.
+
+Une nouvelle version apparaît donc dans la démo au plus deux heures après sa
+release. GitHub met en pause un workflow planifié après 60 jours sans commit
+dans le dépôt : sans version pendant deux mois, le réactiver dans l'onglet
+Actions du site.
 * Un nouvel appel au pont qui ne fait que lire : l'ajouter à `LECTURES` dans
   `demo.js`, sinon la démo répond « dans l'app ». Une lecture qui révélerait
   quelque chose du PC (clés USB, chemins) n'y va pas.
