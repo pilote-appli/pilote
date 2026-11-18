@@ -70,7 +70,11 @@ public, et le site ne s'écrit qu'avec son propre jeton. Le bouton « Run
 workflow » de l'onglet Actions du site la refait tout de suite.
 
 Une nouvelle version apparaît donc dans la démo au plus deux heures après sa
-release. GitHub met en pause un workflow planifié après 60 jours sans commit
+release. La fin de la sortie du script part en annotation (`::notice` ou
+`::error`) : lisible sur la page du run et par l'API sans être connecté, alors
+que le journal complet demande un compte. Premier essai (18/11) en échec : sur
+les Windows de GitHub, le dossier temporaire a un nom court (`RUNNER~1`) et
+Pilote lit le nom long ; d'où le `realpath` du dossier temporaire. GitHub met en pause un workflow planifié après 60 jours sans commit
 dans le dépôt : sans version pendant deux mois, le réactiver dans l'onglet
 Actions du site.
 * Un nouvel appel au pont qui ne fait que lire : l'ajouter à `LECTURES` dans
@@ -82,7 +86,19 @@ Actions du site.
 `index.html` (section `#essayer`), `assets/demo.js` et le bloc « Démo de
 l'accueil » de `assets/style.css`. La page est affichée à 1366 × 740 puis
 réduite pour tenir dans le cadre (0,93 sur un écran de 1366 px). Sous 760 px
-de large, ou sans JS, la démo ne se charge pas : la capture de l'accueil et
-« L'ouvrir quand même » la remplacent. « Installer Pilote » dans la démo
+de large, ou sans JS, la démo ne se charge pas dans la page : la capture de
+l'accueil, avec « Ouvrir la démo », l'ouvre en plein écran.
+
+## Sur téléphone : le mode ordinateur (choix d'Arthur, 18/11/2026)
+
+Pilote n'a pas de mise en page pour téléphone : en 390 px, la barre latérale
+prenait la moitié de l'écran. `fabriquer_demo.py` remplace la balise viewport
+par `width=1366` : un téléphone met Pilote en page comme sur un écran
+d'ordinateur, puis le réduit à sa largeur (zoom à deux doigts). Un ordinateur
+ignore cette balise. Téléphone tenu à la verticale (`orientation: portrait` et
+`pointer: coarse`, page ouverte seule) : Pilou propose de le tourner, une fois
+par visite ; la fenêtre part seule à l'horizontale. Écartée : une vraie
+version téléphone de l'interface (gros travail sur le CSS de l'app, risque
+pour Pilote). « Installer Pilote » dans la démo
 envoie un message à la page (`postMessage`, même origine), qui descend
 jusqu'aux boutons.
