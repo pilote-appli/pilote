@@ -99,6 +99,10 @@ ignore cette balise. Téléphone tenu à la verticale (`orientation: portrait` e
 `pointer: coarse`, page ouverte seule) : Pilou propose de le tourner, une fois
 par visite ; la fenêtre part seule à l'horizontale. Écartée : une vraie
 version téléphone de l'interface (gros travail sur le CSS de l'app, risque
-pour Pilote). « Installer Pilote » dans la démo
+pour Pilote). La démo est **endormie** tant qu'on n'a pas
+cliqué sur « Faire la démo » (bouton au centre du cadre, demandé par Arthur le
+18/11) : un calque transparent prend la molette, et la page défile au lieu de
+Pilote. Un clic la réveille ; elle se rendort quand la souris sort du cadre.
+« Installer Pilote » dans la démo
 envoie un message à la page (`postMessage`, même origine), qui descend
 jusqu'aux boutons.
