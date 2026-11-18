@@ -238,6 +238,7 @@ changes une partie, mets à jour sa fiche plutôt que ce fichier.
 | `docs/mac.md` | version Mac : décisions, étapes, ce qui reste propre à Windows, build Mac | `plateforme.py`, tout `sys.platform`, `pilote-mac.spec`, `build-mac.yml` |
 | `docs/linux.md` | version Linux et Chromebook : paquet .deb sans PyInstaller (un seul pour x64 et ARM), trousseau, clés USB, test sur 4 Linux | tout `sys.platform.startswith("linux")`, `plateforme.paquet_linux`, `build/linux/`, `build-linux.yml` |
 | `docs/microsoft-store.md` | version Microsoft Store : paquet MSIX, données dans `~\Pilote\Donnees`, pas d'auto-update, test | `build/msix.py`, `build/AppxManifest.xml`, `plateforme.version_store`, `storage.get_app_dir`, `updater.start_check` |
+| `docs/demo-en-ligne.md` | démo du site : la vraie interface sur Brice, sans serveur ni pont, fabriquée par un script, anonymisée | `build/demo/`, `LECTURES` de `demo.js`, section `#essayer` du site |
 | `docs/securite.md` | faiblesses connues : fait (sauvegardes chiffrées, revue) et plans (données chiffrées sur le disque, `/data` par le pont) | `server.py`, `chiffrement.py`, `jsonstore.py`, toute question de sécurité |
 | `docs/pistes.md` | pistes proposées, et celles écartées (à ne pas reproposer) | toute suggestion de nouveauté |
 

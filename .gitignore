@@ -38,6 +38,8 @@ profiles.json
 build/*/
 # sauf le paquet Linux, des scripts (docs/linux.md)
 !build/linux/
+# et la démo du site, des scripts aussi (docs/demo-en-ligne.md)
+!build/demo/
 build/build/
 build/__pycache__/
 
