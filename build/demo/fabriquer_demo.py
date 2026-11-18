@@ -166,6 +166,13 @@ def ecrire_demo(tmp, sortie, methodes, pont, requetes):
             '<meta name="robots" content="noindex">\n'
             '<script src="demo-donnees.js"></script>\n<script src="demo.js"></script>\n' % CSP)
     html = html.replace("<head>", tete, 1)   # le premier, comme server._inject_session_token
+    # Sur téléphone, Pilote se met en page comme sur un écran d'ordinateur de
+    # 1366 px, réduit à la taille du téléphone (on zoome à deux doigts). Un
+    # ordinateur, lui, ignore cette balise : rien n'y change.
+    html, n = re.subn(r'<meta name="viewport" content="[^"]*">',
+                      '<meta name="viewport" content="width=1366">', html, count=1)
+    if n != 1:
+        raise SystemExit("ARRET : balise viewport introuvable dans index.html")
     with open(os.path.join(sortie, "index.html"), "w", encoding="utf-8", newline="\n") as f:
         f.write(html)
     shutil.copy(os.path.join(ICI, "demo.js"), os.path.join(sortie, "demo.js"))
