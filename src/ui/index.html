@@ -32765,6 +32765,10 @@ async function pilouDemarrage() {
   }
   if (ex || !_hydrationDone || !S.uiPrefs || S.uiPrefs.visiteProposee) return;
   if (document.getElementById("ov-welcome")) return;   // Premiers pas en cours
+  // Premiers pas à venir : ils attendent quelques lectures avant de s'ouvrir,
+  // et proposent eux-mêmes la visite (même condition que _showWelcomeIfFirstRun)
+  const peaVide = !(S.positions || []).length && !(S.transactions || []).length && !(S.depots || []).length;
+  if (peaVide && !S.uiPrefs.premiersPas) return;
   S.uiPrefs.visiteProposee = true;
   _enregistrerUiPrefs();
   const box = document.createElement("div");
