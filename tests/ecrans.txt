@@ -11,6 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.82 (20/11/2026) : Ma forme (Montres) en deux blocs, Sante puis Sport.
-# Brice n'a pas de montre : la page montre son ecran vide (pas d'erreur).
+# 4.4.83 (20/11/2026) : tenues de Pilou dans la barre du haut : Agenda (tenue
+# du mois affiche), Montres (coach), Sports (plâtre seulement pendant une blessure).
+ag-cal
 ga-forme
+sp-agenda
