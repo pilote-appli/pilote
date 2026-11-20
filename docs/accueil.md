@@ -155,6 +155,11 @@ juste après le patch de `goTab` de Garmin) :
   après la mise à jour (`S.uiPrefs.visiteProposee`), puis Paramètres → Général,
   à côté du réglage de Pilou, « Revoir la visite » (`pilouVisiterMesModules` : les
   modules affichés).
+  Pas sur une installation neuve (corrigé le 19/11/2026) : les Premiers pas
+  attendent quelques lectures avant de s'ouvrir, et `pilouDemarrage` passait
+  avant eux ; la bulle sortait derrière l'assistant, qui propose déjà la visite.
+  Elle ne vient plus tant que les Premiers pas restent à faire (PEA vide et pas
+  de `S.uiPrefs.premiersPas`, la condition de `_showWelcomeIfFirstRun`).
 * Mesuré à 1366 × 720 : l'étape 1 la plus chargée (prénom, 2e utilisateur, ancienne
   installation, chemin) fait 638 px pour 646 ; l'étape 2 défile dans sa fenêtre
   (760 px), comme avant mais 60 px de plus avec la bulle.
