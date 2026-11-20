@@ -1959,6 +1959,10 @@ label.sv-check, label.sv-inline {
 /* ── Garmin (garmin.py) ─────────────────────────────────────────────────── */
 .ga-maj { font-size: 12px; color: var(--txt3); }
 .ga-chart { position: relative; height: 260px; }
+.ga-bloc-t { display: flex; align-items: center; gap: 8px; margin: 1.6rem 0 .8rem; font-family: var(--serif); font-size: 20px; font-weight: 500; color: var(--txt); }
+.ga-bloc-t:first-of-type { margin-top: .2rem; }
+.ga-bloc-t .ph { color: var(--accent-text, var(--accent)); font-size: 20px; }
+.ga-kpis-seuls { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
 .mkpi.ga-kpi-clic { cursor: pointer; transition: border-color .15s; }
 .mkpi.ga-kpi-clic:not(.accent):hover { border-color: var(--accent); }
 .ga-courbe-h { flex-wrap: wrap; gap: .6rem; }
@@ -30482,13 +30486,11 @@ function gaRenderForme() {
     const [jO, o] = gaDernier("spo2");
     const [jR, rs] = gaDernier("respiration");
     const age = GA.config && GA.config.ageForme;
-    const im = gaIntensiteSemaine();
     const [jC, rc] = gaDernier("recup");
     const hor = gaHoraires(30);
     const kpis2 = [
       hor ? gaKpi("Coucher et lever", hor.coucher + " → " + hor.lever,
                   "moyenne 30 j · coucher régulier à ± " + hor.ecart + " min") : "",
-      im ? gaKpi("Minutes intenses", im.total + " min", "cette semaine" + (im.objectif ? " · objectif " + im.objectif + " min" : ""), "intensite") : "",
       rc ? gaKpi("Récupération", rc.recup + " %", "d'après Coros · " + gaLeJour(jC)) : "",
       o ? gaKpi("SpO2", o.spo2 + " %", "moyenne du jour · " + dashDateCourte(jO), "spo2") : "",
       rs ? gaKpi("Respiration", rs.respiration + " /min", "moyenne du jour · " + dashDateCourte(jR), "respiration") : "",
@@ -30508,7 +30510,16 @@ function gaRenderForme() {
         <div class="card-b"><div class="ga-chart"><canvas id="ga-chart"></canvas></div></div></div>`;
   }
 
-  box.innerHTML = alerte + alerteCo + rappel + forme + gaRecordsHtml() + gaCycleHtml() + gaSeancesHtml();
+  // Deux blocs : la santé (sommeil, récupération, cycle), puis le sport
+  // (minutes intenses, records, séances). Un bloc vide n'a pas de titre.
+  const im = gaIntensiteSemaine();
+  const sport = (im ? `<div class="mkpis ga-kpis-seuls">${gaKpi("Minutes intenses", im.total + " min",
+      "cette semaine" + (im.objectif ? " · objectif " + im.objectif + " min" : ""))}</div>` : "")
+    + gaRecordsHtml() + gaSeancesHtml();
+  const sante = forme + gaCycleHtml();
+  box.innerHTML = alerte + alerteCo + rappel
+    + `<h2 class="ga-bloc-t"><i class="ph ph-heartbeat"></i> Santé</h2>` + sante
+    + (sport ? `<h2 class="ga-bloc-t"><i class="ph ph-person-simple-run"></i> Sport</h2>` + sport : "");
   gaRenderCourbe();
 }
 

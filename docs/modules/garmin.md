@@ -156,7 +156,11 @@ nouveau ou une panne.
 
 ### Écrans et tuiles
 
-* **Ma forme** : jusqu'à douze chiffres (sommeil de la nuit, score de sommeil
+* **Ma forme** : deux blocs titrés (20/11/2026, demande d'Arthur, qui préférait
+  une page en deux parties à deux onglets ou à un rangement dans Santé et Sports).
+  « Santé » : les chiffres, la courbe et le cycle. « Sport » : minutes intenses,
+  records et séances, sans titre s'il n'y a rien. Le détail :
+  jusqu'à douze chiffres (sommeil de la nuit, score de sommeil
   avec son palier Garmin, excellent 90, bon 80, passable 60, et sa moyenne 7 j,
   coucher et lever moyens sur 30 j avec la régularité du coucher en écart type
   (`gaHoraires`, un coucher après minuit compte pour la veille), Body
