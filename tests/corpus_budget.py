@@ -128,7 +128,7 @@ MARCHANDS = [
     ("INTERFLORA", "cadeaux", C), ("WONDERBOX", "cadeaux", C),
     ("MAXI ZOO", "animaux", C), ("CLINIQUE VETERINAIRE", "animaux", C), ("ZOOPLUS", "animaux", C),
     ("CROIX ROUGE FRANCAISE", "dons", P), ("RESTOS DU COEUR", "dons", V), ("HELLOASSO", "dons", C),
-    ("UNIVERSITE DE TOULON", "education", C), ("CVEC", "education", C), ("UDEMY", "education", C),
+    ("UNIVERSITE DE LILLE", "education", C), ("CVEC", "education", C), ("UDEMY", "education", C),
     ("OPENCLASSROOMS", "education", P),
     ("DGFIP IMPOT", "impots", P), ("DIRECTION GENERALE DES FINANCES PUBLIQUES", "impots", P),
     ("TRESOR PUBLIC", "impots", P), ("AMENDES.GOUV", "impots", C), ("ANTS", "impots", C),
@@ -156,8 +156,8 @@ REVENUS = [
 ]
 PERSONNES = ["M MARTIN DUPONT", "MME CLAIRE PETIT", "LUCAS BERNARD", "M ET MME DURAND", "SOPHIE LAMBERT",
              "PAUL ROUSSEAU", "JULES FONTAINE", "NICOLAS MOREAU"]
-VILLES = ["PARIS", "LYON", "TOULON", "MARSEILLE", "NANTES", "LILLE", "BORDEAUX", "PARIS 15", "LA SEYNE SUR M",
-          "HYERES", "RENNES", "NICE"]
+VILLES = ["PARIS", "LYON", "TOULOUSE", "MARSEILLE", "NANTES", "LILLE", "BORDEAUX", "PARIS 15", "ST GERMAIN EN L",
+          "GRENOBLE", "RENNES", "NICE"]
 MOIS = ["JANVIER", "FEVRIER", "MARS", "AVRIL", "MAI", "JUIN", "JUILLET", "AOUT", "SEPTEMBRE", "OCTOBRE",
         "NOVEMBRE", "DECEMBRE"]
 
