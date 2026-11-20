@@ -832,7 +832,7 @@ def classer(op: dict, cats: Categories, hist: Historique) -> dict:
     # une capture d'écran, déjà lisible : gardé avec ses accents)
     lib = op.get("libelleExact") or op.get("affiche") and _jolie(_norm(op["affiche"])) or nettoyer(op["brut"])
     if genre == "retrait" and not _norm(lib).startswith(("retrait", "cash", "atm")):
-        lib = ("Retrait " + lib).strip()     # « RETRAIT DAB 10/11 TOULON » -> « Retrait Toulon »
+        lib = ("Retrait " + lib).strip()     # « RETRAIT DAB 10/11 NANTES » -> « Retrait Nantes »
     texte = _norm(op["brut"]) + " " + _norm(op.get("affiche", ""))
     k = cle(op.get("affiche") or op["brut"])
     res = dict(op, type=typ, montant=round(abs(mt), 2), libelle=lib or op["brut"][:60], genre=genre, cle=k,
