@@ -37,8 +37,35 @@ essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
   PEA, CTO, Crypto. Débardeur turquoise, bandeau et poignets éponge : Sports.
   Blouse blanche et stéthoscope : Santé. Gilet marine sur chemise, crayon sur
   l'oreille : Mes comptes. Peignoir bordeaux : Patrimoine. Reporter (trench
-  beige, chapeau feutre) : Actus. Sans tenue : Agenda, Montres, Pense-bête, Prêt,
-  Premiers pas, bilan de l'année. Les tissus sont des couleurs fixes, le pelage
+  beige, chapeau feutre) : Actus. Sans tenue : Pense-bête, Prêt, Premiers pas,
+  bilan de l'année.
+* **Tenues du 20/11/2026** (4.4.83, choisies par Arthur sur planche, plusieurs
+  tours de retouches) :
+  * **Agenda : une tenue par mois**, celle du **mois affiché** dans le calendrier
+    (`PILOU_TENUE_MOIS`, lu sur `_agMois` ; `agChangerMois` et `agAujourdhui`
+    appellent `pilouRafraichir`). Janvier couronne et part de galette (croûte
+    dans la patte, pointe vers le milieu des jambes, patte derrière la part) ;
+    février anorak et skis, **tête nue** avec ses lunettes d'aviateur (bonnet,
+    casque, bonnet péruvien et masque de ski écartés) ; mars ciré, chapeau de
+    pluie, bottes, parapluie ; avril panier d'œufs et nœud ; mai chapeau de
+    paille, tablier, muguet ; juin guitare sur les genoux (pas sous les pieds) ;
+    juillet maillot jaune avec un petit vélo dessiné ; août chemise rouge à
+    **petites** fleurs, collier de fleurs, glace tenue par le cône ; septembre
+    cartable, règle et crayon dans la même patte ; octobre chapeau de sorcier,
+    grand seau citrouille posé à côté (bonbons dedans, patte hors du seau) ;
+    novembre gros pull moutarde, chocolat chaud ; décembre Père Noël (le pull
+    de Noël seul écarté).
+  * **Sports : plâtre** au bras (signé, pansement sur la joue) sur la tenue de
+    sport, tant qu'une blessure a commencé et n'est pas finie
+    (`spInjuryOngoing` : guéri aujourd'hui = plus de plâtre). La jambe
+    plâtrée avec béquille a été écartée.
+  * **Montres : le coach** (veste de survêtement violette, chronomètre au cou,
+    montre au poignet). Écartés : horloger, traileur.
+  * Champs de tenue ajoutés pour ces dessins : `fond` (derrière tout), `pieds`,
+    `brasG` (remplace le bras gauche), `devant` (objet tenu, après les bras ;
+    `PL_PATTE_D` redessine la patte qui le serre). `corps` est devenu
+    facultatif. Les objets dépassent un peu du dessin (parapluie, chapeau) :
+    vérifié dans la barre du haut, rien n'est coupé. Les tissus sont des couleurs fixes, le pelage
   suit l'accent. Écartés par Arthur : chemise à bretelles et visière de
   comptable, salopette, casque de chantier et gilet orange, tweed et chapeau
   melon, pilote de ligne, sweat à capuche et casque audio. En thème sombre, le
