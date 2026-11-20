@@ -2,6 +2,17 @@
   "_lisez_moi": "Une fiche par version, la plus récente en tête. Elle s'affiche avant l'installation (lue sur GitHub au tag de la version), une fois après, puis dans Paramètres → Mises à jour. Écrite pour l'utilisateur : ce qui change pour lui, pas pour le code. Clés : version, date (AAAA-MM-JJ), titre, nouveau, ameliore, corrige (listes, chacune facultative). Gras : ce qui précède « : » en tête de ligne l'est tout seul ; **texte** met autre chose en gras, mais seulement à partir de la fiche de la 4.4.54 (une 4.4.52 afficherait les étoiles dans « Mise à jour disponible »).",
   "versions": [
     {
+      "version": "4.4.81",
+      "date": "2026-11-20",
+      "titre": "Des exemples plus simples",
+      "ameliore": [
+        "Les exemples écrits en gris dans les champs vides sont plus généraux : plus de ville, de courtier ou de contrat précis (par exemple « Appartement, maison » pour un bien immobilier)."
+      ],
+      "corrige": [
+        "Premier lancement : Pilou ne propose plus la visite derrière les Premiers pas, qui la proposent déjà."
+      ]
+    },
+    {
       "version": "4.4.80",
       "date": "2026-11-17",
       "titre": "Pilou s'habille pour chaque section",

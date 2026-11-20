@@ -11,17 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.80 (17/11/2026) : Pilou dans la barre du haut de chaque page, dans la
-# tenue de sa section (docs/design-carnet.md, « Tenues »). Une page par
-# tenue, l'accueil (costard), une section sans tenue, puis le theme sombre
-# (accueil et PEA : le costard ressort le moins sur le fond fonce).
+# 4.4.81 (20/11/2026) : exemples des champs generiques. La fenetre du
+# bien immobilier (Patrimoine), dont l'exemple citait une ville, apres l'accueil.
 home
-dash
-fin-month
-sa-suivi
-sp-agenda
 pa-vue
-ac-boite
-ag-cal
-js:applyTheme('dark')
-dash
+js:paOpenBien()
