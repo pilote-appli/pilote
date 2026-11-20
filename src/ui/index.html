@@ -4919,7 +4919,7 @@ html.verre .toast-stack .toast {
 
     <div class="fg fin-ac-wrap">
       <label>Libellé</label>
-      <input id="fin-tx-label" type="text" autocomplete="off" placeholder="Ex. Courses Carrefour, Salaire mai…"
+      <input id="fin-tx-label" type="text" autocomplete="off" placeholder="Ex. Courses, Salaire mai…"
              role="combobox" aria-autocomplete="list" aria-controls="fin-tx-ac" aria-expanded="false"
              oninput="finAcUpdate()" onkeydown="finAcKey(event)" onblur="setTimeout(finAcClose, 150)">
       <div class="fin-ac" id="fin-tx-ac" role="listbox" hidden></div>
@@ -5749,7 +5749,7 @@ html.verre .toast-stack .toast {
   <div class="modal" style="max-width:480px">
     <h2>Bien immobilier</h2>
     <div class="fg"><label>Nom du bien</label>
-      <input id="pa-bien-nom" maxlength="60" placeholder="ex : Appartement Toulon, maison"></div>
+      <input id="pa-bien-nom" maxlength="60" placeholder="ex : Appartement, maison"></div>
     <div class="fg-row">
       <div class="fg"><label>Valeur estimée (€)</label>
         <input id="pa-bien-val" type="number" step="0.01" min="0" placeholder="ex : 180000"></div>
@@ -6076,7 +6076,7 @@ html.verre .toast-stack .toast {
   <div class="modal">
     <h2 id="cto-cpt-titre">Nouveau CTO</h2>
     <div class="fg"><label>Nom du compte</label>
-      <input id="cto-cpt-nom" maxlength="40" placeholder="ex : CTO Trade Republic"></div>
+      <input id="cto-cpt-nom" maxlength="40" placeholder="ex : CTO, compte-titres"></div>
     <div class="fg"><label id="cto-cpt-courtier-lbl">Courtier</label>
       <select id="cto-cpt-courtier" onchange="ctoCompteResume()"></select></div>
     <p class="pac-dim" id="cto-cpt-resume" style="margin:-4px 0 14px"></p>
@@ -6300,7 +6300,7 @@ html.verre .toast-stack .toast {
       <span id="df-recap-txt"></span>
     </div>
     <div class="fg"><label>Montant estimé (€)</label><input id="df-montant" type="number" step="0.01" placeholder="calculé auto"></div>
-    <div class="fg"><label>Note (optionnel)</label><input id="df-note" placeholder="Saint-Gobain 2026…"></div>
+    <div class="fg"><label>Note (optionnel)</label><input id="df-note" placeholder="Acompte, solde de l'année…"></div>
     <div class="mact">
       <button class="btn btn-ghost" onclick="closeOv('ov-divf')">Annuler</button>
       <button class="btn btn-primary" id="divf-save-btn" onclick="saveDivFuture()">Enregistrer</button>
@@ -6324,7 +6324,7 @@ html.verre .toast-stack .toast {
       <span id="dv-recap-txt"></span>
     </div>
     <div class="fg"><label>Montant reçu (€)</label><input id="dv-montant" type="number" step="0.01" placeholder="calculé auto"></div>
-    <div class="fg"><label>Note (optionnel)</label><input id="dv-note" placeholder="Saint-Gobain 2026…"></div>
+    <div class="fg"><label>Note (optionnel)</label><input id="dv-note" placeholder="Acompte, solde de l'année…"></div>
     <div class="mact">
       <button class="btn btn-ghost" onclick="closeOv('ov-div')">Annuler</button>
       <button class="btn btn-primary" onclick="saveDiv()">Enregistrer</button>
@@ -22672,7 +22672,7 @@ function prVenteModal(id) {
 function prAvContratModal(id) {
   const c = id ? prAvContrat(id) : null;
   prOpenForm(c ? "Modifier le contrat" : "Nouveau contrat d'assurance vie", `
-    ${prFg("Nom du contrat", "label", "text", c ? c.label : "", 'placeholder="Ex. Linxea Spirit, AV Crédit Agricole…" required')}
+    ${prFg("Nom du contrat", "label", "text", c ? c.label : "", 'placeholder="Ex. Assurance vie, contrat de ma banque…" required')}
     ${prFg("Frais sur versements (%)", "frais_versement", "number", c && prN(c.frais_versement) ? c.frais_versement : "", 'step="0.01" min="0" max="99" placeholder="0"')}
     <div class="m-note" style="margin-bottom:0">Pris sur chaque dépôt avant de placer l'argent : le taux figure dans
       les conditions de ton contrat.${c ? "" : " Chaque contrat a ses propres taux annuels et ses propres dépôts."}</div>`,
