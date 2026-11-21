@@ -124,6 +124,13 @@ Validé sur captures (données de Brice), Carnet à gauche, Verre à droite.
   emojis de ces écrans et des titres de fenêtres (🚀, ⬇, 🔧, ✅, ❌, ⚠, 🔒, 📄, ⚙, 🏅,
   ▦, ⊳, 📚) sont devenus des icônes Phosphor, dans les deux styles. Le fond Verre est
   écrit une fois pour `body::before` et `.lock-ecran`.
+* **La page entière défile sans barre (21/11/2026)** : `html { scrollbar-width:
+  none }` et `html::-webkit-scrollbar { display: none }`. Sa barre de 4 px courait
+  sur toute la hauteur de la fenêtre, barre de titre comprise, et le fond
+  (`body::before`, fixe) s'arrêtait avant elle : une bande grise à droite, l'app
+  semblait ne pas prendre tout l'écran. Molette, pavé tactile et clavier font
+  toujours défiler ; les zones internes (barre latérale, listes) gardent leur
+  barre. Ne pas remettre la barre de la page sans couvrir cette bande.
 * **Repères communs aux deux styles** (bloc « REPÈRES », juste avant) : espacements
   sur une grille de 4 et 8 px (`--space-*`), quatre durées (`--dur-*`), une courbe
   douce (`--ease`) et un léger rebond (`--ease-spring`) pour ce qui répond à un
