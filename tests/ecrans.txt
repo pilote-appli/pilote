@@ -11,8 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.83 (20/11/2026) : tenues de Pilou dans la barre du haut : Agenda (tenue
-# du mois affiche), Montres (coach), Sports (plâtre seulement pendant une blessure).
-ag-cal
-ga-forme
-sp-agenda
+# 4.4.84 (21/11/2026) : plus de barre de defilement de la page (bande de
+# 4 px a droite) : le fond doit aller jusqu'au bord, et la page defiler.
+home
+ga-forme 400
+pos
