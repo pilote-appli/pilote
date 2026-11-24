@@ -11,8 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.84 (21/11/2026) : plus de barre de defilement de la page (bande de
-# 4 px a droite) : le fond doit aller jusqu'au bord, et la page defiler.
+# 4.4.85 (24/11/2026) : Pilou couvert de post-it dans le Pense-bete (barre du
+# haut, ecrans vides).
+tc-liste
+tc-faites
 home
-ga-forme 400
-pos
