@@ -37,8 +37,13 @@ essais (trois styles, quatre humeurs) : artifact privé d'Arthur.
   PEA, CTO, Crypto. Débardeur turquoise, bandeau et poignets éponge : Sports.
   Blouse blanche et stéthoscope : Santé. Gilet marine sur chemise, crayon sur
   l'oreille : Mes comptes. Peignoir bordeaux : Patrimoine. Reporter (trench
-  beige, chapeau feutre) : Actus. Sans tenue : Pense-bête, Prêt, Premiers pas,
-  bilan de l'année.
+  beige, chapeau feutre) : Actus. Sans tenue : Prêt, Premiers pas, bilan de
+  l'année.
+* **Pense-bête : couvert de post-it** (4.4.85, 24/11/2026, choisi par Arthur sur
+  planche) : trois post-it sur le ventre, un sur l'oreille droite, un coché sur
+  le front, stylo bleu à la patte (`PILOU_TENUES.postits`, `_plPostit`). Sur le
+  pelage, sans `corps`. Aussi sur les deux écrans vides de la section. Écartés :
+  commandant de bord (porte-bloc), majordome, ficelle au doigt et réveil.
 * **Tenues du 20/11/2026** (4.4.83, choisies par Arthur sur planche, plusieurs
   tours de retouches) :
   * **Agenda : une tenue par mois**, celle du **mois affiché** dans le calendrier
