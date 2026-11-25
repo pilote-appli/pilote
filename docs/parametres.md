@@ -153,6 +153,40 @@ via `_cheminDonnees()`, relu à chaque ouverture : il suit un changement
 d'utilisateur), avec « Ouvrir » (`openDataFolder()`). Un clic sur le chemin le
 sélectionne en entier. Même ligne dans les Premiers pas (`docs/accueil.md`).
 
+**Mon profil (25/11/2026, `src/profil.py`).** Jusque-là, « Exporter » et
+« Importer » ne portaient que `pea_data.json`, alors que la confirmation disait
+« Remplacer tes données » : quelqu'un qui croyait tout emporter laissait ses
+comptes, son sport, sa santé… sur le PC. Ces deux boutons s'appellent désormais
+« Exporter le PEA » et « Importer un PEA » (ligne « PEA seul », raccourcis Ctrl+E
+et Ctrl+I inchangés), et « Mon profil » emporte tout l'utilisateur actif :
+
+* **Exporter mon profil** (`profilExporter`, `Api.profil_exporter`) : un zip avec
+  les fichiers de modules seulement (`profil.FICHIERS`, un par `JsonStore`, plus
+  le PEA et Mes comptes : `tests/test_profil.py` vérifie qu'aucun module n'est
+  oublié) et un témoin `profil-pilote.json` (nom, emoji, couleur, version). Ni
+  backups, ni `_cache` du PEA (régénérable), ni `pin.hash` : un fichier perdu ne
+  doit pas arriver verrouillé par un code connu d'un autre. Mot de passe au choix
+  (tapé deux fois) : chiffré comme les sauvegardes (`chiffrement.py`), extension
+  `.pilote`, sinon `.zip`. Les écritures en attente partent avant
+  (`_viderEnregistrements`).
+* **Importer un profil** (`profilImporter`) : `Api.profil_choisir` ouvre le
+  fichier et garde son chemin côté Python (la page ne passe jamais de chemin),
+  `profil_apercu` le relit avec le mot de passe, puis trois issues :
+  « Nouvel utilisateur » (dossier neuf, `slugify` écarte les existants, il devient
+  l'actif), « Remplacer <actif> » (redemande confirmation ; son nom et son PIN
+  restent, ses fichiers de modules absents du profil sont retirés, l'état d'avant
+  est gardé dans `backups/avant_import/profil_avant_import_<date>.zip`) ou
+  Annuler. Échap et clic à côté annulent, jamais « remplacer ». Tout est validé
+  avant la première écriture : témoin présent (une sauvegarde complète est
+  refusée, elle se restaure dans Sauvegarde), seuls les noms de `FICHIERS` sont
+  lus (pas de zip-slip), JSON lisibles, PEA complet.
+* Les codes d'Actus, d'iCloud, de Garmin et de Coros sont chiffrés pour le PC
+  (DPAPI, trousseau du Mac par utilisateur) : après l'import, une fenêtre dit de
+  les reconnecter si le profil vient d'un autre ordinateur.
+* Différence avec la sauvegarde : elle remet tout `Donnees/` (tous les
+  utilisateurs) ; le profil ne porte qu'un utilisateur et peut en devenir un
+  nouveau.
+
 **Mises à jour (section `maj`, 4.3.37).** Le bouton « Vérifier les mises à jour »
 quitte « Données & app ». `majRenderSection()` : version installée, la version
 proposée s'il y en a une (avec sa fiche et « Installer… », qui ouvre la fenêtre

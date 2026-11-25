@@ -2,6 +2,19 @@
   "_lisez_moi": "Une fiche par version, la plus récente en tête. Elle s'affiche avant l'installation (lue sur GitHub au tag de la version), une fois après, puis dans Paramètres → Mises à jour. Écrite pour l'utilisateur : ce qui change pour lui, pas pour le code. Clés : version, date (AAAA-MM-JJ), titre, nouveau, ameliore, corrige (listes, chacune facultative). Gras : ce qui précède « : » en tête de ligne l'est tout seul ; **texte** met autre chose en gras, mais seulement à partir de la fiche de la 4.4.54 (une 4.4.52 afficherait les étoiles dans « Mise à jour disponible »).",
   "versions": [
     {
+      "version": "4.4.86",
+      "date": "2026-11-25",
+      "titre": "Tes abonnements repérés, et tout ton profil dans un fichier",
+      "nouveau": [
+        "Mes comptes : Pilote repère les dépenses qui reviennent chaque mois (Netflix, forfait, salle de sport…). Clique sur Suivre ou sur Pas un abonnement, rien d'autre à régler. Une fois suivi, il te prévient si le prix monte ou si l'abonnement ne passe plus. Il n'ajoute aucune opération : elles arrivent par tes relevés.",
+        "Accueil : une tuile Mes abonnements, avec ce que te coûtent tes dépenses récurrentes chaque mois.",
+        "Paramètres, Données : Exporter mon profil met tout ton espace dans un seul fichier (PEA, comptes-titres, comptes, sport, santé, patrimoine, pense-bête, agenda), protégé par un mot de passe si tu veux. Importer un profil le retrouve sur un autre ordinateur, ou en fait un nouvel utilisateur. Ton code PIN ne part pas avec."
+      ],
+      "corrige": [
+        "Paramètres, Données : les anciens boutons Exporter et Importer ne portaient que le PEA, alors qu'Importer demandait de « remplacer tes données ». Ils s'appellent maintenant Exporter le PEA et Importer un PEA."
+      ]
+    },
+    {
       "version": "4.4.85",
       "date": "2026-11-24",
       "titre": "Pilou habillé dans le Pense-bête",

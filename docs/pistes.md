@@ -135,8 +135,10 @@ Autres pistes :
   captures restent réservées aux dépenses (`docs/modules/comptes.md`) ; pour la
   bourse, CSV conseillé et PDF en secours (`docs/import-releves.md`).
 
-**Traité depuis** : la recherche globale (Ctrl+K) et le bilan de l'année avec
+**Traité depuis** : les abonnements repérés dans Mes comptes et l'export /
+import de tout un profil (25/11/2026, `docs/modules/comptes.md`,
+`docs/parametres.md`) ; la recherche globale (Ctrl+K) et le bilan de l'année avec
 Pilou (12/11/2026, `docs/accueil.md`). Avant : l'emoji par défaut des catégories créées par l'utilisateur est
-deviné d'après le libellé (4.2.7, `finGuessIcon`). L'export de tout l'espace utilisateur, longtemps en attente, est
-couvert par la sauvegarde USB (archive zip de tout `Donnees/`). L'import par fichier,
-lui, ne couvre toujours que `pea_data.json`.
+deviné d'après le libellé (4.2.7, `finGuessIcon`). L'export de tout l'espace utilisateur, longtemps en attente, était
+couvert par la sauvegarde USB (archive zip de tout `Donnees/`) ; depuis le 25/11/2026,
+« Exporter mon profil » le fait pour un seul utilisateur, et l'import aussi.
