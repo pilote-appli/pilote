@@ -11,8 +11,8 @@
 # Trois captures par job (lot), 45 au plus : chaque lot a ses 50 annotations.
 # Tour complet de l'app : tests/ecrans-tour.txt.
 #
-# 4.4.85 (24/11/2026) : Pilou couvert de post-it dans le Pense-bete (barre du
-# haut, ecrans vides).
-tc-liste
-tc-faites
-home
+# 4.4.86 (25/11/2026) : Parametres, Donnees (Mon profil) ; fenetre Mes
+# abonnements (Mes comptes) ; onglet Mois de Mes comptes.
+js:openSettings('donnees')
+js:dashVoirAbos()
+fin-month

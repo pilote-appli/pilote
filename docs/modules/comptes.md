@@ -172,6 +172,42 @@ corrections générales (parapharmacie avant l'enseigne, noms collés,
 public n'existe. Le premier vrai relevé d'Arthur dira le vrai chiffre.
 `tests/test_budget_releves.py` garde ces seuils et les exemples publiés.
 
+## Abonnements repérés (25/11/2026)
+
+Proposé et validé avec Arthur le 25/11/2026. Pilote repère, dans toutes les
+dépenses (importées ou saisies), celles qui reviennent chaque mois, sans écran
+de règles : on **Suit** ou on répond **Pas un abonnement**, une fois pour toutes.
+
+* **Repérage** (`finAboCandidats`, seuils dans `FIN_ABO`) : même libellé
+  (`finNorm`), une seule fois par mois (deux dans un même mois, courses ou
+  essence, écartent le libellé), au moins 3 mois de suite jusqu'à ce mois-ci ou
+  le mois dernier, à ±5 jours du jour médian, à ±10 % du dernier montant, sur
+  13 mois. Écartés : libellé déjà porté par un récurrent, opérations créées par
+  un récurrent, `F.abonnementsIgnores` (clés écartées, gardées dans
+  `finances.json`). Mensuel seulement : l'annuel demanderait deux ans d'historique.
+* **Suivre** (`finAboSuivre`) crée un récurrent `amountMode: "suivi"` (pastille
+  « Suivi », aussi au choix dans la fenêtre d'un récurrent) : il **ne crée
+  aucune opération**. Un récurrent fixe en créait une chaque mois, et le mois où
+  le prix change, l'opération du relevé n'était plus reconnue comme déjà saisie
+  (même montant à trois jours près) : doublon. `finProcessRecurrences` avance
+  seulement son échéance et son montant (dernier prix vu, `_finAboAvancer`).
+* **À vérifier** (`finAboAlertes`) : hausse (dernière dépense plus chère que la
+  précédente, il y a 45 jours au plus ; « J'ai vu » → `hausseVue`), et plus passé
+  depuis 62 jours (« Résilié » met en pause, « Toujours actif » → `disparuVu`).
+* **Où** : bandeau `#fin-abo-bar` au-dessus des transactions (même style que
+  « À classer »), fenêtre « Mes abonnements » (`finAboOuvrir` : à vérifier,
+  repérés, dépenses récurrentes actives et leur total par mois), tuile d'accueil
+  `fin-abos` (`finAboTotalMois`, ramené au mois : hebdo × 52/12, trimestriel ÷ 3,
+  annuel ÷ 12).
+* **Limite connue** : une hausse de plus de 10 % avant d'avoir suivi
+  l'abonnement casse le repérage (les montants ne se ressemblent plus) ; il
+  revient trois mois plus tard au nouveau prix. Une fois suivi, toute hausse est
+  signalée.
+* Essayé le 25/11/2026 dans la démo (Brice + dépenses ajoutées) : Spotify et un
+  forfait repérés, Carrefour (plusieurs fois par mois), une salle de sport plus
+  vue depuis septembre et des achats à jours différents écartés ; hausse
+  10,99 → 11,99 signalée dès le suivi ; aucune opération créée.
+
 ## Captures d'écran de l'appli de la banque (demandé par Arthur le 14/11/2026)
 
 Beaucoup d'utilisateurs n'ont pas le CSV sous la main, mais ont l'appli de leur

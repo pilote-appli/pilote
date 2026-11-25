@@ -77,7 +77,7 @@ import splash
 
 
 APP_NAME    = "Pilote"
-APP_VERSION = "4.4.85"
+APP_VERSION = "4.4.86"
 SINGLE_INSTANCE_PORT = 50317          # port arbitraire pour le verrou single-instance
 WINDOW_DEFAULT_SIZE  = (1280, 800)
 WINDOW_MIN_SIZE      = (960, 640)
@@ -914,6 +914,69 @@ class Api:
         path = result[0] if isinstance(result, (list, tuple)) else result
         ok, msg = storage.import_from(path)
         return {"ok": ok, "message": msg}
+
+    # -- Tout un utilisateur dans un fichier (profil.py) ------------------
+
+    def profil_exporter(self, mdp: str = "") -> dict:
+        try:
+            import profil
+            u = storage.get_active_user()
+            win = webview.windows[0]
+            result = win.create_file_dialog(
+                _dialogue("SAVE"),
+                save_filename=profil.nom_fichier(u.get("label") or "", bool(mdp)),
+                file_types=(("Profil Pilote (*.pilote)",) if mdp else ("Profil Pilote (*.zip)",)),
+            )
+            if not result:
+                return {"ok": False, "cancelled": True}
+            cible = result if isinstance(result, str) else result[0]
+            ext = profil.EXT_CHIFFRE if mdp else profil.EXT_ZIP
+            if not cible.lower().endswith(ext):
+                cible += ext
+            return profil.exporter(cible, APP_VERSION, mdp or None)
+        except Exception as e:
+            traceback.print_exc()
+            return {"ok": False, "error": str(e)}
+
+    def profil_choisir(self) -> dict:
+        """Choix du fichier, puis son apercu. Le chemin reste ici : la page
+        ne fait que dire « importe celui-la » (profil_importer)."""
+        try:
+            import profil
+            win = webview.windows[0]
+            result = win.create_file_dialog(
+                _dialogue("OPEN"), allow_multiple=False,
+                file_types=("Profil Pilote (*.zip;*.pilote)", "All files (*.*)"),
+            )
+            if not result:
+                return {"ok": False, "cancelled": True}
+            self._profil_choisi = result[0] if isinstance(result, (list, tuple)) else result
+            return profil.apercu(self._profil_choisi)
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def profil_apercu(self, mdp: str = "") -> dict:
+        """Apercu du fichier choisi une fois son mot de passe tape."""
+        return self._profil_appel(lambda profil, chemin: profil.apercu(chemin, mdp or None))
+
+    def profil_importer(self, mode: str, mdp: str = "") -> dict:
+        return self._profil_appel(lambda profil, chemin: profil.importer(chemin, mode, mdp or None))
+
+    def _profil_appel(self, faire) -> dict:
+        try:
+            import profil
+            chemin = getattr(self, "_profil_choisi", None)
+            if not chemin:
+                return {"ok": False, "error": "Aucun fichier choisi."}
+            return faire(profil, chemin)
+        except ValueError as e:
+            msg = str(e)
+            if msg.startswith("mot_de_passe:"):
+                return {"ok": False, "reason": "mot_de_passe", "error": msg.split(":", 1)[1]}
+            return {"ok": False, "error": msg}
+        except Exception as e:
+            traceback.print_exc()
+            return {"ok": False, "error": str(e)}
 
     def video_debut(self, nom: str) -> dict:
         """Bilan de l'annee : « Telecharger la video ». Demande ou l'enregistrer ;

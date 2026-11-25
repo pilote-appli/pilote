@@ -66,6 +66,7 @@ Pilote/
 │   ├── jsonstore.py    # Socle commun : écriture atomique + backup quotidien 7 j
 │   ├── donnees.py      # LE passage pour lire/écrire un fichier de Donnees/ (étape 1 du chiffrement)
 │   ├── sauvegarde.py   # Sauvegarde externe sur clé USB (miroir + archives zip)
+│   ├── profil.py       # Exporter / importer tout un utilisateur dans un fichier (Paramètres, Données)
 │   ├── appicon.py      # Icône recolorée selon la couleur d'accent
 │   ├── splash.py       # Petite fenêtre de chargement affichée au lancement
 │   ├── updater.py      # Auto-updater (check + download + install) + fiches des versions

@@ -320,6 +320,7 @@ jamais un second calcul :
 | Prêt | `pret-mensualite`, `pret-gains` | configuration du prêt, `prOverview().benefice_net` |
 | Comptes | `fin-solde`, `fin-revenu` | `finComputeMonthTotals` |
 | Comptes | `fin-releve` (4.4.70) | opérations importées à classer (`finAClasser`), date du dernier import ; boutons « Importer un relevé » (`dashImporterReleve`) et « Classer » (`finVoirAClasser`) : `docs/modules/comptes.md` |
+| Comptes | `fin-abos` (25/11/2026) | total par mois des dépenses récurrentes actives (`finAboTotalMois`), et la première chose à regarder (hausse, abonnement plus passé, repérés) ; bouton « Voir » / « À regarder » (`dashVoirAbos`) : `docs/modules/comptes.md`, « Abonnements repérés » |
 | Pense-bête | `pense-bete`, `tc-retard` | tâches du module Pense-bête (`TC`, taches.json) depuis la 4.4.73 ; avant, `S.uiPrefs.penseBete` |
 | Bilan | `bilan` (01/11/2026) | total de la bourse sur la semaine passée (`_bilanCache`, calculé 15 s après le lancement si la tuile est affichée), bouton « Voir le bilan » |
 
